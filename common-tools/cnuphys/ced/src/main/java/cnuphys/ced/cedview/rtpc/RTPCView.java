@@ -368,7 +368,10 @@ public class RTPCView extends CedXYView implements ChangeListener {
 		if (!haveEvent) {
 			feedbackStrings.add("$orange red$No event");
 		} else {
-			feedbackStrings.add("$orange red$" + "event " + _eventManager.getEventNumber());
+			feedbackStrings.add("$orange red$" + "sequential event " + _eventManager.getSequentialEventNumber());
+			
+			int trueEventNum = _eventManager.getTrueEventNumber();
+			feedbackStrings.add("$orange red$" + "true event " + ((trueEventNum < 0) ? "n/a" : trueEventNum ));
 			feedbackStrings.add("$orange red$" + _eventManager.getCurrentSourceDescription());
 		}
 

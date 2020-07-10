@@ -53,8 +53,11 @@ public class NodePanel extends JPanel
 	/** show ints as hex */
 	protected JCheckBox intsInHexButton;
 
-	/** Used for "goto" event */
-	protected JTextField eventNumberInput;
+	/** Used for "goto" sequential event */
+	protected JTextField seqEventNumberInput;
+	
+	/** Used for "goto" true event */
+	protected JTextField trueEventNumberInput;
 
 	// the table
 	protected NodeTable _nodeTable;
@@ -177,7 +180,7 @@ public class NodePanel extends JPanel
 	 */
 	private void addEventControls() {
 
-		JPanel sourcePanel = _eventInfoPanel.getSourcePanel();
+		JPanel eventSourcePanel = _eventInfoPanel.getEventSourcePanel();
 		JPanel numPanel = _eventInfoPanel.getNumberPanel();
 
 		nextButton = new JButton("next");
@@ -188,26 +191,54 @@ public class NodePanel extends JPanel
 		prevButton.setFont(Fonts.smallFont);
 		prevButton.addActionListener(this);
 
-		JLabel label = new JLabel("Go to # ");
-		GraphicsUtilities.setSizeSmall(label);
+		JLabel seqLabel = new JLabel("Goto seq # ");
+		GraphicsUtilities.setSizeSmall(seqLabel);
+		
+		JLabel trueLabel = new JLabel("Goto true # ");
+		GraphicsUtilities.setSizeSmall(trueLabel);
 
-		eventNumberInput = new JTextField(6);
+
+		seqEventNumberInput = new JTextField(7);
+		trueEventNumberInput = new JTextField(7);
 
 		KeyAdapter ka = new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent kev) {
-				if (kev.getKeyCode() == KeyEvent.VK_ENTER) {
-					MenuSelectionManager.defaultManager().clearSelectedPath();
-					try {
-						int enumber = Integer.parseInt(eventNumberInput.getText());
-						_eventManager.gotoEvent(enumber + 1);
-					} catch (Exception e) {
-						eventNumberInput.setText("");
+
+				if (kev.getSource() == seqEventNumberInput) {
+					if (kev.getKeyCode() == KeyEvent.VK_ENTER) {
+						MenuSelectionManager.defaultManager().clearSelectedPath();
+						try {
+							int enumber = Integer.parseInt(seqEventNumberInput.getText());
+							_eventManager.gotoEvent(enumber + 1);
+						} catch (Exception e) {
+							seqEventNumberInput.setText("");
+						}
 					}
 				}
+
+				else if (kev.getSource() == trueEventNumberInput) {
+
+					// find the corresponding sequential number
+
+					if (kev.getKeyCode() == KeyEvent.VK_ENTER) {
+						int trueNum = _eventManager.getTrueEventNumber();
+						if (trueNum > -1) {
+							try {
+								int enumber = Integer.parseInt(trueEventNumberInput.getText());
+								_eventManager.gotoEvent(_eventManager.getSequentialEventNumber() + (enumber - trueNum));
+							} catch (Exception e) {
+								seqEventNumberInput.setText("");
+							}
+						}
+
+					}
+				}
+
 			}
 		};
-		eventNumberInput.addKeyListener(ka);
+		seqEventNumberInput.addKeyListener(ka);
+		trueEventNumberInput.addKeyListener(ka);
 
 		intsInHexButton = new JCheckBox("Show ints in hex", false);
 		intsInHexButton.setFont(Fonts.defaultFont);
@@ -223,8 +254,9 @@ public class NodePanel extends JPanel
 		};
 		intsInHexButton.addItemListener(il);
 
-		sourcePanel.add(Box.createHorizontalStrut(4));
-		sourcePanel.add(intsInHexButton);
+		eventSourcePanel.add(Box.createHorizontalStrut(4));
+		eventSourcePanel.add(intsInHexButton);
+		
 
 		JPanel panel = new JPanel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 2));
@@ -233,8 +265,15 @@ public class NodePanel extends JPanel
 		panel.add(Box.createHorizontalStrut(2));
 		panel.add(nextButton);
 		panel.add(Box.createHorizontalStrut(2));
-		panel.add(label);
-		panel.add(eventNumberInput);
+		
+		numPanel.add(panel, BorderLayout.NORTH);
+		
+		
+		panel.add(seqLabel);
+		panel.add(seqEventNumberInput);
+		panel.add(Box.createHorizontalStrut(6));
+		panel.add(trueLabel);
+		panel.add(trueEventNumberInput);
 
 		numPanel.add(panel, 0);
 	}
@@ -248,7 +287,8 @@ public class NodePanel extends JPanel
 		}
 		nextButton.setEnabled(_eventManager.isNextOK());
 		prevButton.setEnabled(_eventManager.isPrevOK());
-		eventNumberInput.setEnabled(_eventManager.isGotoOK());
+		seqEventNumberInput.setEnabled(_eventManager.isGotoOK());
+		trueEventNumberInput.setEnabled(_eventManager.isGotoOK() && (_eventManager.getTrueEventNumber() > -1));
 	}
 
 	/**
@@ -270,12 +310,21 @@ public class NodePanel extends JPanel
 	}
 
 	/**
-	 * Set the displayed event number value.
-	 * 
-	 * @param eventNumber event number.
+	 * Set the displayed sequential event number value.
+	 * That is just the event number in the file.
+	 * @param seqEventNumber event number.
 	 */
-	public void setEventNumber(int eventNumber) {
-		_eventInfoPanel.setEventNumber(eventNumber);
+	public void setSeqEventNumber(int seqEventNumber) {
+		_eventInfoPanel.setSeqEventNumber(seqEventNumber);
+	}
+	
+	/**
+	 * Set the displayed true event number value.
+	 * That is the number in the RUN::config bank
+	 * @param trueEventNumber event number.
+	 */
+	public void setTrueEventNumber(int trueEventNumber) {
+		_eventInfoPanel.setTrueEventNumber(trueEventNumber);
 	}
 
 	/**
@@ -498,7 +547,8 @@ public class NodePanel extends JPanel
 
 		if (!_eventManager.isAccumulating()) {
 			setData(event);
-			setEventNumber(_eventManager.getEventNumber());
+			setSeqEventNumber(_eventManager.getSequentialEventNumber());
+			setTrueEventNumber(_eventManager.getTrueEventNumber());
 			setRunNumber(_eventManager.getRunData().run);
 			fixButtons();
 		}
@@ -511,7 +561,8 @@ public class NodePanel extends JPanel
 	 */
 	@Override
 	public void openedNewEventFile(String path) {
-		setEventNumber(0);
+		setSeqEventNumber(0);
+		setTrueEventNumber(-1);
 		setRunNumber(-1);
 
 		// set the text field
@@ -541,7 +592,8 @@ public class NodePanel extends JPanel
 
 		case AccumulationManager.ACCUMULATION_FINISHED:
 			setData(_eventManager.getCurrentEvent());
-			setEventNumber(_eventManager.getEventNumber());
+			setSeqEventNumber(_eventManager.getSequentialEventNumber());
+			setTrueEventNumber(_eventManager.getTrueEventNumber());
 			setRunNumber(_eventManager.getRunData().run);
 			fixButtons();
 			break;

@@ -49,8 +49,12 @@ public class ClasIoEventMenu extends JMenu implements ActionListener, IClasIoEve
 	// a hash table of menu items used by recent file feature
 	private static Hashtable<String, JMenuItem> _menuItems;
 
-	// for goto
-	private JTextField evnum;
+	// for goto sequential
+	private JTextField seqEvNum;
+	
+	// for goto true event from RUN::config
+	private JTextField trueEvNum;
+
 
 	// for auto next event
 	private JCheckBox _periodEvent;
@@ -131,8 +135,12 @@ public class ClasIoEventMenu extends JMenu implements ActionListener, IClasIoEve
 		// previous
 		prevItem = addMenuItem("Previous Event", KeyEvent.VK_P);
 
-		// goto
-		add(createGoToPanel());
+		// goto sequential
+		add(createGotoSequentialPanel());
+		
+		// goto true
+		add(createGotoTruePanel());
+
 
 		// periodic event
 		add(createEventPeriodPanel());
@@ -267,7 +275,8 @@ public class ClasIoEventMenu extends JMenu implements ActionListener, IClasIoEve
 
 		nextItem.setEnabled(nextOK);
 		prevItem.setEnabled(_eventManager.isPrevOK());
-		evnum.setEnabled(_eventManager.isGotoOK());
+		seqEvNum.setEnabled(_eventManager.isGotoOK());
+		trueEvNum.setEnabled(_eventManager.isGotoOK() && (_eventManager.getTrueEventNumber() > -1));
 		_periodEvent.setEnabled(nextOK);
 		_periodTF.setEnabled(nextOK);
 
@@ -426,14 +435,14 @@ public class ClasIoEventMenu extends JMenu implements ActionListener, IClasIoEve
 		// add to menu
 		addMenu(path, true);
 	}
-
-	// create the goto event widget
-	private JPanel createGoToPanel() {
+	
+	// create the goto sequential event widget
+	private JPanel createGotoSequentialPanel() {
 		JPanel sp = new TransparentPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
 
-		JLabel label = new JLabel("Go To Event: ");
+		JLabel label = new JLabel("Goto Sequential Event: ");
 
-		evnum = new JTextField("1", 10);
+		seqEvNum = new JTextField("1", 10);
 
 		KeyAdapter ka = new KeyAdapter() {
 			@Override
@@ -441,7 +450,7 @@ public class ClasIoEventMenu extends JMenu implements ActionListener, IClasIoEve
 				if (kev.getKeyCode() == KeyEvent.VK_ENTER) {
 					MenuSelectionManager.defaultManager().clearSelectedPath();
 					try {
-						int enumber = Integer.parseInt(evnum.getText());
+						int enumber = Integer.parseInt(seqEvNum.getText());
 						_eventManager.gotoEvent(enumber);
 					} catch (Exception e) {
 
@@ -449,13 +458,48 @@ public class ClasIoEventMenu extends JMenu implements ActionListener, IClasIoEve
 				}
 			}
 		};
-		evnum.addKeyListener(ka);
+		seqEvNum.addKeyListener(ka);
 
 		sp.add(label);
-		sp.add(evnum);
-		evnum.setEnabled(false);
+		sp.add(seqEvNum);
+		seqEvNum.setEnabled(false);
 		return sp;
 	}
+
+	// create the goto true event widget
+	private JPanel createGotoTruePanel() {
+		JPanel sp = new TransparentPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+
+		JLabel label = new JLabel("Goto True Event: ");
+
+		trueEvNum = new JTextField("1", 10);
+
+		KeyAdapter ka = new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent kev) {
+				if (kev.getKeyCode() == KeyEvent.VK_ENTER) {
+					MenuSelectionManager.defaultManager().clearSelectedPath();
+					int trueNum = _eventManager.getTrueEventNumber();
+					if (trueNum > -1) {
+						try {
+							int enumber = Integer.parseInt(trueEvNum.getText());
+							if (enumber != trueNum) {
+								_eventManager.gotoTrueEvent(enumber);
+							}
+						} catch (Exception e) {
+						}
+					}
+				}
+			}
+		};
+		trueEvNum.addKeyListener(ka);
+
+		sp.add(label);
+		sp.add(trueEvNum);
+		trueEvNum.setEnabled(false);
+		return sp;
+	}
+	
 
 	// create the event every so many seconds widget
 	private JPanel createEventPeriodPanel() {

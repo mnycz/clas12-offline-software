@@ -71,9 +71,11 @@ public class ClasIoPresentBankPanel extends JPanel
 	private void update() {
 		String[] allBanks = _eventManager.getKnownBanks();
 		for (String s : allBanks) {
+			
 			ActionLabel alabel = _alabels.get(s);
 
 			if (alabel != null) {
+				
 				boolean inCurrent = _eventManager.isBankInCurrentEvent(s);
 				alabel.setEnabled(inCurrent);
 

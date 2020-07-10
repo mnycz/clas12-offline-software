@@ -2,7 +2,7 @@
 #prune jars from the big coat java jar so that I can depend on projects
 
 #mv the jar 
-COAT=coat-libs-6.5.3-SNAPSHOT.jar
+COAT=coat-libs-6.5.8-SNAPSHOT.jar
 OLDCOAT=old_$COAT
 mv $COAT $OLDCOAT
 

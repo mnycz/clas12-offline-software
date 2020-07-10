@@ -331,7 +331,7 @@ public class AllDCSuperLayer extends RectangleItem {
 			Rectangle2D.Double wr) {
 
 		if (wire > GeoConstants.NUM_WIRE) {
-			String msg = "Bad wire number in drawDCHit " + wire + " event number " + _eventManager.getEventNumber();
+			String msg = "Bad wire number in drawDCHit " + wire + " seq event number " + _eventManager.getSequentialEventNumber();
 			Log.getInstance().warning(msg);
 			System.err.println(msg);
 			return;
@@ -388,7 +388,7 @@ public class AllDCSuperLayer extends RectangleItem {
 			Rectangle2D.Double wr, Color color) {
 
 		if (wire > GeoConstants.NUM_WIRE) {
-			String msg = "Bad wire number in drawDCHit " + wire + " event number " + _eventManager.getEventNumber();
+			String msg = "Bad wire number in drawDCHit " + wire + " seq event number " + _eventManager.getSequentialEventNumber();
 			Log.getInstance().warning(msg);
 			System.err.println(msg);
 			return;
@@ -415,7 +415,7 @@ public class AllDCSuperLayer extends RectangleItem {
 	private void drawDCNNHit(Graphics g, IContainer container, int layer, int wire, Rectangle2D.Double wr) {
 
 		if (wire > GeoConstants.NUM_WIRE) {
-			String msg = "Bad wire number in drawDCNNHit " + wire + " event number " + _eventManager.getEventNumber();
+			String msg = "Bad wire number in drawDCNNHit " + wire + " event number " + _eventManager.getSequentialEventNumber();
 			Log.getInstance().warning(msg);
 			System.err.println(msg);
 			return;

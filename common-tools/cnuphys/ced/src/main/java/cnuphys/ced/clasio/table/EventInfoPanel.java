@@ -21,16 +21,18 @@ public class EventInfoPanel extends JPanel {
 	/**
 	 * A label for displaying the ordinal number of the event from an event file.
 	 */
-	private NamedLabel eventNumberLabel;
+	private NamedLabel seqEventNumberLabel;
+	
+	/**
+	 * A label for displaying the true number of the event from the RUN::config bank.
+	 */
+	private NamedLabel trueEventNumberLabel;
 
 	/** holds the source field */
-	private JPanel _sourcePanel;
+	private JPanel _eventSourcePanel;
 
 	/** holds the event count field */
 	private JPanel _numPanel;
-
-	/** Panel in which to place event viewing controls. */
-	JPanel controlPanel;
 
 	/** run number */
 	private NamedLabel runLabel;
@@ -49,41 +51,43 @@ public class EventInfoPanel extends JPanel {
 		setBorder(new EmptyBorder(5, 0, 5, 0)); // top, left, bot, right
 
 		eventSourceLabel = new NamedLabel("source", "event_source", 400);
-		eventNumberLabel = new NamedLabel("event #", "event #", 65);
-		numEventsLabel = new NamedLabel("count", "event #", 65);
-		runLabel = new NamedLabel("run #", "event #", 65);
+		seqEventNumberLabel = new NamedLabel("seq #", "true #", 65);
+		trueEventNumberLabel = new NamedLabel("true #", "true #", 65);
+		numEventsLabel = new NamedLabel("count", "true #", 65);
+		runLabel = new NamedLabel("run #", "true #", 65);
 
 		// limit size of labels
 		Dimension d1 = eventSourceLabel.getPreferredSize();
-		Dimension d2 = eventNumberLabel.getPreferredSize();
+		Dimension d2 = trueEventNumberLabel.getPreferredSize();
 
 		eventSourceLabel.setMaximumSize(d1);
-		eventNumberLabel.setMaximumSize(d2);
+		seqEventNumberLabel.setMaximumSize(d2);
+		trueEventNumberLabel.setMaximumSize(d2);
 		numEventsLabel.setMaximumSize(d2);
 		runLabel.setMaximumSize(d2);
 
 		// panels
 
-		_sourcePanel = new JPanel();
-		_sourcePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-		_sourcePanel.add(eventSourceLabel);
+		_eventSourcePanel = new JPanel();
+		_eventSourcePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		_eventSourcePanel.add(eventSourceLabel);
 
 		_numPanel = new JPanel();
-		_numPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		_numPanel.setLayout(new BorderLayout(4, 4));
+		
+		JPanel sPanel = new JPanel();
+		sPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-		_numPanel.add(eventNumberLabel);
-		_numPanel.add(Box.createHorizontalStrut(3));
-		_numPanel.add(numEventsLabel);
-		_numPanel.add(Box.createHorizontalStrut(3));
-		_numPanel.add(runLabel);
+		sPanel.add(seqEventNumberLabel);
+		sPanel.add(Box.createHorizontalStrut(3));
+		sPanel.add(trueEventNumberLabel);
+		sPanel.add(Box.createHorizontalStrut(3));
+		sPanel.add(numEventsLabel);
+		sPanel.add(Box.createHorizontalStrut(3));
+		sPanel.add(runLabel);
+		_numPanel.add(sPanel, BorderLayout.SOUTH);
 
-		controlPanel = new JPanel();
-		controlPanel.setPreferredSize(new Dimension(200, 1)); // width to be
-		// same as data
-		// view
-
-		add(controlPanel, BorderLayout.WEST);
-		add(_sourcePanel, BorderLayout.NORTH);
+		add(_eventSourcePanel, BorderLayout.NORTH);
 		add(_numPanel, BorderLayout.SOUTH);
 	}
 
@@ -92,8 +96,8 @@ public class EventInfoPanel extends JPanel {
 	 * 
 	 * @return the event source panel
 	 */
-	public JPanel getSourcePanel() {
-		return _sourcePanel;
+	public JPanel getEventSourcePanel() {
+		return _eventSourcePanel;
 	}
 
 	/**
@@ -126,13 +130,27 @@ public class EventInfoPanel extends JPanel {
 	}
 
 	/**
-	 * Set the displayed event number value.
-	 * 
-	 * @param eventNumber event number.
+	 * Set the displayed sequential event number value.
+	 * The sequential event number is just the number in the file.
+	 * @param seqEventNum event number.
 	 */
-	public void setEventNumber(int eventNumber) {
-		if (eventNumber > -1) {
-			eventNumberLabel.setText("" + eventNumber);
+	public void setSeqEventNumber(int seqEventNum) {
+		if (seqEventNum > -1) {
+			seqEventNumberLabel.setText("" + seqEventNum);
+		}
+	}
+	
+	/**
+	 * Set the displayed true event number value.
+	 * The true event number comes from the RUN::config bank.
+	 * @param trueEventNum event number.
+	 */
+	public void setTrueEventNumber(int trueEventNum) {
+		if (trueEventNum > -1) {
+			trueEventNumberLabel.setText("" + trueEventNum);
+		}
+		else {
+			trueEventNumberLabel.setText("n/a");
 		}
 	}
 
@@ -155,7 +173,7 @@ public class EventInfoPanel extends JPanel {
 	 * @return the displayed event number value.
 	 */
 	public int getEventNumber() {
-		return Integer.parseInt(eventNumberLabel.getText());
+		return Integer.parseInt(seqEventNumberLabel.getText());
 	}
 
 	/**

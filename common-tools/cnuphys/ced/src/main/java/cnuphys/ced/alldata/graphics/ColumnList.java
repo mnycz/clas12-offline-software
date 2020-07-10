@@ -39,6 +39,7 @@ public class ColumnList extends JList<String> {
 	 * @param bankName the name of the bank
 	 */
 	public void setList(String bankName) {
+		
 		if (bankName != null) {
 			DataDescriptor dd = DataManager.getInstance().getDictionary().getDescriptor(bankName);
 			if (dd != null) {

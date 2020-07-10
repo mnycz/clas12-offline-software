@@ -707,7 +707,7 @@ public class AccumulationManager implements IAccumulator, IClasIoEventListener, 
 
 				} catch (ArrayIndexOutOfBoundsException e) {
 					String msg = String.format("Index out of bounds (BST). Event# %d lay %d sect %d  strip %d",
-							_eventManager.getEventNumber(), hit.layer, hit.sector, hit.component);
+							_eventManager.getSequentialEventNumber(), hit.layer, hit.sector, hit.component);
 					Log.getInstance().warning(msg);
 				}
 
@@ -777,7 +777,7 @@ public class AccumulationManager implements IAccumulator, IClasIoEventListener, 
 						_HTCCAccumulatedData[sect0][ring0][half0] += 1;
 					} catch (ArrayIndexOutOfBoundsException e) {
 						String msg = String.format("HTCC index out of bounds. Event# %d sect %d ring %d half %d",
-								_eventManager.getEventNumber(), hit.sector, hit.layer, hit.component);
+								_eventManager.getSequentialEventNumber(), hit.sector, hit.layer, hit.component);
 						Log.getInstance().warning(msg);
 						System.err.println(msg);
 					}
@@ -804,7 +804,7 @@ public class AccumulationManager implements IAccumulator, IClasIoEventListener, 
 						_LTCCAccumulatedData[sect0][half0][ring0] += 1;
 					} catch (ArrayIndexOutOfBoundsException e) {
 						String msg = String.format("LTCC index out of bounds. Event# %d sect %d ring %d half %d",
-								_eventManager.getEventNumber(), hit.sector, hit.layer, hit.component);
+								_eventManager.getSequentialEventNumber(), hit.sector, hit.layer, hit.component);
 						Log.getInstance().warning(msg);
 						System.err.println(msg);
 					}

@@ -44,6 +44,7 @@ public class DataManager {
 	 */
 	private DataManager() {
 
+		System.out.println("DICTIONARY");
 		_dictionary = new HipoDataDictionary();
 
 		// HACK filter out dgtz banks
@@ -215,11 +216,6 @@ public class DataManager {
 				for (String columnName : entries) {
 					int type = dd.getProperty("type", columnName);
 
-//					if ((columnName.contains("timestamp"))) {
-//						// TODO MAJOR HACK (STILL NEEDED)!
-//						ff
-//						type = 4;
-//					}
 
 					if ((type < 1) || (type > 6) || (type == 24)) {
 //							Log.getInstance()

@@ -43,7 +43,7 @@ public class CedHistoFiller implements IAccumulationListener {
 
 		case AccumulationManager.ACCUMULATION_CANCELLED:
 		case AccumulationManager.ACCUMULATION_FINISHED:
-			Ced.setEventNumberLabel(ClasIoEventManager.getInstance().getEventNumber());
+			Ced.setEventNumberLabel(ClasIoEventManager.getInstance().getSequentialEventNumber());
 
 			fillDcHistogramGrid(ced.dcHistoGrid);
 			fillFtofHistogramGrid(ced.ftofHistoGrid);
