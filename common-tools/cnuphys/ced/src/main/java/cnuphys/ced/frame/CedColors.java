@@ -13,11 +13,19 @@ public class CedColors {
 //	public static final Color tbDocaLine = Color.green;
 //	public static final Color tbDocaFill = new Color(0, 0, 0, 60);
 
+
+	// hb segment color
+	public static final Color hbSegmentLine = X11Colors.getX11Color("brown");
+
 	// tb segment line color
 	public static final Color tbSegmentLine = X11Colors.getX11Color("Navy");
+	
+	// ai hb segment color
+	public static final Color aihbSegmentLine = X11Colors.getX11Color("dark khaki");
 
-	// tb segment color
-	public static final Color hbSegmentLine = X11Colors.getX11Color("brown");
+	// ai tb segment line color
+	public static final Color aitbSegmentLine = X11Colors.getX11Color("dark magenta");
+
 
 	// for hits cells
 	public static final Color defaultHitCellFill = Color.red;
@@ -45,6 +53,16 @@ public class CedColors {
 	public static final Color TB_TRANS = X11Colors.getX11Color("dark orange", 240);
 	public static final Color TB_DOCAFRAME = TB_COLOR.darker();
 
+	// AI hit based
+	public static final Color AIHB_COLOR = X11Colors.getX11Color("spring green");
+	public static final Color AIHB_TRANS = X11Colors.getX11Color("spring green", 240);
+	public static final Color AIHB_DOCAFRAME = AIHB_COLOR.darker();
+
+	// AI time based
+	public static final Color AITB_COLOR = X11Colors.getX11Color("magenta");
+	public static final Color AITB_TRANS = X11Colors.getX11Color("magenta", 240);
+	public static final Color AITB_DOCAFRAME = AITB_COLOR.darker();
+
 	// neural net based
 	public static final Color NN_COLOR = X11Colors.getX11Color("medium sea green");
 	public static final Color NN_TRANS = X11Colors.getX11Color("medium sea green", 160);
@@ -52,8 +70,8 @@ public class CedColors {
 	// doca fills
 	public static final Color DOCA_COLOR = new Color(0, 255, 0, 76);
 	public static final Color TRKDOCA_COLOR = new Color(0, 0, 255, 76);
-	
-	//fills for clusters
+
+	// fills for clusters
 	public static final Color HB_CLUSTER_COLOR = new Color(255, 255, 0, 220);
 	public static final Color TB_CLUSTER_COLOR = X11Colors.getX11Color("dark orange", 220);
 	public static final Color SNR_CLUSTER_COLOR = new Color(46, 169, 87, 220);

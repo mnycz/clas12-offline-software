@@ -463,6 +463,15 @@ public class DCXYView extends HexView {
 			_crossDrawer.setMode(CrossDrawer.TB);
 			_crossDrawer.feedback(container, pp, wp, feedbackStrings);
 		}
+		if (showAIDCHBCrosses()) {
+			_crossDrawer.setMode(CrossDrawer.AIHB);
+			_crossDrawer.feedback(container, pp, wp, feedbackStrings);
+		}
+		if (showAIDCTBCrosses()) {
+			_crossDrawer.setMode(CrossDrawer.AITB);
+			_crossDrawer.feedback(container, pp, wp, feedbackStrings);
+		}
+
 
 		// Other (not DC) Crosses
 		if (showCrosses()) {

@@ -50,6 +50,11 @@ import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.ced.clasio.ClasIoReconEventView;
 import cnuphys.ced.dcnoise.edit.NoiseParameterDialog;
 import cnuphys.ced.event.AccumulationManager;
+import cnuphys.ced.event.data.AIDC;
+import cnuphys.ced.event.data.AIHBCrosses;
+import cnuphys.ced.event.data.AIHBSegments;
+import cnuphys.ced.event.data.AITBCrosses;
+import cnuphys.ced.event.data.AITBSegments;
 import cnuphys.ced.event.data.AllEC;
 import cnuphys.ced.event.data.BMT;
 import cnuphys.ced.event.data.BMTCrosses;
@@ -1176,14 +1181,19 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	//any events come through
 	private static void initDataCollectors() {
 		DC.getInstance();
+		AIDC.getInstance();
 		FTOF.getInstance();
 		BMTCrosses.getInstance();
 		FMTCrosses.getInstance();
 		BSTCrosses.getInstance();
 		TBCrosses.getInstance();
 		HBCrosses.getInstance();
+		AITBCrosses.getInstance();
+		AIHBCrosses.getInstance();
 		TBSegments.getInstance();
 		HBSegments.getInstance();
+		AITBSegments.getInstance();
+		AIHBSegments.getInstance();
 		AllEC.getInstance();
 		HTCC2.getInstance();
 		FTCAL.getInstance();

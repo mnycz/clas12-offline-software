@@ -40,6 +40,14 @@ public class CrossDrawer3D extends Item3D {
 			CrossList list = TBCrosses.getInstance().getCrosses();
 			drawCrossList(drawable, list, CedColors.TB_COLOR);
 		}
+		if (_cedPanel3D.showAIHBCross()) {
+			CrossList list = HBCrosses.getInstance().getCrosses();
+			drawCrossList(drawable, list, CedColors.AIHB_COLOR);
+		}
+		if (_cedPanel3D.showAITBCross()) {
+			CrossList list = TBCrosses.getInstance().getCrosses();
+			drawCrossList(drawable, list, CedColors.AITB_COLOR);
+		}
 
 	}
 

@@ -103,13 +103,19 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	public static final String SECTORCHANGE_LABEL = "Sector Change";
 
 	/** Global show HB */
-	private static final String GLOBAL_HB_LABEL = "HB Data";
+	private static final String GLOBAL_HB_LABEL = "Reg HB";
 
 	/** Global show TB */
-	private static final String GLOBAL_TB_LABEL = "TB Data";
+	private static final String GLOBAL_TB_LABEL = "Reg TB";
 	
 	/** Global show Neural Net data */
 	private static final String GLOBAL_NN_LABEL = "NN Data";
+	
+	/** Global show AI HB */
+	private static final String GLOBAL_AIHB_LABEL = "AI HB";
+
+	/** Global show AITB */
+	private static final String GLOBAL_AITB_LABEL = "AI TB";
 
 	/** Global show ADC hits */
 	private static final String GLOBAL_ADC_HIT_LABEL = "ADC Hits";
@@ -128,6 +134,12 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	
 	// controls whether any neural net data displayed
     private AbstractButton _showNNButton;
+    
+ // controls whether any AI HB data displayed
+ 	private AbstractButton _showAIHBButton;
+
+ 	// controls whether any AI TB data displayed
+ 	private AbstractButton _showAITBButton;
 
 	// controls whether dc reconstructed Hits are displayed
 	private AbstractButton _dcHitsButton;
@@ -279,6 +291,16 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 		// global time based data
 		if (Bits.checkBit(bits, DisplayBits.GLOBAL_TB)) {
 			_showTBButton = add(GLOBAL_TB_LABEL, true, true, this, _buttonColor).getCheckBox();
+		}
+		
+		// global hit based AI data
+		if (Bits.checkBit(bits, DisplayBits.GLOBAL_AIHB)) {
+			_showAIHBButton = add(GLOBAL_AIHB_LABEL, true, true, this, _buttonColor).getCheckBox();
+		}
+
+		// global time based AI data
+		if (Bits.checkBit(bits, DisplayBits.GLOBAL_AITB)) {
+			_showAITBButton = add(GLOBAL_AITB_LABEL, true, true, this, _buttonColor).getCheckBox();
 		}
 		
 		// global neural data
@@ -504,6 +526,25 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	}
 	
 	/**
+	 * Convenience method global AI hit based display
+	 * 
+	 * @return <code>true</code> if we are to show AI hb globally
+	 */
+	public boolean showAIHB() {
+		return (_showAIHBButton != null) && _showAIHBButton.isSelected();
+	}
+
+	/**
+	 * Convenience method global AI time based display
+	 * 
+	 * @return <code>true</code> if we are to show AI tb globally
+	 */
+	public boolean showAITB() {
+		return (_showAITBButton != null) && _showAITBButton.isSelected();
+	}
+	
+	
+	/**
 	 * Convenience method global neural net based display
 	 * 
 	 * @return <code>true</code> if we are to show nn globally
@@ -512,14 +553,6 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 		return (_showNNButton != null) && _showNNButton.isSelected();
 	}
 
-	/**
-	 * Convenience method to see if we show the dc HB reconstructed hits.
-	 * 
-	 * @return <code>true</code> if we are to show dc HB reconstructed hits.
-	 */
-	public boolean showDCHBHits() {
-		return showHB() && (_dcHitsButton != null) && _dcHitsButton.isSelected();
-	}
 	
 	/**
 	 * Convenience method to see if we show the dc neural net hits.
@@ -531,6 +564,33 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	}
 
 	/**
+	 * Convenience method to see if we show the dc HB reconstructed hits.
+	 * 
+	 * @return <code>true</code> if we are to show dc HB reconstructed hits.
+	 */
+	public boolean showDCHBHits() {
+		return showHB() && (_dcHitsButton != null) && _dcHitsButton.isSelected();
+	}
+
+	/**
+	 * Convenience method to see if we show the AI dc TB reconstructed hits.
+	 * 
+	 * @return <code>true</code> if we are to show AI dc TB reconstructed hits.
+	 */
+	public boolean showAIDCTBHits() {
+		return showAITB() && (_dcHitsButton != null) && _dcHitsButton.isSelected();
+	}
+	
+	/**
+	 * Convenience method to see if we show the AI dc HB reconstructed hits.
+	 * 
+	 * @return <code>true</code> if we are to show AI dc HB reconstructed hits.
+	 */
+	public boolean showAIDCHBHits() {
+		return showAIHB() && (_dcHitsButton != null) && _dcHitsButton.isSelected();
+	}
+
+	/**
 	 * Convenience method to see if we show the dc TB reconstructed hits.
 	 * 
 	 * @return <code>true</code> if we are to show dc TB reconstructed hits.
@@ -538,7 +598,6 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	public boolean showDCTBHits() {
 		return showTB() && (_dcHitsButton != null) && _dcHitsButton.isSelected();
 	}
-	
 	/**
 	 * Convenience method to see if we show the dc HB reconstructed clusters.
 	 * 
@@ -569,7 +628,7 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	/**
 	 * Convenience method to see if we show the dc hb reconstructed segments.
 	 * 
-	 * @return <code>true</code> if we are to show dc hb reconstructed crosses.
+	 * @return <code>true</code> if we are to show dc hb reconstructed segments.
 	 */
 	public boolean showDCHBSegments() {
 		return showHB() && showSegments();
@@ -578,10 +637,29 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	/**
 	 * Convenience method to see if we show the dc tb reconstructed segments.
 	 * 
-	 * @return <code>true</code> if we are to show dc tb reconstructed crosses.
+	 * @return <code>true</code> if we are to show dc tb reconstructed segments.
 	 */
 	public boolean showDCTBSegments() {
 		return showTB() && showSegments();
+	}
+	
+
+	/**
+	 * Convenience method to see if we show the AI dc hb reconstructed segments.
+	 * 
+	 * @return <code>true</code> if we are to show AI dc hb reconstructed segments.
+	 */
+	public boolean showAIDCHBSegments() {
+		return showAIHB() && showSegments();
+	}
+
+	/**
+	 * Convenience method to see if we show the AI dc tb reconstructed segments.
+	 * 
+	 * @return <code>true</code> if we are to show AI dc tb reconstructed segments.
+	 */
+	public boolean showAIDCTBSegments() {
+		return showAITB() && showSegments();
 	}
 
 	/**
@@ -610,6 +688,25 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	public boolean showDCTBCrosses() {
 		return showTB() && showCrosses();
 	}
+	
+	/**
+	 * Convenience method to see if we show the AI dc HB reconstructed crosses.
+	 * 
+	 * @return <code>true</code> if we are to show AI dc HB reconstructed crosses.
+	 */
+	public boolean showAIDCHBCrosses() {
+		return showAIHB() && showCrosses();
+	}
+
+	/**
+	 * Convenience method to see if we show the AI dc TB reconstructed crosses.
+	 * 
+	 * @return <code>true</code> if we are to show AI dc TB reconstructed crosses.
+	 */
+	public boolean showAIDCTBCrosses() {
+		return showAITB() && showCrosses();
+	}
+
 
 	/**
 	 * Convenience method to see if we show no doca at all.

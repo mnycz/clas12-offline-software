@@ -247,6 +247,7 @@ public class SectorView extends CedView implements ChangeListener {
 						+ ControlPanel.ACCUMULATIONLEGEND,
 				DisplayBits.MAGFIELD + DisplayBits.CROSSES + DisplayBits.RECONHITS + DisplayBits.CLUSTERS
 						+ DisplayBits.FMTCROSSES + DisplayBits.DC_HITS + DisplayBits.SEGMENTS + DisplayBits.GLOBAL_HB + DisplayBits.GLOBAL_NN
+						+ DisplayBits.GLOBAL_AIHB + DisplayBits.GLOBAL_AITB
 						+ DisplayBits.GLOBAL_TB + DisplayBits.ACCUMULATION + DisplayBits.DOCA + DisplayBits.MCTRUTH +
 						DisplayBits.SECTORCHANGE,
 				3, 5);
@@ -560,6 +561,15 @@ public class SectorView extends CedView implements ChangeListener {
 					_dcCrossDrawer.setMode(CrossDrawer.TB);
 					_dcCrossDrawer.draw(g, container);
 				}
+				if (showAIDCHBCrosses()) {
+					_dcCrossDrawer.setMode(CrossDrawer.AIHB);
+					_dcCrossDrawer.draw(g, container);
+				}
+				if (showAIDCTBCrosses()) {
+					_dcCrossDrawer.setMode(CrossDrawer.AITB);
+					_dcCrossDrawer.draw(g, container);
+				}
+
 
 				// Other (not DC) Crosses
 				if (showCrosses()) {
@@ -878,6 +888,15 @@ public class SectorView extends CedView implements ChangeListener {
 			_dcCrossDrawer.setMode(CrossDrawer.TB);
 			_dcCrossDrawer.vdrawFeedback(container, pp, wp, feedbackStrings, 0);
 		}
+		if (showAIDCHBCrosses()) {
+			_dcCrossDrawer.setMode(CrossDrawer.AIHB);
+			_dcCrossDrawer.vdrawFeedback(container, pp, wp, feedbackStrings, 0);
+		}
+		if (showAIDCTBCrosses()) {
+			_dcCrossDrawer.setMode(CrossDrawer.AITB);
+			_dcCrossDrawer.vdrawFeedback(container, pp, wp, feedbackStrings, 0);
+		}
+
 
 		// Other (not DC) Crosses
 		if (showCrosses()) {

@@ -61,6 +61,12 @@ public class DisplayBits {
     
     /** global nn data */
     public static final int GLOBAL_NN = 02000000;
+    
+    /** global nn data */
+    public static final int GLOBAL_AIHB = 04000000;
+    
+    /** global nn data */
+    public static final int GLOBAL_AITB = 010000000;
 
 
 	/** Distance scale */

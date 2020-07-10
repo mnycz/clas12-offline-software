@@ -11,6 +11,7 @@ import cnuphys.bCNU.format.DoubleFormat;
 import cnuphys.bCNU.graphics.container.IContainer;
 import cnuphys.bCNU.util.UnicodeSupport;
 import cnuphys.ced.clasio.ClasIoEventManager;
+import cnuphys.ced.event.data.AIDC;
 import cnuphys.ced.event.data.AllEC;
 import cnuphys.ced.event.data.Cluster;
 import cnuphys.ced.event.data.ClusterList;
@@ -81,6 +82,18 @@ public class ReconDrawer extends SectorViewDrawer {
 				_view.getSuperLayerDrawer(0, supl).drawTimeBasedSegments(g, container);
 			}
 		}
+		
+		if (_view.showAIDCHBSegments()) {
+			for (int supl = 1; supl <= 6; supl++) {
+				_view.getSuperLayerDrawer(0, supl).drawAIHitBasedSegments(g, container);
+			}
+		}
+
+		if (_view.showAIDCTBSegments()) {
+			for (int supl = 1; supl <= 6; supl++) {
+				_view.getSuperLayerDrawer(0, supl).drawAITimeBasedSegments(g, container);
+			}
+		}
 
 	}
 
@@ -118,6 +131,12 @@ public class ReconDrawer extends SectorViewDrawer {
 		}
 		if (_view.showDCTBHits()) {
 			drawDCHitList(g, container, CedColors.TB_COLOR, DC.getInstance().getTBHits(), true);
+		}
+		if (_view.showAIDCHBHits()) {
+			drawDCHitList(g, container, CedColors.AIHB_COLOR, AIDC.getInstance().getAIHBHits(), false);
+		}
+		if (_view.showAIDCTBHits()) {
+			drawDCHitList(g, container, CedColors.AITB_COLOR, AIDC.getInstance().getAITBHits(), true);
 		}
 	}
 
@@ -238,6 +257,76 @@ public class ReconDrawer extends SectorViewDrawer {
 				}
 			}
 		}  //show tb hits
+
+
+
+		// AI DC HB Recon Hits
+		if (_view.showAIDCHBHits()) {
+			DCReconHitList hits = AIDC.getInstance().getAIHBHits();
+			DCClusterList clusters = AIDC.getInstance().getAIHBClusters();
+			
+			if ((hits != null) && !hits.isEmpty()) {
+				for (DCReconHit hit : hits) {
+					if (_view.containsSector(hit.sector)) {
+						if (hit.contains(screenPoint)) {
+							hit.getFeedbackStrings("AI HB", feedbackStrings);
+							
+							
+							//possibly have cluster info
+							short clusterId = hit.clusterID;
+							
+							if (clusterId > 0) {
+								DCCluster cluster = clusters.fromClusterId(clusterId);
+								
+								String str1;
+								if (cluster == null) {
+									str1 = String.format("$red$" + "HB clusterID %d", clusterId);
+								} else {
+									str1 = String.format("$red$" + "HB clusterID %d size %d", clusterId, cluster.size);
+								}
+								feedbackStrings.add(str1);
+							}
+							
+							return;
+						}
+					}
+				}
+			}
+		}  //show AI hb hits
+		
+		// AI DC TB Recon Hits
+		if (_view.showAIDCTBHits()) {
+			DCReconHitList hits = AIDC.getInstance().getAITBHits();
+			DCClusterList clusters = AIDC.getInstance().getAITBClusters();
+			
+			if ((hits != null) && !hits.isEmpty()) {
+				for (DCReconHit hit : hits) {
+					if (_view.containsSector(hit.sector)) {
+						if (hit.contains(screenPoint)) {
+							hit.getFeedbackStrings("AI TB", feedbackStrings);
+							
+							
+							//possibly have cluster info
+							short clusterId = hit.clusterID;
+							
+							if (clusterId > 0) {
+								DCCluster cluster = clusters.fromClusterId(clusterId);
+								
+								String str1;
+								if (cluster == null) {
+									str1 = String.format("$red$" + "TB clusterID %d", clusterId);
+								} else {
+									str1 = String.format("$red$" + "TB clusterID %d size %d", clusterId, cluster.size);
+								}
+								feedbackStrings.add(str1);
+							}
+							
+							return;
+						}
+					}
+				}
+			}
+		}  //show AI tb hits
 
 
 	}

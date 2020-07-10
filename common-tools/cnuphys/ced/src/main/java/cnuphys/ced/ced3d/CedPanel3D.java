@@ -74,6 +74,11 @@ public class CedPanel3D extends Panel3D {
 
 	public static final String SHOW_TB_CROSS = "TB Cross";
 	public static final String SHOW_HB_CROSS = "HB Cross";
+	
+	public static final String SHOW_AITB_CROSS = "AITB Cross";
+	public static final String SHOW_AIHB_CROSS = "AIHB Cross";
+
+	
 	public static final String SHOW_TB_TRACK = "TB Track";
 	public static final String SHOW_HB_TRACK = "HB Track";
 	public static final String SHOW_CVT_TRACK = "CVT Track";
@@ -444,6 +449,15 @@ public class CedPanel3D extends Panel3D {
 	}
 
 	/**
+	 * Show hit based cross?
+	 * 
+	 * @return <code>true</code> if we are to show hit based cross
+	 */
+	public boolean showHBCross() {
+		return show(CedPanel3D.SHOW_HB_CROSS);
+	}
+	
+	/**
 	 * Show time based cross?
 	 * 
 	 * @return <code>true</code> if we are to show time based cross
@@ -453,12 +467,21 @@ public class CedPanel3D extends Panel3D {
 	}
 
 	/**
-	 * Show hit based cross?
+	 * Show AI hit based cross?
 	 * 
-	 * @return <code>true</code> if we are to show hit based cross
+	 * @return <code>true</code> if we are to show AI hit based cross
 	 */
-	public boolean showHBCross() {
-		return show(CedPanel3D.SHOW_HB_CROSS);
+	public boolean showAIHBCross() {
+		return show(CedPanel3D.SHOW_AIHB_CROSS);
+	}
+	
+	/**
+	 * Show AI time based cross?
+	 * 
+	 * @return <code>true</code> if we are to show AI time based cross
+	 */
+	public boolean showAITBCross() {
+		return show(CedPanel3D.SHOW_AITB_CROSS);
 	}
 
 	/**

@@ -150,13 +150,9 @@ public class DataManager {
 				if (columns != null) {
 					for (String columnName : columns) {
 						ColumnData cd = getColumnData(bankName, columnName);
-
-//						if ("HitBasedTrkg::HBCrosses.Cluster_ID".equals(bankName + "." + columnName)) {
-//							(new Throwable()).printStackTrace();
-//						}
 						if (cd == null) {
-//							Log.getInstance().warning("Dictionary does not seem to know about bank named [" + bankName
-//									+ "." + columnName + "] May be a disconnect with json files");
+							Log.getInstance().warning("Dictionary does not seem to know about bank named [" + bankName
+									+ "." + columnName + "] May be a disconnect with json files");
 						} else {
 							list.add(cd);
 						}
@@ -165,15 +161,6 @@ public class DataManager {
 			}
 		}
 
-//		if (event != null) {
-//			for (ColumnData cd : _columnData.values()) {
-//				if (cd.getDataArray(event) != null) {
-//					if (cd.length(event) > 0) {
-//						list.add(cd);
-//					}
-//				}
-//			}
-//		}
 		Collections.sort(list);
 
 		String bankName = "";

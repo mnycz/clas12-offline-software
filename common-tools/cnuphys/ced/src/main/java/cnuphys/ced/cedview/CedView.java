@@ -395,7 +395,45 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 		}
 		return _controlPanel.getDisplayArray().showDCHBCrosses();
 	}
+	
+	/**
+	 * Convenience method to see it we show the dc time-based reconstructed crosses.
+	 * 
+	 * @return <code>true</code> if we are to show the dc time-based reconstructed
+	 *         crosses.
+	 */
+	public boolean showDCTBCrosses() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showDCTBCrosses();
+	}
 
+	/**
+	 * Convenience method to see it we show the AI dc hit-based reconstructed crosses.
+	 * 
+	 * @return <code>true</code> if we are to show the AI dc hit-based reconstructed
+	 *         crosses.
+	 */
+	public boolean showAIDCHBCrosses() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAIDCHBCrosses();
+	}
+	
+	/**
+	 * Convenience method to see it we show the AI dc time-based reconstructed crosses.
+	 * 
+	 * @return <code>true</code> if we are to show the AI dc time-based reconstructed
+	 *         crosses.
+	 */
+	public boolean showAIDCTBCrosses() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAIDCTBCrosses();
+	}
 	/**
 	 * Get the color scale model if there is one.
 	 * 
@@ -433,6 +471,31 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 		return _controlPanel.getDisplayArray().showTB();
 	}
 	
+
+	/**
+	 * Convenience method global AI hit based display
+	 * 
+	 * @return <code>true</code> if we are to show AI hb globally
+	 */
+	public boolean showAIHB() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAIHB();
+	}
+
+	/**
+	 * Convenience method global AI time based display
+	 * 
+	 * @return <code>true</code> if we are to show AI tb globally
+	 */
+	public boolean showAITB() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAITB();
+	}
+	
 	/**
 	 * Convenience method global neural net data
 	 * 
@@ -444,6 +507,7 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 		}
 		return _controlPanel.getDisplayArray().showNN();
 	}
+	
 
 	/**
 	 * Convenience method to see it we show the reconstructed clusters.
@@ -604,18 +668,6 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 		return _controlPanel.getDisplayArray().showTBDoca();
 	}
 
-	/**
-	 * Convenience method to see it we show the dc time-based reconstructed crosses.
-	 * 
-	 * @return <code>true</code> if we are to show the dc time-based reconstructed
-	 *         crosses.
-	 */
-	public boolean showDCTBCrosses() {
-		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
-			return false;
-		}
-		return _controlPanel.getDisplayArray().showDCTBCrosses();
-	}
 
 	/**
 	 * Convenience method to see it we show the dc hit based reconstructed hits.
@@ -641,6 +693,32 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 			return false;
 		}
 		return _controlPanel.getDisplayArray().showDCTBHits();
+	}
+	
+	/**
+	 * Convenience method to see it we show the AI dc hit based reconstructed hits.
+	 * 
+	 * @return <code>true</code> if we are to show the AI dc hit-based reconstructed
+	 *         hits.
+	 */
+	public boolean showAIDCHBHits() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAIDCHBHits();
+	}
+
+	/**
+	 * Convenience method to see it we show the AI dc time based reconstructed hits.
+	 * 
+	 * @return <code>true</code> if we are to show the AI dc time-based reconstructed
+	 *         hits.
+	 */
+	public boolean showAIDCTBHits() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAIDCTBHits();
 	}
 	
 	/**
@@ -690,6 +768,31 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 			return false;
 		}
 		return _controlPanel.getDisplayArray().showDCTBSegments();
+	}
+
+	
+	/**
+	 * Should we draw AI hit based segments
+	 * 
+	 * @return whether we should draw AI hits based segments
+	 */
+	public boolean showAIDCHBSegments() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAIDCHBSegments();
+	}
+
+	/**
+	 * Should we draw AI time based segments
+	 * 
+	 * @return whether we should draw AI time based segments
+	 */
+	public boolean showAIDCTBSegments() {
+		if ((_controlPanel == null) || (_controlPanel.getDisplayArray() == null)) {
+			return false;
+		}
+		return _controlPanel.getDisplayArray().showAIDCTBSegments();
 	}
 
 	/**

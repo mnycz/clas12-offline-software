@@ -12,17 +12,24 @@ public class DataDrawSupport {
 
 	public static final int HB_CROSS = 0;
 	public static final int TB_CROSS = 1;
-	public static final int BST_CROSS = 2;
-	public static final int BMT_CROSS = 3;
-	public static final int FMT_CROSS = 4;
+	public static final int AIHB_CROSS = 2;
+	public static final int AITB_CROSS = 3;
+	public static final int BST_CROSS = 4;
+	public static final int BMT_CROSS = 5;
+	public static final int FMT_CROSS = 6;
+	
+
 
 	private static final Color TRANSYELLOW = new Color(255, 255, 0, 240);
 	private static final Color TRANSGREEN = X11Colors.getX11Color("lawn green", 250);
 	private static final Color TRANSBLUE = X11Colors.getX11Color("sky blue", 250);
 	private static final Color TRANSRED = X11Colors.getX11Color("red", 128);
 
-	public static Color transColors[] = { CedColors.HB_TRANS, CedColors.TB_TRANS, TRANSYELLOW, TRANSGREEN, TRANSRED };
-	public static String prefix[] = { "HB ", "TB ", "BST ", "BMT ", "FMT " };
+	public static Color transColors[] = { CedColors.HB_TRANS, CedColors.TB_TRANS, CedColors.AIHB_TRANS, CedColors.AITB_TRANS, 
+			TRANSYELLOW, TRANSGREEN, TRANSRED};
+	
+	
+	public static String prefix[] = { "Reg HB ", "Reg TB ", "AI HB ", "AI TB ", "BST ", "BMT ", "FMT " };
 
 	// half the size of a cross
 	public static final int CROSSHALF = 6; // pixels

@@ -25,7 +25,14 @@ import cnuphys.ced.cedview.sectorview.SectorView;
 import cnuphys.ced.event.data.DataDrawSupport;
 import cnuphys.ced.frame.CedColors;
 
+/**
+ * Shows some of the symbology
+ * @author heddle
+ *
+ */
 public class DrawingLegend extends JComponent {
+	
+	private static final int TRAJSIZE = 10;
 
 	private static final Font labelFont = new Font("SansSerif", Font.PLAIN, 9);
 
@@ -74,7 +81,7 @@ public class DrawingLegend extends JComponent {
 		DataDrawSupport.drawReconCluster(g, pp);
 		x = quickString(g, x + 6, yc, "Recon Cluster ") + 20;
 
-		yc += 18;
+		yc += 17;
 		x = 8;
 
 		// view dependent drawing
@@ -90,7 +97,7 @@ public class DrawingLegend extends JComponent {
 
 	}
 	
-	private static final int TRAJSIZE = 10;
+
 	private int paintTrajPoint(Graphics g, int x, int y) {
 		int s2 = TRAJSIZE/2;
 		SymbolDraw.drawStar(g, x, y, s2, Color.black);
@@ -107,14 +114,14 @@ public class DrawingLegend extends JComponent {
 		x = drawCross(g, x, yc, DataDrawSupport.BMT_CROSS);
 		x = paintTrajPoint(g, x, yc);
 
-		yc += 18;
+		yc += 17;
 		SymbolDraw.drawUpTriangle(g, xo, yc, 3, X11Colors.getX11Color("Dark Green"),
 				X11Colors.getX11Color("Aquamarine"));
 
 		quickString(g, xo + 16, yc, "Hit Strip Midpoint");
 
 		// tracks
-		yc += 18;
+		yc += 17;
 		x = xo;
 		x = quickString(g, xo, yc, "Tracks   ");
 		x = drawLine(g2, x, yc, CedColors.HB_COLOR, "HB ");
@@ -130,22 +137,43 @@ public class DrawingLegend extends JComponent {
 		Graphics2D g2 = (Graphics2D) g;
 		x = drawCross(g, x, yc, DataDrawSupport.HB_CROSS);
 		x = drawCross(g, x, yc, DataDrawSupport.TB_CROSS);
+		
+		yc += 17;
+		x = xo;
+
+		x = drawCross(g, x, yc, DataDrawSupport.AIHB_CROSS);
+		x = drawCross(g, x, yc, DataDrawSupport.AITB_CROSS);
+		
+		yc += 17;
+		x = xo;
 		x = drawCross(g, x, yc, DataDrawSupport.FMT_CROSS);
 		x = drawCircle(g, x, yc, CedColors.docaTruthLine, "TB Doca");
-		yc += 18;
+		yc += 17;
 
 		// segment lines
 		x = xo;
-		x = drawSegLine(g2, x, yc, CedColors.hbSegmentLine, CedColors.HB_COLOR, "HB Segment");
-		x = drawSegLine(g2, x, yc, CedColors.tbSegmentLine, CedColors.TB_COLOR, "TB Segment");
+		x = drawSegLine(g2, x, yc, CedColors.hbSegmentLine, CedColors.HB_COLOR, "Reg HB Segment  ");
+		x = drawSegLine(g2, x, yc, CedColors.tbSegmentLine, CedColors.TB_COLOR, "Reg TB Segment");
+		yc += 17;
+		x = xo;
+		x = drawSegLine(g2, x, yc, CedColors.aihbSegmentLine, CedColors.AIHB_COLOR, "AI HB Segment");
+		x = drawSegLine(g2, x, yc, CedColors.aitbSegmentLine, CedColors.AITB_COLOR, "AI TB Segment");
 
 		// tracks
-		yc += 18;
+		yc += 17;
 		x = xo;
-		x = quickString(g, xo, yc, "Tracks   ");
-		x = drawLine(g2, x, yc, CedColors.HB_COLOR, "HB ");
-		x = drawLine(g2, x, yc, CedColors.TB_COLOR, "TB ");
-		x = drawLine(g2, x, yc, CedColors.cvtTrackColor, "CVT ");
+		x = drawLine(g2, x, yc, CedColors.HB_COLOR, "Reg HB Track ");
+		x = drawLine(g2, x, yc, CedColors.TB_COLOR, "Reg TB Track ");
+		
+		yc += 17;
+		x = xo;
+		x = drawLine(g2, x, yc, CedColors.AIHB_COLOR, "AI HB Track ");
+		x = drawLine(g2, x, yc, CedColors.AITB_COLOR, "AI TB Track ");
+		
+		yc += 17;
+		x = xo;
+		x = drawLine(g2, x, yc, CedColors.cvtTrackColor, "CVT Track ");
+
 
 	}
 
@@ -158,9 +186,10 @@ public class DrawingLegend extends JComponent {
 		g2.drawLine(x, yc, x + 26, yc);
 
 		x += 36;
-		return quickString(g2, x, yc - 2, str) + 18;
+		return quickString(g2, x, yc - 2, str) + 17;
 	}
 
+	//draw a segment
 	private int drawSegLine(Graphics2D g2, int x, int yc, Color lineColor, Color endColor, String str) {
 		g2.setColor(CedColors.docaTruthFill);
 		g2.setStroke(GraphicsUtilities.getStroke(6f, LineStyle.SOLID));
@@ -172,7 +201,7 @@ public class DrawingLegend extends JComponent {
 		SymbolDraw.drawOval(g2, x, yc, 2, 2, endColor, endColor);
 		SymbolDraw.drawOval(g2, x + 30, yc, 2, 2, endColor, endColor);
 		x += 40;
-		return quickString(g2, x, yc - 2, str) + 18;
+		return quickString(g2, x, yc - 2, str) + 17;
 	}
 
 	private int drawCross(Graphics g, int x, int y, int mode) {
@@ -194,7 +223,7 @@ public class DrawingLegend extends JComponent {
 		FontMetrics fm = getFontMetrics(labelFont);
 		g.setColor(Color.black);
 		g.setFont(labelFont);
-		g.setColor(Color.cyan);
+		g.setColor(Color.white);
 		g.drawString(s, x, yc + fm.getAscent() / 2);
 		return x + fm.stringWidth(s);
 	}

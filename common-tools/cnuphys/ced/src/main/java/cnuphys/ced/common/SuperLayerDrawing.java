@@ -24,6 +24,8 @@ import cnuphys.bCNU.util.MathUtilities;
 import cnuphys.bCNU.util.X11Colors;
 import cnuphys.ced.cedview.CedView;
 import cnuphys.ced.event.AccumulationManager;
+import cnuphys.ced.event.data.AIHBSegments;
+import cnuphys.ced.event.data.AITBSegments;
 import cnuphys.ced.event.data.DC;
 import cnuphys.ced.event.data.DCReconHit;
 import cnuphys.ced.event.data.DCTdcHit;
@@ -326,6 +328,8 @@ public class SuperLayerDrawing {
 		drawHitBasedSegments(g, container);
 		// drawTimeBasedHits(g, container);
 		drawTimeBasedSegments(g, container);
+		drawAIHitBasedSegments(g, container);
+		drawAITimeBasedSegments(g, container);
 
 	}
 
@@ -767,7 +771,7 @@ public class SuperLayerDrawing {
 	}
 
 	/**
-	 * 
+	 * Draw hit based segments
 	 * @param g         the graphics context
 	 * @param container the drawing container
 	 */
@@ -793,10 +797,10 @@ public class SuperLayerDrawing {
 			}
 		}
 
-	} // drawHiteBasedSegments
+	} // drawHitBasedSegments
 
 	/**
-	 * 
+	 * Draw time based segments
 	 * @param g         the graphics context
 	 * @param container the drawing container
 	 */
@@ -813,10 +817,71 @@ public class SuperLayerDrawing {
 			for (Segment segment : segments) {
 				if ((segment.sector == _iSupl.sector()) && (segment.superlayer == _iSupl.superlayer())) {
 
-//					if (segment.sector == 4 && segment.superlayer == 3) {
-//						System.err.println("seg sect 4 and superlayer " + segment.superlayer);
-//						System.err.println(String.format("    (%-9.4f, %-9.4f), (%-9.4f, %-9.4f)", segment.z1, segment.x1, segment.z2, segment.x2));
-//					}
+					projectedPoint(segment.x1, 0, segment.z1, wp1);
+					projectedPoint(segment.x2, 0, segment.z2, wp2);
+
+					// have top flip if lower sector
+					if (_iSupl.isLowerSector()) {
+						wp1.y = -wp1.y;
+						wp2.y = -wp2.y;
+					}
+
+					drawSegment(g, container, _view, wp1, wp2, CedColors.tbSegmentLine, CedColors.TB_COLOR);
+
+				}
+			}
+		}
+
+	} // drawTimeBasedSegments
+	
+	
+
+	/**
+	 * Draw AI hit based segments
+	 * @param g         the graphics context
+	 * @param container the drawing container
+	 */
+	public void drawAIHitBasedSegments(Graphics g, IContainer container) {
+
+		if (!_view.showAIDCHBSegments()) {
+			return;
+		}
+
+		SegmentList segments = AIHBSegments.getInstance().getSegments();
+
+		if ((segments != null) && !segments.isEmpty()) {
+			Point2D.Double wp1 = new Point2D.Double();
+			Point2D.Double wp2 = new Point2D.Double();
+			for (Segment segment : segments) {
+				if ((segment.sector == _iSupl.sector()) && (segment.superlayer == _iSupl.superlayer())) {
+
+					projectedPoint(segment.x1, 0, segment.z1, wp1);
+					projectedPoint(segment.x2, 0, segment.z2, wp2);
+					drawSegment(g, container, _view, wp1, wp2, CedColors.aihbSegmentLine, CedColors.AIHB_COLOR);
+
+				}
+			}
+		}
+
+	} // drawAIHitBasedSegments
+
+	/**
+	 * Draw AI time based segments
+	 * @param g         the graphics context
+	 * @param container the drawing container
+	 */
+	public void drawAITimeBasedSegments(Graphics g, IContainer container) {
+
+		if (!_view.showAIDCTBSegments()) {
+			return;
+		}
+
+		SegmentList segments = AITBSegments.getInstance().getSegments();
+		if ((segments != null) && !segments.isEmpty()) {
+			Point2D.Double wp1 = new Point2D.Double();
+			Point2D.Double wp2 = new Point2D.Double();
+			for (Segment segment : segments) {
+				if ((segment.sector == _iSupl.sector()) && (segment.superlayer == _iSupl.superlayer())) {
 
 					projectedPoint(segment.x1, 0, segment.z1, wp1);
 					projectedPoint(segment.x2, 0, segment.z2, wp2);
@@ -827,19 +892,13 @@ public class SuperLayerDrawing {
 						wp2.y = -wp2.y;
 					}
 
-//					
-//					if (segment.sector == 4 && segment.superlayer == 3) {
-//						System.err.println("    pp1: " + wp1);
-//						System.err.println("    pp2: " + wp2);
-//					}
-
-					drawSegment(g, container, _view, wp1, wp2, CedColors.tbSegmentLine, CedColors.TB_COLOR);
+					drawSegment(g, container, _view, wp1, wp2, CedColors.aitbSegmentLine, CedColors.AITB_COLOR);
 
 				}
 			}
 		}
 
-	} // drawTimeBasedSegments
+	} // drawAITimeBasedSegments
 
 	// draw a HB or TB segement
 	private void drawSegment(Graphics g, IContainer container, CedView view, Point2D.Double sectPnt1,

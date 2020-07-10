@@ -14,6 +14,8 @@ import cnuphys.bCNU.format.DoubleFormat;
 import cnuphys.bCNU.graphics.container.IContainer;
 import cnuphys.bCNU.graphics.world.WorldGraphicsUtilities;
 import cnuphys.ced.clasio.ClasIoEventManager;
+import cnuphys.ced.event.data.AIHBCrosses;
+import cnuphys.ced.event.data.AITBCrosses;
 import cnuphys.ced.event.data.Cross;
 import cnuphys.ced.event.data.CrossList;
 import cnuphys.ced.event.data.DataDrawSupport;
@@ -23,8 +25,11 @@ import cnuphys.ced.item.HexSectorItem;
 
 public class CrossDrawer extends DCXYViewDrawer {
 
-	public static final int HB = 0;
-	public static final int TB = 1;
+	public static final int HB = DataDrawSupport.HB_CROSS;
+	public static final int TB = DataDrawSupport.TB_CROSS;;
+	public static final int AIHB = DataDrawSupport.AIHB_CROSS;
+	public static final int AITB = DataDrawSupport.AITB_CROSS;;
+
 
 	private static final int ARROWLEN = 30; // pixels
 	private static final Stroke THICKLINE = new BasicStroke(1.5f);
@@ -62,9 +67,17 @@ public class CrossDrawer extends DCXYViewDrawer {
 		CrossList crosses = null;
 		if (_mode == HB) {
 			crosses = HBCrosses.getInstance().getCrosses();
-		} else if (_mode == TB) {
+		} 
+		else if (_mode == TB) {
 			crosses = TBCrosses.getInstance().getCrosses();
 		}
+		else if (_mode == AIHB) {
+			crosses = AIHBCrosses.getInstance().getCrosses();
+		}
+		else if (_mode == AITB) {
+			crosses = AITBCrosses.getInstance().getCrosses();
+		}
+		
 		if ((crosses == null) || crosses.isEmpty()) {
 			return;
 		}
@@ -77,7 +90,6 @@ public class CrossDrawer extends DCXYViewDrawer {
 		double result[] = new double[3];
 		Point pp = new Point();
 
-		int index = 0;
 		for (Cross cross : crosses) {
 			HexSectorItem hsItem = _view.getHexSectorItem(cross.sector);
 
@@ -123,8 +135,6 @@ public class CrossDrawer extends DCXYViewDrawer {
 
 			// the circles and crosses
 			DataDrawSupport.drawCross(g, pp.x, pp.y, _mode);
-
-			index++;
 		}
 
 		g2.setStroke(oldStroke);
@@ -146,9 +156,17 @@ public class CrossDrawer extends DCXYViewDrawer {
 		CrossList crosses = null;
 		if (_mode == HB) {
 			crosses = HBCrosses.getInstance().getCrosses();
-		} else if (_mode == TB) {
+		} 
+		else if (_mode == TB) {
 			crosses = TBCrosses.getInstance().getCrosses();
 		}
+		else if (_mode == AIHB) {
+			crosses = AIHBCrosses.getInstance().getCrosses();
+		}
+		else if (_mode == AITB) {
+			crosses = AITBCrosses.getInstance().getCrosses();
+		}
+		
 		if ((crosses == null) || crosses.isEmpty()) {
 			return;
 		}
