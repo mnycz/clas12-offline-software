@@ -273,7 +273,7 @@ public class Geometry {
         // if first iteration trkDir == null
         double s2corr = s2;
         // now use track info
-        s2corr = this.getCorrectedStrip(sector, upperlayer, s2, trkDir, SVTConstants.MODULELEN);
+        s2corr = this.getCorrectedStrip(sector, upperlayer, s2, trkDir, SVTConstants.ACTIVESENLEN);
         double z = getLocCoord(s1, s2corr)[1];
         //update using the corrected z
         s2corr = this.getCorrectedStrip(sector, upperlayer, s2, trkDir, z);
@@ -288,8 +288,8 @@ public class Geometry {
         double[] LC = getLocCoord(s1, s2corr);
         double LC_x = LC[0];
         double LC_z = LC[1];
-
-        Point3D crPoint = transformToFrame(sector, upperlayer - 1, LC_x, 0, LC_z, "lab", "middle");
+        
+        Point3D crPoint = transformToFrame(sector, upperlayer - 1, LC_x, 0, LC_z, "lab", "");
 
         vals[0] = crPoint.x();
         vals[1] = crPoint.y();
