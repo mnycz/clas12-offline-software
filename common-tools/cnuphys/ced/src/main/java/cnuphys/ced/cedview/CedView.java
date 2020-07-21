@@ -105,7 +105,8 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 	 */
 	public static final String rhoPhi = UnicodeSupport.SMALL_RHO + UnicodeSupport.THINSPACE + UnicodeSupport.SMALL_PHI;
 
-	private static final String evnumAppend = "  (Event# ";
+	//for appending event number to the titile
+	private static final String evnumAppend = "  (Seq Event# ";
 
 	/**
 	 * Name for the detector layer.
@@ -696,6 +697,16 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 	}
 	
 	/**
+	 * Convenience method to see if we show REC::Calorimeter data
+	 * 
+	 * @return <code>true</code> if we are to show REC::Calorimeter.
+	 */
+	public boolean showRecCal() {
+		return _controlPanel.getDisplayArray().showRecCal();
+	}
+
+	
+	/**
 	 * Convenience method to see it we show the AI dc hit based reconstructed hits.
 	 * 
 	 * @return <code>true</code> if we are to show the AI dc hit-based reconstructed
@@ -894,7 +905,7 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 	@Override
 	public void magneticFieldChanged() {
 		_activeProbe = FieldProbe.factory();
-		getContainer().refresh();
+		TimedRefreshManager.getInstance().add(this);
 	}
 
 	// we are hovering
@@ -1105,7 +1116,7 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 	@Override
 	public void trajectoriesChanged() {
 		if (!_eventManager.isAccumulating()) {
-			getContainer().refresh();
+			TimedRefreshManager.getInstance().add(this);
 		}
 	}
 
@@ -1136,12 +1147,17 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 			title = title.substring(0, index);
 		}
 
-		int num = _eventManager.getSequentialEventNumber();
-		if (num > 0) {
-			setTitle(title + evnumAppend + num + ")");
+		int seqNum = _eventManager.getSequentialEventNumber();
+		int trueNum = _eventManager.getTrueEventNumber();
+		if (seqNum > 0) {
+			if (trueNum > 0) {
+				setTitle(title + evnumAppend + seqNum + "  True event# " + trueNum + ")");
+			}
+			else {
+			    setTitle(title + evnumAppend + seqNum + ")");
+			}
 		}
 	}
-
 	/**
 	 * Override getName to return the title of the view.
 	 * 

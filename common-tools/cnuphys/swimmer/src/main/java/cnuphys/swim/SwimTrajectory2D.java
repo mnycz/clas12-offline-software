@@ -34,9 +34,6 @@ public class SwimTrajectory2D {
 
 	private boolean _sectorChange[];
 
-	// sector with the most points
-	private byte _dominantSector = -1;
-
 	/**
 	 * Create a 2D trajectory from the 3D trajectory
 	 * 
@@ -76,29 +73,6 @@ public class SwimTrajectory2D {
 				index++;
 			}
 
-			// get the dominant sector
-			_dominantSector = -1;
-			byte maxCount = 0;
-			byte[] sects = { 0, 0, 0, 0, 0, 0, 0 };
-
-			for (int i = 0; i < size; i++) {
-				byte sect = _sector[i];
-				sects[sect]++;
-				if (sects[sect] > maxCount) {
-					_dominantSector = sect;
-					maxCount = sects[sect];
-				}
-			}
-
-//			int[] indices = sectChangeIndices();
-//			System.err.print("Dominant Sector: " + _dominantSector + " ");
-//			if (indices != null) {
-//				for (int idx : indices) {
-//					System.err.print("index " + idx + "  " + sectorChangeString(idx) + " ");
-//				}
-//			}
-//
-//			System.err.println();
 		}
 	}
 

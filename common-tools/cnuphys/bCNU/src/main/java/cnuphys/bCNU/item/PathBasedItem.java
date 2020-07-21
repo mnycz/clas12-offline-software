@@ -55,9 +55,9 @@ public class PathBasedItem extends AItem {
 	 */
 	@Override
 	public boolean shouldDraw(Graphics g, IContainer container) {
-		if (_path == null) {
-			return false;
-		}
+//		if (_path == null) {
+//			return false;
+//		}
 
 		if (WorldGraphicsUtilities.getPathPointCount(_path) == 1) {
 			Rectangle spr = singlePointBounds(container);

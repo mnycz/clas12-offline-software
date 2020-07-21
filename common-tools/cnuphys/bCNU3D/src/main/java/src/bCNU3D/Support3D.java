@@ -210,11 +210,34 @@ public class Support3D {
 		setColor(gl, color);
 		gl.glPushMatrix();
 		gl.glTranslatef(x, y, z);
-		// glut.glutSolidSphere(radius, 20, 10);
 		glut.glutWireSphere(radius, slices, stacks);
 		gl.glPopMatrix();
 
 	}
+	
+	/**
+	 * Draw a solid sphere
+	 * 
+	 * @param drawable the OpenGL drawable
+	 * @param x        x center
+	 * @param y        y center
+	 * @param z        z enter
+	 * @param radius   radius in physical units
+	 * @param slices   number of slices
+	 * @param stacks   number of strips
+	 * @param color    color of wires
+	 */
+	public static void solidSphere(GLAutoDrawable drawable, float x, float y, float z, float radius, int slices,
+			int stacks, Color color) {
+		GL2 gl = drawable.getGL().getGL2();
+		setColor(gl, color);
+		gl.glPushMatrix();
+		gl.glTranslatef(x, y, z);
+		glut.glutSolidSphere(radius, slices, stacks);
+		gl.glPopMatrix();
+
+	}
+
 
 	/**
 	 * @param drawable  the openGL drawable

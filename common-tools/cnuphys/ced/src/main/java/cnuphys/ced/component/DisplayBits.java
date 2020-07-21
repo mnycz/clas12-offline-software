@@ -67,6 +67,9 @@ public class DisplayBits {
     
     /** global nn data */
     public static final int GLOBAL_AITB = 010000000;
+    
+    /** data from REC::Calorimeter */
+    public static final int RECCAL = 020000000;
 
 
 	/** Distance scale */

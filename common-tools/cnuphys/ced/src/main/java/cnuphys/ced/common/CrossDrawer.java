@@ -24,16 +24,16 @@ import cnuphys.ced.event.data.TBCrosses;
 
 public class CrossDrawer extends CedViewDrawer {
 
-	public static final int HB = 0;
-	public static final int TB = 1;
-	public static final int AIHB = 2;
-	public static final int AITB = 3;
+	public static final int HB = DataDrawSupport.HB_CROSS;
+	public static final int TB = DataDrawSupport.TB_CROSS;
+	public static final int AIHB = DataDrawSupport.AIHB_CROSS;
+	public static final int AITB = DataDrawSupport.AITB_CROSS;
 
-	protected static final int ARROWLEN = 30; // pixels
-	protected static final Stroke THICKLINE = new BasicStroke(1.5f);
+	public static final int ARROWLEN = 30; // pixels
+	public static final Stroke THICKLINE = new BasicStroke(1.5f);
 
 	// feedback string color
-	protected static String fbcolors[] = { "$wheat$", "$misty rose$", "$light pink$", "$khaki$" };
+	public static String fbcolors[] = { "$wheat$", "$misty rose$", "$light pink$", "$khaki$" };
 
 	protected int _mode = HB;
 

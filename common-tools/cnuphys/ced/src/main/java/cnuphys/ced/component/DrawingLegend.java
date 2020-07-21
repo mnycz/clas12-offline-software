@@ -26,7 +26,7 @@ import cnuphys.ced.event.data.DataDrawSupport;
 import cnuphys.ced.frame.CedColors;
 
 /**
- * Shows some of the symbology
+ * Shows some of the symbology on a legend.
  * @author heddle
  *
  */

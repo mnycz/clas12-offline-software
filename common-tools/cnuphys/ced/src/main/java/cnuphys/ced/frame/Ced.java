@@ -31,6 +31,7 @@ import cnuphys.ced.alldata.graphics.DefinitionManager;
 import cnuphys.ced.ced3d.view.CentralView3D;
 import cnuphys.ced.ced3d.view.FTCalView3D;
 import cnuphys.ced.ced3d.view.ForwardView3D;
+import cnuphys.ced.cedview.TimedRefreshManager;
 import cnuphys.ced.cedview.alldc.AllDCView;
 import cnuphys.ced.cedview.allec.ECView;
 import cnuphys.ced.cedview.allpcal.PCALView;
@@ -68,6 +69,7 @@ import cnuphys.ced.event.data.FTOF;
 import cnuphys.ced.event.data.HBCrosses;
 import cnuphys.ced.event.data.HBSegments;
 import cnuphys.ced.event.data.HTCC2;
+import cnuphys.ced.event.data.RECCalorimeter;
 import cnuphys.ced.event.data.BST;
 import cnuphys.ced.event.data.BSTCrosses;
 import cnuphys.ced.event.data.CND;
@@ -123,7 +125,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	private static String _geoVariation = "default";
 	
 	//ced release 
-	private static final String _release = "build 1.4.55";
+	private static final String _release = "build 1.4.57";
 
 	// used for one time inits
 	private int _firstTime = 0;
@@ -329,6 +331,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 
 		// make sure noise listener is instantiated
 		NoiseManager.getInstance();
+		
+		// make sure Timed refresh manager is instantiated
+		TimedRefreshManager.getInstance();
+
 
 		// add an object that can respond to a "swim all MC" request.
 
@@ -1202,6 +1208,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		BST.getInstance();
 		BMT.getInstance();
 		CND.getInstance();
+		RECCalorimeter.getInstance();
 		Cosmics.getInstance();
 		DataManager.getInstance();
 	}
@@ -1278,7 +1285,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 						FileUtilities.setDefaultDir(arg[i]);
 					}
 				}
-				else if (isLinux ||  arg[i].contains("NO3D") || arg[i].contains("TAKETHATGAGIKANDVERONIQUE")) {
+				else if (arg[i].contains("NO3D")) {
 					_use3D = false;
 					System.err.println("Not using 3D");
 				} else if (arg[i].contains("OLDDCGEO")) {

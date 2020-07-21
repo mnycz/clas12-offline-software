@@ -170,7 +170,8 @@ public class DCXYView extends HexView {
 				ControlPanel.DISPLAYARRAY + ControlPanel.FEEDBACK + ControlPanel.ACCUMULATIONLEGEND
 						+ ControlPanel.DRAWLEGEND,
 				DisplayBits.ACCUMULATION + DisplayBits.CROSSES + DisplayBits.FMTCROSSES + DisplayBits.GLOBAL_HB
-						+ DisplayBits.GLOBAL_TB + DisplayBits.CVTTRACKS + DisplayBits.MCTRUTH + DisplayBits.SECTORCHANGE,
+						+ DisplayBits.GLOBAL_TB  
+						+ DisplayBits.GLOBAL_AIHB +  DisplayBits.GLOBAL_AITB + DisplayBits.CVTTRACKS + DisplayBits.MCTRUTH + DisplayBits.SECTORCHANGE,
 				3, 5);
 
 		add(_controlPanel, BorderLayout.EAST);
@@ -240,6 +241,14 @@ public class DCXYView extends HexView {
 					}
 					if (showDCTBCrosses()) {
 						_crossDrawer.setMode(CrossDrawer.TB);
+						_crossDrawer.draw(g, container);
+					}
+					if (showAIDCHBCrosses()) {
+						_crossDrawer.setMode(CrossDrawer.AIHB);
+						_crossDrawer.draw(g, container);
+					}
+					if (showAIDCTBCrosses()) {
+						_crossDrawer.setMode(CrossDrawer.AITB);
 						_crossDrawer.draw(g, container);
 					}
 

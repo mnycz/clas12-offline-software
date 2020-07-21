@@ -78,6 +78,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 	private Timer _timer;
 	boolean _enableMaintenance;
 	boolean _doingMaintenance;
+	public boolean refreshPending;
 
 	// distance in front of the screen
 	private float _zdist;
@@ -190,8 +191,13 @@ public class Panel3D extends JPanel implements GLEventListener {
 	private void setupMaintenanceTimer() {
 		TimerTask task = new TimerTask() {
 
+			
 			@Override
 			public void run() {
+				if (refreshPending) {
+					refreshPending = false;
+					refresh();
+				}
 				if (_enableMaintenance) {
 					_doingMaintenance = true;
 					refresh();
@@ -273,7 +279,8 @@ public class Panel3D extends JPanel implements GLEventListener {
 		}
 
 		GL2 gl = drawable.getGL().getGL2();
-		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+		
+		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT | GL.GL_STENCIL_BUFFER_BIT);
 		if (_drawMode == DrawMode.ANIMATOR) {
 			animator.pause();
 		}
@@ -486,11 +493,20 @@ public class Panel3D extends JPanel implements GLEventListener {
 		_zdist += dz;
 		// refresh();
 	}
+	
+	/**
+	 * Refresh the drawing
+	 */
+	public void refreshQueued() {
+		refreshPending = true;
+	}
+	
 
 	/**
 	 * Refresh the drawing
 	 */
 	public void refresh() {
+		
 		if (gljpanel == null) {
 			return;
 		}

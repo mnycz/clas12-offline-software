@@ -227,35 +227,20 @@ public class ControlPanel extends JPanel implements ChangeListener {
 		if ((Bits.checkBit(controlPanelBits, DISPLAYARRAY)) && (displayArrayBits != 0)) {
 			_displayArray = new DisplayArray(_view, displayArrayBits, _nc, _hgap);
 		}
-
-		// every thing else on a "general" panel
-
-		boolean addBasic = false;
-		JPanel basic = new JPanel();
-		basic.setLayout(new BorderLayout(2, 2));
-		// Box box = Box.createVerticalBox();
-
-		// target phi slider
+		
+		// phi slider
+		
+		Box phiSlider = null;
 		if (Bits.checkBit(controlPanelBits, PHISLIDER)) {
 			boolean isBig = Bits.checkBit(controlPanelBits, PHI_SLIDER_BIG);
-			basic.add(createPhiSlider(isBig), BorderLayout.NORTH);
-			addBasic = true;
+			phiSlider = createPhiSlider(isBig);
 		}
 
-		// drawing legend
+		// legend
+		JPanel legend = null;
 		if (Bits.checkBit(controlPanelBits, DRAWLEGEND)) {
-			basic.add(DrawingLegend.getLegendPanel(_view), BorderLayout.CENTER);
-			addBasic = true;
+			legend = DrawingLegend.getLegendPanel(_view);
 		}
-
-		// target z slider
-		// if (Bits.checkBit(controlPanelBits, TARGETSLIDER)) {
-		// let's disable--just takes up space
-		// box.add(createTargetSlider());
-		// }
-
-		// basic.add(box);
-		
 
 
 		if (_displayArray != null) {
@@ -264,12 +249,8 @@ public class ControlPanel extends JPanel implements ChangeListener {
 			sp.setLayout(new BoxLayout(sp, BoxLayout.Y_AXIS));
 			
 			
-//			JPanel sp = new JPanel();
-//			sp.setLayout(new BorderLayout(2, 2));
-
 			_displayArray.setBorder(new CommonBorder("Visibility"));
 			sp.add(_displayArray);
-//			sp.add(_displayArray, BorderLayout.NORTH);
 			
 			if (Bits.checkBit(controlPanelBits, ALLDCDISPLAYPANEL)) {
 				_allDCDisplayPanel = new AllDCDisplayPanel(_view);
@@ -281,25 +262,25 @@ public class ControlPanel extends JPanel implements ChangeListener {
 				_colorPanel = new ColorModelPanel(_view, AccumulationManager.colorScaleModel, 160,
 						"Relative Accumulation or ADC Value", 10, _view.getMedianSetting(), true, true);
 
-//				_colorPanel.getSlider().setEnabled(false);
-//				_colorPanel.getSlider().addChangeListener(this);
-
 				sp.add(_colorPanel);
-//				sp.add(_colorPanel, BorderLayout.CENTER);
 			}
 			
 			//adc threshold
 			if (Bits.checkBit(controlPanelBits, ADCTHRESHOLDSLIDER)) {
 				sp.add(createAdcThresholdSlider());
-//				sp.add(createAdcThresholdSlider(), BorderLayout.SOUTH);
 			}
 
 			
 			tabbedPane.add(sp, "display");
 		}
+		
+		if (phiSlider != null) {
+			tabbedPane.add(phiSlider, "phi");
+		}
 
-		if (addBasic) {
-			tabbedPane.add(basic, "basic");
+
+		if (legend != null) {
+			tabbedPane.add(legend, "legend");
 		}
 
 		if (magFieldPanel != null) {

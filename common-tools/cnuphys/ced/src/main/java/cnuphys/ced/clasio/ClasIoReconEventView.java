@@ -52,9 +52,11 @@ public class ClasIoReconEventView extends ClasIoTrajectoryInfoView {
 
 			addTracks(event, _trajData, "HitBasedTrkg::HBTracks");
 			addTracks(event, _trajData, "TimeBasedTrkg::TBTracks");
-			
 			addTracks(event, _trajData, "REC::Particle");
-
+			
+			addTracks(event, _trajData, "HitBasedTrkg::AITracks");
+			addTracks(event, _trajData, "TimeBasedTrkg::AITracks");
+			
 			// look for cvt tyracks
 			addTracks(event, _trajData, "CVTRec::Tracks");
 			addTracks(event, _trajData, "CVTRec::TracksCA");

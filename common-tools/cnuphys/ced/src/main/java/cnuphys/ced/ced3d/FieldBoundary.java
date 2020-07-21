@@ -142,7 +142,7 @@ public class FieldBoundary extends Cylinder implements MagneticFieldChangeListen
 	public void magneticFieldChanged() {
 		float data[] = getBoundaryData(_field);
 		reset(data[0], data[1], data[2], data[3], data[4], data[5]);
-		_cedPanel.refresh();
+		_cedPanel.refreshQueued();
 	}
 
 }

@@ -99,6 +99,12 @@ public class SectorPCALItem extends PolygonItem {
 		drawHits(g, container);
 
 	}
+	
+	@Override
+	public boolean shouldDraw(Graphics g, IContainer container) {
+		return true;
+	}
+
 
 	/**
 	 * Get a strip outline

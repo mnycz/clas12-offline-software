@@ -133,51 +133,6 @@ public class LundSupport {
 	}
 
 	/**
-	 * Is this a track based "particle"
-	 * 
-	 * @param lid the id
-	 * @return <code>true</code> if track based
-	 */
-	public static boolean isTB(LundId lid) {
-		if (lid == null) {
-			return false;
-		}
-		int id = lid.getId();
-		return ((id == -101) || (id == -99) || (id == -100));
-
-	}
-
-	/**
-	 * Is this a hit based "particle"
-	 * 
-	 * @param lid the id
-	 * @return <code>true</code> if hit based
-	 */
-	public static boolean isHB(LundId lid) {
-		if (lid == null) {
-			return false;
-		}
-		int id = lid.getId();
-		return ((id == -201) || (id == -199) || (id == -200));
-
-	}
-
-	/**
-	 * Is this a cvt based "particle"
-	 * 
-	 * @param lid the id
-	 * @return <code>true</code> if cvt based
-	 */
-	public static boolean isCVT(LundId lid) {
-		if (lid == null) {
-			return false;
-		}
-		int id = lid.getId();
-		return ((id == -301) || (id == -299) || (id == -300));
-
-	}
-
-	/**
 	 * Obtain the LundID object for an electron
 	 * 
 	 * @return the LundID object for an electron

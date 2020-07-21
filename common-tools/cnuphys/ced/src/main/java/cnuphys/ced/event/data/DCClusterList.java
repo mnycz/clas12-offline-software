@@ -63,6 +63,7 @@ public class DCClusterList extends Vector<DCCluster> {
 
 	}
 	
+
 	/**
 	 * Obtain the cluster from the id
 	 * @param id the id of the cluster

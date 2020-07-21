@@ -79,13 +79,21 @@ public class CedPanel3D extends Panel3D {
 	public static final String SHOW_AIHB_CROSS = "AIHB Cross";
 
 	
-	public static final String SHOW_TB_TRACK = "TB Track";
-	public static final String SHOW_HB_TRACK = "HB Track";
+	public static final String SHOW_TB_TRACK = "Reg TB Track";
+	public static final String SHOW_HB_TRACK = "Reg HB Track";
+	
+	public static final String SHOW_AITB_TRACK = "AI TB Track";
+	public static final String SHOW_AIHB_TRACK = "AI HB Track";
+
 	public static final String SHOW_CVT_TRACK = "CVT Track";
+	
+	public static final String SHOW_REC_TRACK = "REC Track";
 
 	public static final String SHOW_MAP_EXTENTS = "Map Extents";
 
 	public static final String SHOW_COSMIC = "Cosmics";
+	
+	public static final String SHOW_REC_CAL = "REC Cal";
 
 	// Check box array
 	protected CheckBoxArray _checkBoxArray;
@@ -141,7 +149,7 @@ public class CedPanel3D extends Panel3D {
 		for (String s : _cbaLabels) {
 			AbstractButton ab = _checkBoxArray.getButton(s);
 			ab.setFont(Fonts.smallFont);
-			ab.setSelected(true);
+			ab.setSelected(!SHOW_MAP_EXTENTS.equals(s));
 
 //			if (!SHOW_SIM_SDOCA.equals(s)) {
 //				ab.setSelected(true);
@@ -200,6 +208,12 @@ public class CedPanel3D extends Panel3D {
 
 		ep.add(new KeyboardLegend(this));
 		_checkBoxArray = new CheckBoxArray(2, 4, 4, _cbaLabels);
+		
+		AbstractButton ab =_checkBoxArray.getButton(SHOW_MAP_EXTENTS);
+		if (ab != null) {
+			ab.setSelected(false);
+		}
+		
 		_checkBoxArray.setBorder(new CommonBorder());
 		ep.add(_checkBoxArray);
 
@@ -428,6 +442,42 @@ public class CedPanel3D extends Panel3D {
 	 */
 	public boolean showHBTrack() {
 		return show(CedPanel3D.SHOW_HB_TRACK);
+	}
+	
+	/**
+	 * Show AI time based track?
+	 * 
+	 * @return <code>true</code> if we are to show time based tracks
+	 */
+	public boolean showAITBTrack() {
+		return show(CedPanel3D.SHOW_AITB_TRACK);
+	}
+
+	/**
+	 * Show AI hit based track?
+	 * 
+	 * @return <code>true</code> if we are to show hit based tracks
+	 */
+	public boolean showAIHBTrack() {
+		return show(CedPanel3D.SHOW_AIHB_TRACK);
+	}
+	
+	/**
+	 * Show REC::Particle tracks?
+	 * 
+	 * @return <code>true</code> if we are to show recon tracks
+	 */
+	public boolean showRecTrack() {
+		return show(CedPanel3D.SHOW_REC_TRACK);
+	}
+	
+	/**
+	 * Show REC::Calorimiter data?
+	 * 
+	 * @return <code>true</code> if we are to REC::Calorimeter data
+	 */
+	public boolean showRecCal() {
+		return show(CedPanel3D.SHOW_REC_CAL);
 	}
 
 	/**

@@ -63,6 +63,11 @@ public class SectorECItem extends PolygonItem {
 		_view = (SectorView) getLayer().getContainer().getView();
 
 	}
+	
+	@Override
+	public boolean shouldDraw(Graphics g, IContainer container) {
+		return true;
+	}
 
 	/**
 	 * Custom drawer for the item.
@@ -81,6 +86,7 @@ public class SectorECItem extends PolygonItem {
 		Point2D.Double path[] = getShell(_view, _plane, _stripType, _sector);
 
 		if (path == null) {
+			System.err.println("StripType: " + _stripType + " path is null");
 			return;
 		}
 

@@ -143,7 +143,7 @@ public class DialogUtilities {
 		pane.setIcon(ImageManager.cnuIcon);
 
 		pane.setOptions(options);
-		JDialog dialog = pane.createDialog(null, "Dilaog");
+		JDialog dialog = pane.createDialog(null, "Dialog");
 		dialog.setVisible(true);
 		Object obj = pane.getValue();
 		for (int k = 0; k < options.length; k++) {

@@ -34,8 +34,32 @@ public class SwimTrajectoryDrawer extends ASwimTrajectoryDrawer {
 	
 	@Override
 	public void drawTrajectories(Graphics g, IContainer container) {
+		
+		
 		for (SwimTrajectory2D trajectory2D : _trajectories2D) {
-			drawSwimTrajectory(g, container, trajectory2D);
+			
+			boolean show = true;
+			
+			String source = trajectory2D.getSource();
+
+			if (source != null) {
+				if (source.contains("HitBasedTrkg::HBTracks")) {
+					show = _view.showHB();
+				} else if (source.contains("TimeBasedTrkg::TBTracks")) {
+					show = _view.showTB();
+				} else if (source.contains("HitBasedTrkg::AITracks")) {
+					show = _view.showAIHB();
+				} else if (source.contains("TimeBasedTrkg::AITracks")) {
+					show = _view.showAITB();
+				}
+			}
+			
+			
+			if (show) {
+				drawSwimTrajectory(g, container, trajectory2D);
+			}
+			
+			
 			if (_view.showSectorChange()) {
 				markSectorChanges(g, container, trajectory2D);
 			}

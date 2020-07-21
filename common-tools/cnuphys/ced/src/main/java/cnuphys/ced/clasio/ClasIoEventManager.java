@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -28,6 +29,7 @@ import org.jlab.utils.system.ClasUtilsFile;
 
 import cnuphys.bCNU.application.Desktop;
 import cnuphys.bCNU.dialog.DialogUtilities;
+
 import cnuphys.bCNU.graphics.ImageManager;
 import cnuphys.bCNU.graphics.component.IpField;
 import cnuphys.bCNU.log.Log;
@@ -83,6 +85,10 @@ public class ClasIoEventManager {
 	
 	//a ringbuffer for previous events
 	private RingBuffer<PrevIndexedEvent> _previousEvents;
+	
+	//maps sequential event number to true event numbers
+	private NumberMap[] _numberMap;
+	private Comparator<NumberMap> _nmComparator;
 
 	// all the filters
 	private ArrayList<IEventFilter> _eventFilters = new ArrayList<>();
@@ -177,6 +183,7 @@ public class ClasIoEventManager {
 	 * @param event the new event
 	 */
 	private void setNextEvent(DataEvent event) {
+		
 		_currentEvent = event;
 
 		if (event != null) {
@@ -365,6 +372,7 @@ public class ClasIoEventManager {
 		_currentEvent = null;
 		_eventIndex = 0;
 		_previousEvents.clear();
+		_numberMap = null;
 		
 		// TODO check if I need to skip the first event
 
@@ -404,6 +412,7 @@ public class ClasIoEventManager {
 		_currentEvent = null;
 		_eventIndex = 0;
 		_previousEvents.clear();
+		_numberMap = null;
 
 		// TODO check if I need to skip the first event
 
@@ -428,6 +437,9 @@ public class ClasIoEventManager {
 			_runData.reset();
 			_currentEvent = null;
 			_eventIndex = 0;
+			_previousEvents.clear();
+			_numberMap = null;
+
 			_dataSource = null;
 			_currentMachine = _etDialog.getMachine();
 			_currentETFile = _etDialog.getFile();
@@ -735,16 +747,14 @@ public class ClasIoEventManager {
         return new HipoDataEvent(decodedEvent, _schemaFactory);
 	}
 
+
 	/**
-	 * Get the next event from the current compact reader
-	 * 
+	 * Get the next event from the current  reader
 	 * @return the next event, if possible
 	 */
 	public DataEvent getNextEvent() {
 
 		EventSourceType estype = getEventSourceType();
-
-		// System.err.println("ET DEBUG: in getNextEvent estype: " + estype);
 
 		switch (estype) {
 
@@ -903,7 +913,6 @@ public class ClasIoEventManager {
 
 			break;
 
-		// case HIPORING:
 		case ET:
 			break;
 		}
@@ -911,48 +920,46 @@ public class ClasIoEventManager {
 	
 	/**
 	 * Go t the event with the desired true event number
-	 * @param desesiredTrueNumber
+	 * @param desesiredTrueNumber the desired true event number
 	 * @return the event
 	 */
-	public DataEvent gotoTrueEvent(int desiredTrueNumber) {
+	public DataEvent gotoTrueEvent(int desiredTrueNumber) {		
 		
 		int currentTrueEvent = getTrueEventNumber();
 		if (currentTrueEvent < 0) {
 			return _currentEvent;
 		}
-		
-		if (desiredTrueNumber < currentTrueEvent) {
-			gotoEvent(1);
-			currentTrueEvent = getTrueEventNumber();
+
+		EventSourceType estype = getEventSourceType();
+		switch (estype) {
+
+		case HIPOFILE:
+			break;
+
+		case EVIOFILE: // assume the event numbers are sequential
+			return gotoEvent(_eventIndex + (desiredTrueNumber - currentTrueEvent));
+
+		default:
+			return _currentEvent;
 		}
 		
-		int del = desiredTrueNumber - currentTrueEvent;
 		
-		while (del > 50) {
-			int skip = del/2;
-			gotoEvent(_eventIndex + skip);
-			currentTrueEvent = getTrueEventNumber();
-			del = desiredTrueNumber - currentTrueEvent;
-		}
-		
-		int bestIndex = _eventIndex;
-		int bestDel = del;
-		for (int i = 0; i < 100; i++) {
-			while ((del != 0) && (_currentEvent != null)) {
-				gotoEvent(_eventIndex + 1);
-				currentTrueEvent = getTrueEventNumber();
-				del = desiredTrueNumber - currentTrueEvent;
-				if (Math.abs(del) < Math.abs(bestDel)) {
-					bestIndex = _eventIndex;
-					bestDel = del;
-				}
+		// only hipo
+
+		if (_numberMap == null) {
+			runThroughEvents(desiredTrueNumber);
+		} else {
+
+			int saveIndex = _eventIndex;
+			int seqIndex = getSequentialFromTrue(desiredTrueNumber);
+
+			if (seqIndex >= 0) {
+				gotoEvent(seqIndex);
+			} else {
+				gotoEvent(saveIndex);
 			}
 		}
-		
-		if (bestIndex != _eventIndex) {
-			gotoEvent(bestIndex);
-		}
-		
+
 		return _currentEvent;
 	}
 
@@ -987,6 +994,7 @@ public class ClasIoEventManager {
 			break;
 
 		case EVIOFILE:
+			_previousEvents.add(new PrevIndexedEvent(_currentEvent, _eventIndex));
 			_currentEvent = _dataSource.gotoEvent(eventNumber);
 			if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {		
 				_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
@@ -1366,8 +1374,151 @@ public class ClasIoEventManager {
 		
 		System.err.println();
 	}
+
 	
-	//inner clas for storing previous events in a ring buffer
+	/**
+	 * Minimal event getter for running through events as fast as possibe
+	 * @return the next event
+	 */
+	public DataEvent bareNextEvent() {
+
+		EventSourceType estype = getEventSourceType();
+
+		switch (estype) {
+
+		case HIPOFILE:
+			if (_dataSource.hasEvent()) {
+				_currentEvent = _dataSource.getNextEvent();
+				_eventIndex++;
+			}
+			else {
+				return null;
+			}
+			break;
+
+		case EVIOFILE:
+			if (_dataSource.hasEvent()) {
+				_currentEvent = _dataSource.getNextEvent();
+
+				if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
+					_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
+					_eventIndex++;
+				}
+				else {
+					return null;
+				}
+			}
+
+			break; // end case eviofile
+
+		case ET:
+			break;
+		}
+		
+		return _currentEvent;
+	}
+	
+	private int getSequentialFromTrue(int trueIndex) {
+		NumberMap testMap = new NumberMap(-1, trueIndex);
+		int index =  Arrays.binarySearch(_numberMap, testMap, _nmComparator);
+		
+		if (index < 0) {
+			return -1;
+		}
+		
+		return _numberMap[index].sequentialNum;
+	}
+	
+	//run through the hipo file to make a mapping of sequential to true
+	private void runThroughEvents(int gotoIndex) {
+		
+		int saveIndex = _eventIndex;
+
+		EventSourceType estype = getEventSourceType();
+		switch (estype) {
+
+		case HIPOFILE: 
+			gotoEvent(0);
+			
+			int count = getEventCount();
+
+			if (count > 0) {
+				_numberMap = new NumberMap[count];
+			} else {
+				_numberMap = null;
+			}
+			
+			if (_nmComparator == null) {
+				_nmComparator = new Comparator<NumberMap>() {
+
+					@Override
+					public int compare(NumberMap o1, NumberMap o2) {
+						if (o1.trueNum < o2.trueNum) {
+							return -1;
+						} else if (o1.trueNum > o2.trueNum) {
+							return 1;
+						} else {
+							return 0;
+						}
+					}
+
+				};
+			}
+			break;
+			
+		case EVIOFILE:
+			gotoEvent(0);
+			_eventIndex = 0;
+			break;
+
+			
+			default:
+				return;
+		}
+		
+		int trueNum = getTrueEventNumber();
+		
+		_numberMap[0] = new NumberMap(1, trueNum);
+
+		IRunThrough rthrough = new IRunThrough() {
+			
+			int index = 1;
+			
+			@Override
+			public void nextRunthroughEvent(DataEvent event) {
+				if (event != null) {
+					int trueNum = getTrueEventNumber();
+					_numberMap[index] = new NumberMap(index+1, trueNum);
+				}
+				
+				index++;
+			}
+
+			@Override
+			public void runThroughtDone() {
+				Arrays.sort(_numberMap, _nmComparator);
+				
+				int seqIndex = getSequentialFromTrue(gotoIndex);
+
+				
+				if (seqIndex >= 0) {
+					gotoEvent(seqIndex);
+				} else {
+					gotoEvent(saveIndex);
+				}
+
+			}
+			
+		};
+		
+		RunThroughDialog dialog = new RunThroughDialog(rthrough);
+		dialog.setVisible(true);
+		dialog.process();
+
+	}
+	
+	
+	//inner class for storing previous events in a ring buffer
 	class PrevIndexedEvent {
 		public DataEvent event;
 		public int index;
@@ -1377,6 +1528,18 @@ public class ClasIoEventManager {
 			this.index = index;
 		}
 	}
+	
+	//inner class for mapping seq event to true event number
+	class NumberMap {
+		public int sequentialNum;
+		public int trueNum;
+		
+		public NumberMap(int sequentialNum, int trueNum) {
+			this.sequentialNum = sequentialNum;
+			this.trueNum = trueNum;
+		}
+	}
+	
 	
 }
 

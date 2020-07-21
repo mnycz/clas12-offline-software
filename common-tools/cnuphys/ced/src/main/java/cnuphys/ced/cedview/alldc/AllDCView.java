@@ -55,19 +55,26 @@ public class AllDCView extends CedView implements IRollOverListener {
 	private static final Color activeBG = Color.darkGray;
 	
 	//roll over labels
-	private static final String HB_ROLLOVER = "Hit Based DC Clusters";
-	private static final String TB_ROLLOVER = "Time Based DC Clusters";
+	private static final String HB_ROLLOVER = "Reg Hit Based DC Clusters";
+	private static final String TB_ROLLOVER = "Reg Time Based DC Clusters";
+	private static final String AIHB_ROLLOVER = "AI Hit Based DC Clusters";
+	private static final String AITB_ROLLOVER = "AI Time Based DC Clusters";
 	private static final String SNR_ROLLOVER = "SNR DC Clusters";
 	
 	//rollover labels
 	private static String roLabels[] = {HB_ROLLOVER, 
 			TB_ROLLOVER, 
+			AIHB_ROLLOVER,
+			AITB_ROLLOVER,
 			SNR_ROLLOVER};
 	
 	//rollover boolean flags
 	private boolean _roShowHBDCClusters;
 	private boolean _roShowTBDCClusters;
+	private boolean _roShowAIHBDCClusters;
+	private boolean _roShowAITBDCClusters;
 	private boolean _roShowSNRDCClusters;
+	
 	
 	//cluster drawer
 	private ClusterDrawer _clusterDrawer;
@@ -231,6 +238,13 @@ public class AllDCView extends CedView implements IRollOverListener {
 					_clusterDrawer.drawTBDCClusters(g, container);					
 				}
 
+				if (_roShowAIHBDCClusters) {
+					_clusterDrawer.drawAIHBDCClusters(g, container);
+				}
+				
+				if (_roShowAITBDCClusters) {
+					_clusterDrawer.drawAITBDCClusters(g, container);					
+				}
 
 
 			}
@@ -439,10 +453,28 @@ public class AllDCView extends CedView implements IRollOverListener {
 	/**
 	 * Display time based hits?
 	 * 
-	 * @return <code> if we should display hits
+	 * @return <code> if we should display time based hits
 	 */
 	public boolean showTBHits() {
 		return _controlPanel.getAllDCDisplayPanel().showTBHits();
+	}
+	
+	/**
+	 * Display AI hit based hits?
+	 * 
+	 * @return <code> if we should display AI hit based hits
+	 */
+	public boolean showAIHBHits() {
+		return _controlPanel.getAllDCDisplayPanel().showAIHBHits();
+	}
+
+	/**
+	 * Display AI time based hits?
+	 * 
+	 * @return <code> if we should display AI time based hits
+	 */
+	public boolean showAITBHits() {
+		return _controlPanel.getAllDCDisplayPanel().showAITBHits();
 	}
 
 	/**
@@ -466,6 +498,13 @@ public class AllDCView extends CedView implements IRollOverListener {
 		else if (text.contains(TB_ROLLOVER)) {
 			_roShowTBDCClusters = true;
 		}
+		else if (text.contains(AIHB_ROLLOVER)) {
+			_roShowAIHBDCClusters = true;
+		}
+		else if (text.contains(AITB_ROLLOVER)) {
+			_roShowAITBDCClusters = true;
+		}
+
 		else if (text.contains(SNR_ROLLOVER)) {
 			_roShowSNRDCClusters = true;
 		}
@@ -489,6 +528,12 @@ public class AllDCView extends CedView implements IRollOverListener {
 		}
 		else if (text.contains(TB_ROLLOVER)) {
 			_roShowTBDCClusters = false;
+		}
+		else if (text.contains(AIHB_ROLLOVER)) {
+			_roShowAIHBDCClusters = false;
+		}
+		else if (text.contains(AITB_ROLLOVER)) {
+			_roShowAITBDCClusters = false;
 		}
 		else if (text.contains(SNR_ROLLOVER)) {
 			_roShowSNRDCClusters = false;

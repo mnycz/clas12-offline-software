@@ -43,6 +43,9 @@ public class PCALView extends HexView {
 
 	// for drawing MC hits
 	private McHitDrawer _mcHitDrawer;
+	
+	// for drawing REC::Calorimeter data
+    private RecDrawer _recDrawer;
 
 	private static final double _xsize = 410.0;
 	private static final double _ysize = _xsize * 1.154734;
@@ -63,6 +66,9 @@ public class PCALView extends HexView {
 
 		// MC hit drawer
 		_mcHitDrawer = new McHitDrawer(this);
+		
+		// REC::Calorimeter drawer
+		_recDrawer = new RecDrawer(this);
 
 		setBeforeDraw();
 		setAfterDraw();
@@ -88,7 +94,7 @@ public class PCALView extends HexView {
 
 		_controlPanel = new ControlPanel(this,
 				ControlPanel.DISPLAYARRAY + ControlPanel.FEEDBACK + ControlPanel.ACCUMULATIONLEGEND,
-				DisplayBits.ACCUMULATION + DisplayBits.MCTRUTH + DisplayBits.UVWSTRIPS, 3, 5);
+				DisplayBits.ACCUMULATION + DisplayBits.MCTRUTH+ DisplayBits.RECCAL + DisplayBits.UVWSTRIPS, 3, 5);
 
 		add(_controlPanel, BorderLayout.EAST);
 		pack();
@@ -141,11 +147,15 @@ public class PCALView extends HexView {
 
 			@Override
 			public void draw(Graphics g, IContainer container) {
-				if (!ClasIoEventManager.getInstance().isAccumulating()) {
-					return;
-				}
-				// draw MC Hits
-				_mcHitDrawer.draw(g, container);
+				if (!_eventManager.isAccumulating()) {
+
+					// draw MC Hits
+					_mcHitDrawer.draw(g, container);
+					
+					//draw REC::Calorimeter data
+					_recDrawer.draw(g, container);
+					
+				} // not acumulating
 			}
 
 		};
@@ -183,6 +193,8 @@ public class PCALView extends HexView {
 		if (showMcTruth()) {
 			_mcHitDrawer.feedback(container, pp, wp, feedbackStrings);
 		}
+
+		_recDrawer.feedback(container, pp, wp, feedbackStrings);
 
 	}
 

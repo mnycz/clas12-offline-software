@@ -42,6 +42,9 @@ public class ECView extends HexView {
 
 	// for drawing MC hits
 	private McHitDrawer _mcHitDrawer;
+	
+	// for drawing REC::Calorimeter data
+    private RecDrawer _recDrawer;
 
 //	private static final double _xsize = 420.0;
 	private static final double _xsize = 430.0;
@@ -60,6 +63,9 @@ public class ECView extends HexView {
 
 		// MC hit drawer
 		_mcHitDrawer = new McHitDrawer(this);
+		
+		// REC::Calorimeter drawer
+		_recDrawer = new RecDrawer(this);
 
 		setBeforeDraw();
 		setAfterDraw();
@@ -85,7 +91,7 @@ public class ECView extends HexView {
 
 		_controlPanel = new ControlPanel(this,
 				ControlPanel.DISPLAYARRAY + ControlPanel.FEEDBACK + ControlPanel.ACCUMULATIONLEGEND,
-				DisplayBits.ACCUMULATION + DisplayBits.MCTRUTH + DisplayBits.INNEROUTER + DisplayBits.UVWSTRIPS, 3, 5);
+				DisplayBits.ACCUMULATION + DisplayBits.MCTRUTH+ DisplayBits.RECCAL + DisplayBits.INNEROUTER + DisplayBits.UVWSTRIPS, 3, 5);
 
 		add(_controlPanel, BorderLayout.EAST);
 		pack();
@@ -143,6 +149,10 @@ public class ECView extends HexView {
 
 					// draw MC Hits
 					_mcHitDrawer.draw(g, container);
+					
+					//draw REC::Calorimeter data
+					_recDrawer.draw(g, container);
+					
 				} // not acumulating
 			}
 
@@ -187,6 +197,8 @@ public class ECView extends HexView {
 		if (showMcTruth()) {
 			_mcHitDrawer.feedback(container, pp, wp, feedbackStrings);
 		}
+		
+		_recDrawer.feedback(container, pp, wp, feedbackStrings);
 
 	}
 

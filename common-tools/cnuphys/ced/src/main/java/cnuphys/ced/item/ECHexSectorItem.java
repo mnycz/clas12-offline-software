@@ -250,7 +250,7 @@ public class ECHexSectorItem extends HexSectorItem {
 	public Polygon stripPolygon(IContainer container, int plane, int stripType, int stripIndex) {
 		Polygon poly = new Polygon();
 		Point pp = new Point();
-
+		
 		for (int i = 0; i < 4; i++) {
 			Point3D pijk = ECGeometry.getStripPoint(plane, stripType, stripIndex, i);
 			ijkToScreen(container, pijk, pp);

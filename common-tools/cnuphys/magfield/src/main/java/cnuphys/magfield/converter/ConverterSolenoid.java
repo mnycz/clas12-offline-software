@@ -62,7 +62,7 @@ public class ConverterSolenoid {
 
 	// get the dir with all the tables
 	private static String getDataDir() {
-		return _homeDir + "/newMapsSolenoid";
+		return _homeDir + "/newMapsSolenoid/mappingDataPoints";
 	}
 
 	private static GridData[] preProcessor(ArrayList<ZFile> zfiles) throws IOException {
@@ -163,7 +163,8 @@ public class ConverterSolenoid {
 	
 	//Scale factor from Veronica
 	
-	private static final double _SCALEFACT = 0.9576;
+	//private static final double _SCALEFACT = 0.9576;
+	private static final double _SCALEFACT = 1.0;
 	private static void processAllFiles(ArrayList<ZFile> zfiles, GridData gdata[]) throws IOException {
 		if (!zfiles.isEmpty()) {
 
@@ -240,10 +241,13 @@ public class ConverterSolenoid {
 								float Brho = Bx;
 								float Bphi = By;
 
-								if (Math.abs(Bphi) > 0.1) {
-									System.err.println("Non zero Bphi.");
-									System.exit(1);
-								}
+//								if (Math.abs(Bphi) > 0.1) {
+//									System.err.println(String.format("Nonzero Bphi = %12.7f T", Bphi/10));
+//									System.err.println(String.format("x = %s  y = %s  z = %s", tokens[0], tokens[1], tokens[2]));
+//									System.err.println(String.format("Bx = %s  By = %s  Bz = %s", tokens[3], tokens[4], tokens[5]));
+//									System.err.println("SCALE FACT: " + _SCALEFACT);
+//									System.exit(1);
+//								}
 
 								try {
 									bvals[rhoIndex][iVal] = new FloatVect(Bphi, Brho, Bz);
@@ -398,11 +402,14 @@ public class ConverterSolenoid {
 									float Bz = Float.parseFloat(tokens[5]);
 									float Brho = Bx;
 									float Bphi = By;
-
-									if (Math.abs(Bphi) > 0.1) {
-										System.err.println("Non zero Bphi.");
-										System.exit(1);
-									}
+//
+//									if (Math.abs(Bphi) > 0.1) {
+//										System.err.println(String.format("Nonzero Bphi = %12.7f T", Bphi));
+//										System.err.println(String.format("x = %s  y = %s  z = %s", tokens[0], tokens[1], tokens[2]));
+//										System.err.println(String.format("Bx = %s  By = %s  Bz = %s", tokens[3], tokens[4], tokens[5]));
+//										System.err.println("SCALE FACT: " + _SCALEFACT);
+//										System.exit(1);
+//									}
 
 									try {
 										bvals[rhoIndex][iVal] = new FloatVect(Bphi, Brho, Bz);
@@ -604,8 +611,8 @@ public class ConverterSolenoid {
 		}
 		System.out.println("Preprocessed Files");
 
-		 convertToBinary(zfiles, gdata);
-		//convertToGemc(zfiles, gdata);
+		 //convertToBinary(zfiles, gdata);
+		convertToGemc(zfiles, gdata);
 
 		System.out.println("done");
 	}

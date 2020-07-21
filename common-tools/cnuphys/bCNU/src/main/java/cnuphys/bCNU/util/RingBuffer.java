@@ -94,10 +94,10 @@ public class RingBuffer<T> extends Vector<T> {
 		}
 		
 		if (size() == 1) {
-			return this.firstElement();
+			return firstElement();
 		}
 		
-		currentIndex = (currentIndex + 1) % _capacity;
-		return this.get(currentIndex);
+		currentIndex = (currentIndex + 1) % size();
+		return get(currentIndex);
 	}
 }

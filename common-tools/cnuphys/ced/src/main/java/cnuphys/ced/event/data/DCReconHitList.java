@@ -53,5 +53,22 @@ public class DCReconHitList extends Vector<DCReconHit> {
 	public String getBankName() {
 		return _bankName;
 	}
+	
+	/**
+	 * Get the hit from the id. Brute force, because
+	 * they are not sorted.
+	 * @param id the id to match
+	 * @return the hit with the matching ID, or null.
+	 */
+	public DCReconHit hitFromId(short id) {
+		for (DCReconHit hit : this) {
+			if (hit.id == id) {
+				return hit;
+			}
+		}
+		
+		return null;
+	}
+	
 
 }

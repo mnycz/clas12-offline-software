@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
@@ -16,6 +17,7 @@ import cnuphys.ced.clasio.ClasIoEventManager;
 //import cnuphys.ced.dcnoise.NoiseReductionParameters;
 //import cnuphys.ced.dcnoise.test.TestParameters;
 import cnuphys.ced.event.AccumulationManager;
+import cnuphys.ced.event.data.AIDC;
 import cnuphys.ced.event.data.DC;
 import cnuphys.ced.event.data.DCReconHit;
 import cnuphys.ced.event.data.DCReconHitList;
@@ -39,7 +41,6 @@ import cnuphys.bCNU.layer.LogicalLayer;
 import cnuphys.bCNU.log.Log;
 import cnuphys.bCNU.util.Fonts;
 import cnuphys.bCNU.util.UnicodeSupport;
-import cnuphys.bCNU.util.X11Colors;
 
 public class AllDCSuperLayer extends RectangleItem {
 
@@ -61,7 +62,7 @@ public class AllDCSuperLayer extends RectangleItem {
 	private int _superLayer;
 
 	// cell overlay transparent color
-	private static final Color cellOverlayColor = new Color(180, 180, 180, 64);
+	private static final Color cellOverlayColor = new Color(180, 180, 180, 32);
 
 	// the number of wires per layer
 	private int _numWires;
@@ -71,7 +72,8 @@ public class AllDCSuperLayer extends RectangleItem {
 
 	// for hits cells
 	private static final Color _defaultHitCellFill = Color.red;
-	private static final Color _defaultHitCellLine = X11Colors.getX11Color("Dark Red");
+//	private static final Color _defaultHitCellLine = X11Colors.getX11Color("Dark Red");
+	private static final Color _defaultHitCellLine = Color.gray;
 
 	// this is the world rectangle that defines the super layer
 	private Rectangle2D.Double _worldRectangle;
@@ -167,7 +169,6 @@ public class AllDCSuperLayer extends RectangleItem {
 
 		// now the data
 		if (_view.isSingleEventMode()) {
-			singleEventDrawItem(g, container);
 			// shade the layers
 			for (int i = 0; i < GeoConstants.NUM_LAYER; i += 2) {
 				WorldGraphicsUtilities.drawWorldRectangle(g, container, _layerWorldRects[i], cellOverlayColor, null);
@@ -175,10 +176,13 @@ public class AllDCSuperLayer extends RectangleItem {
 			}
 
 			// causes cell shading
-			for (int i = 0; i < _numWires; i += 2) {
-				WorldGraphicsUtilities.drawWorldRectangle(g, container, _positionWorldRects[i], cellOverlayColor, null);
+//			for (int i = 0; i < _numWires; i += 2) {
+//				WorldGraphicsUtilities.drawWorldRectangle(g, container, _positionWorldRects[i], cellOverlayColor, null);
+//
+//			}
+			
+			singleEventDrawItem(g, container);
 
-			}
 		} else {
 			accumulatedDrawItem(g, container);
 		}
@@ -197,6 +201,7 @@ public class AllDCSuperLayer extends RectangleItem {
 	private void singleEventDrawItem(Graphics g, IContainer container) {
 
 		Rectangle2D.Double wr = new Rectangle2D.Double(); // used over and over
+		Rectangle pr = new Rectangle(); // used over and over
 
 		// draw results of noise reduction? If so will need the parameters
 		// (which have the results)
@@ -220,25 +225,49 @@ public class AllDCSuperLayer extends RectangleItem {
 			}
 		}
 
-		// draw HB Hits
+		// draw regular HB Hits
 		if (_view.showHBHits()) {
 			DCReconHitList hits = DC.getInstance().getHBHits();
 			if ((hits != null) && !hits.isEmpty()) {
 				for (DCReconHit hit : hits) {
 					if ((hit.sector == _sector) && (hit.superlayer == _superLayer)) {
-						drawDCHit(g, container, hit.layer, hit.wire, wr, CedColors.HB_COLOR);
+						drawDCHit(g, container, hit.layer, hit.wire, pr, wr, CedColors.HB_COLOR, 0);
 					}
 				}
 			}
 		}
 
-		// draw TB Hits
+		// draw regular TB Hits
 		if (_view.showTBHits()) {
 			DCReconHitList hits = DC.getInstance().getTBHits();
 			if ((hits != null) && !hits.isEmpty()) {
 				for (DCReconHit hit : hits) {
 					if ((hit.sector == _sector) && (hit.superlayer == _superLayer)) {
-						drawDCHit(g, container, hit.layer, hit.wire, wr, CedColors.TB_COLOR);
+						drawDCHit(g, container, hit.layer, hit.wire, pr, wr, CedColors.TB_COLOR, 0);
+					}
+				}
+			}
+		}
+		
+		// draw AI HB Hits
+		if (_view.showAIHBHits()) {
+			DCReconHitList hits = AIDC.getInstance().getAIHBHits();
+			if ((hits != null) && !hits.isEmpty()) {
+				for (DCReconHit hit : hits) {
+					if ((hit.sector == _sector) && (hit.superlayer == _superLayer)) {
+						drawDCHit(g, container, hit.layer, hit.wire, pr, wr, CedColors.AIHB_COLOR, 1);
+					}
+				}
+			}
+		}
+
+		// draw AI TB Hits
+		if (_view.showAITBHits()) {
+			DCReconHitList hits = AIDC.getInstance().getAITBHits();
+			if ((hits != null) && !hits.isEmpty()) {
+				for (DCReconHit hit : hits) {
+					if ((hit.sector == _sector) && (hit.superlayer == _superLayer)) {
+						drawDCHit(g, container, hit.layer, hit.wire, pr, wr, CedColors.AITB_COLOR, 2);
 					}
 				}
 			}
@@ -382,10 +411,13 @@ public class AllDCSuperLayer extends RectangleItem {
 	 * @param wire      the 1-based wire
 	 * @param noise     is this marked as a noise hit
 	 * @param pid       the gemc pid
+	 * @param pr        workspace
 	 * @param wr        workspace
+	 * @param color     color
+	 * @param option    0 for rect, 1 for X, 2 for +
 	 */
 	private void drawDCHit(Graphics g, IContainer container, int layer, int wire, 
-			Rectangle2D.Double wr, Color color) {
+			Rectangle pr, Rectangle2D.Double wr, Color color, int option) {
 
 		if (wire > GeoConstants.NUM_WIRE) {
 			String msg = "Bad wire number in drawDCHit " + wire + " seq event number " + _eventManager.getSequentialEventNumber();
@@ -396,7 +428,38 @@ public class AllDCSuperLayer extends RectangleItem {
 
 
 		getCell(layer, wire, wr);
-		WorldGraphicsUtilities.drawWorldRectangle(g, container, wr, color, _defaultHitCellLine);
+		if (option == 1) { //draw X
+			container.worldToLocal(pr, wr);
+			g.setColor(color);
+			
+			int l = pr.x;
+			int t = pr.y;
+			int r = pr.x + pr.width;
+			int b = pr.y + pr.height;
+			
+			g.drawLine(l, t, r, b);
+			g.drawLine(r, t, l, b);	
+			g.setColor(_defaultHitCellLine);
+			g.drawRect(l, t, pr.width, pr.height);
+		}
+		else if (option == 2) { //draw cross
+			container.worldToLocal(pr, wr);
+			g.setColor(color);
+			
+			int l = pr.x;
+			int t = pr.y;
+			int r = pr.x + pr.width;
+			int b = pr.y + pr.height;
+			int xc = (l + r)/2;
+			int yc = (t + b)/2;
+			g.drawLine(l, yc, r, yc);
+			g.drawLine(xc, t, xc, b);
+			g.setColor(_defaultHitCellLine);
+			g.drawRect(l, t, pr.width, pr.height);
+						
+		} else {
+			WorldGraphicsUtilities.drawWorldRectangle(g, container, wr, color, _defaultHitCellLine);
+		}
 		_lastColor  = color;
 	}
 	

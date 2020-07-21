@@ -1,17 +1,22 @@
 package cnuphys.ced.cedview.alldc;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Stroke;
 import java.awt.geom.Area;
 import java.util.List;
 
 import cnuphys.bCNU.graphics.container.IContainer;
 import cnuphys.bCNU.graphics.world.WorldGraphicsUtilities;
+import cnuphys.ced.event.data.AIDC;
 import cnuphys.ced.event.data.DC;
 import cnuphys.ced.event.data.DCCluster;
 import cnuphys.ced.event.data.DCClusterList;
+import cnuphys.ced.event.data.DCReconHit;
+import cnuphys.ced.event.data.DCReconHitList;
 import cnuphys.ced.frame.CedColors;
 import cnuphys.ced.geometry.GeoConstants;
 import cnuphys.ced.noise.NoiseManager;
@@ -24,9 +29,8 @@ public class ClusterDrawer {
 	//the parent view
 	private AllDCView _view;
 	
-	//cluster colors
-	private static Color _clusterLineColor = Color.cyan;
-	private static Color _clusterFillColor;
+	public static final Stroke THICKLINE = new BasicStroke(2.0f);
+
 	
 	/**
 	 * A cluster drawer for the all dc view
@@ -41,10 +45,9 @@ public class ClusterDrawer {
 	 * Draw the hit based DC clusters
 	 */
 	public void drawHBDCClusters(Graphics g, IContainer container) {
-		_clusterFillColor = CedColors.HB_CLUSTER_COLOR;
 		DCClusterList list = DC.getInstance().getHBClusters();
 		if (list != null) {
-			drawDCClusterList(g, container, list);
+			drawDCClusterList(g, container, list, DC.getInstance().getHBHits(), CedColors.HB_COLOR);
 		}
 	}
 	
@@ -52,10 +55,29 @@ public class ClusterDrawer {
 	 * Draw the time based DC clusters
 	 */
 	public void drawTBDCClusters(Graphics g, IContainer container) {
-		_clusterFillColor = CedColors.TB_CLUSTER_COLOR;
 		DCClusterList list = DC.getInstance().getTBClusters();
 		if (list != null) {
-			drawDCClusterList(g, container, list);
+			drawDCClusterList(g, container, list, DC.getInstance().getTBHits(), CedColors.TB_COLOR);
+		}
+	}
+	
+	/**
+	 * Draw the AI hit based DC clusters
+	 */
+	public void drawAIHBDCClusters(Graphics g, IContainer container) {
+		DCClusterList list = AIDC.getInstance().getAIHBClusters();
+		if (list != null) {
+			drawDCClusterList(g, container, list, AIDC.getInstance().getAIHBHits(), CedColors.AIHB_COLOR);
+		}
+	}
+	
+	/**
+	 * Draw the AI time based DC clusters
+	 */
+	public void drawAITBDCClusters(Graphics g, IContainer container) {
+		DCClusterList list = AIDC.getInstance().getAITBClusters();
+		if (list != null) {
+			drawDCClusterList(g, container, list, AIDC.getInstance().getAITBHits(), CedColors.AITB_COLOR);
 		}
 	}
 	
@@ -63,7 +85,6 @@ public class ClusterDrawer {
 	 * Draw the snr DC clusters
 	 */
 	public void drawSNRDCClusters(Graphics g, IContainer container) {
-		_clusterFillColor = CedColors.SNR_CLUSTER_COLOR;
 		NoiseManager nm = NoiseManager.getInstance();
 		
 		for (int sect0 = 0; sect0 < 6; sect0++) {
@@ -74,7 +95,7 @@ public class ClusterDrawer {
 					for (SNRCluster cluster : clusters) {
 						for (int lay0 = 0; lay0< 6; lay0++) {
 							drawSingleSNRClusterOfWires(g, container, sect0, supl0, lay0, 
-									cluster.wireLists[lay0]);
+									cluster.wireLists[lay0], CedColors.SNR_CLUSTER_COLOR);
 						}
 
 						drawSNRBestFitLine(g, container, cluster, sect0, supl0);
@@ -87,12 +108,13 @@ public class ClusterDrawer {
 	
 	
 	//draws the HB or TB clusters
-	private void drawDCClusterList(Graphics g, IContainer container, DCClusterList list) {
+	private void drawDCClusterList(Graphics g, IContainer container, DCClusterList list, DCReconHitList reconHits, Color color) {
 		
 		for (DCCluster cluster : list) {
 			if ((cluster != null) && (cluster.hitID != null)) {
 				
 
+				//count the non-negative hit ids
 				int length = 0;
 				for (int i = 0; i < cluster.hitID.length; i++) {
 					if (cluster.hitID[i] > 0) {
@@ -103,20 +125,24 @@ public class ClusterDrawer {
 					}
 				}
 				
-				
+				//get the hits
 				if (length > 0) {
-					int sector = cluster.sector;
-					int superlayer = cluster.superlayer;
-					int layer[] = new int[length];
-					int wire[] = new int[length];
-					
+					int sector = cluster.sector; // 1..6
+					int superlayer = cluster.superlayer; // 1..6
+					int layer[] = new int[length]; // 1..6
+					int wire[] = new int[length]; // 1..112
+
 					for (int i = 0; i < length; i++) {
-						int index = cluster.hitID[i]-1;
-						layer[i] = DC.getInstance().layer6[index];
-						wire[i] = DC.getInstance().wire[index];
+						short id = cluster.hitID[i];
+						DCReconHit hit = reconHits.hitFromId(id);
+
+						if (hit != null) {
+							layer[i] = hit.layer;
+							wire[i] = hit.wire;
+						}
 					}
-					
-					drawSingleClusterOfWires(g, container, sector, superlayer, layer, wire);
+
+					drawSingleClusterOfWires(g, container, sector, superlayer, layer, wire, color);
 				}
 			}
 			
@@ -133,10 +159,14 @@ public class ClusterDrawer {
 	 * @param wire array of 1-based wires
 	 */
 	private void drawSingleClusterOfWires(Graphics g, IContainer container, 
-			int sector, int superlayer, int layer[], int wire[]) {
+			int sector, int superlayer, int layer[], int wire[], Color color) {
 		
 		
 		Graphics2D g2 = (Graphics2D)g;
+		
+		Stroke saveStroke = g2.getStroke();
+		g2.setStroke(THICKLINE);
+		
 		Rectangle sr = new Rectangle();
 		Rectangle.Double wr = new Rectangle.Double();
 		
@@ -153,13 +183,13 @@ public class ClusterDrawer {
 		}
 		
 		if (!area.isEmpty()) {
-			g2.setColor(_clusterFillColor);
+			g2.setColor(color);
             g2.fill(area);
-            g2.setColor(_clusterLineColor);
+            g2.setColor(color.darker());
             g2.draw(area);
 		}
 
-		
+		g2.setStroke(saveStroke);
 	}
 	
 	/**
@@ -240,10 +270,13 @@ public class ClusterDrawer {
 	 * @param wireList list of 0-based wires
 	 */
 	private void drawSingleSNRClusterOfWires(Graphics g, IContainer container, 
-			int sector, int superlayer, int layer, WireList wireList) {
+			int sector, int superlayer, int layer, WireList wireList, Color lineColor) {
 		
 		
 		Graphics2D g2 = (Graphics2D)g;
+		
+		Stroke saveStroke = g2.getStroke();
+		g2.setStroke(THICKLINE);
 		Rectangle sr = new Rectangle();
 		Rectangle.Double wr = new Rectangle.Double();
 		
@@ -264,13 +297,14 @@ public class ClusterDrawer {
 		}
 		
 		if (!area.isEmpty()) {
-			g2.setColor(_clusterFillColor);
-            g2.fill(area);
-            g2.setColor(_clusterLineColor);
+//			g2.setColor(_clusterFillColor);
+//            g2.fill(area);
+            g2.setColor(lineColor);
             g2.draw(area);
 		}
 
 
+		g2.setStroke(saveStroke);
 		
 	}
 

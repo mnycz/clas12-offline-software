@@ -33,6 +33,10 @@ public abstract class CedView3D extends BaseView
 
 	// the 3D panel
 	protected final CedPanel3D _panel3D;
+	
+	//for appending event number to the titile
+	private static final String evnumAppend = "  (Seq Event# ";
+
 
 	// menu
 	private JMenuItem _printMenuItem;
@@ -97,16 +101,14 @@ public abstract class CedView3D extends BaseView
 	@Override
 	public void newClasIoEvent(DataEvent event) {
 		if (!_eventManager.isAccumulating()) {
-			// setData(event);
-			// setEventNumber(_eventManager.getEventNumber());
-			// fixButtons();
-			_panel3D.refresh();
+			fixTitle(event);
+			_panel3D.refreshQueued();
 		}
 	}
 
 	@Override
 	public void openedNewEventFile(String path) {
-		_panel3D.refresh();
+		_panel3D.refreshQueued();
 	}
 
 	/**
@@ -125,10 +127,12 @@ public abstract class CedView3D extends BaseView
 			break;
 
 		case AccumulationManager.ACCUMULATION_CANCELLED:
+			fixTitle(_eventManager.getCurrentEvent());
 			_panel3D.refresh();
 			break;
 
 		case AccumulationManager.ACCUMULATION_FINISHED:
+			fixTitle(_eventManager.getCurrentEvent());
 			_panel3D.refresh();
 			break;
 		}
@@ -137,7 +141,7 @@ public abstract class CedView3D extends BaseView
 	@Override
 	public void trajectoriesChanged() {
 		if (!_eventManager.isAccumulating()) {
-			_panel3D.refresh();
+			_panel3D.refreshQueued();
 		}
 	}
 
@@ -167,6 +171,32 @@ public abstract class CedView3D extends BaseView
 			_panel3D.refresh();
 		}
 	}
+	
+	/**
+	 * Fix the title of the view after an event arrives. The default is to append
+	 * the event number.
+	 * 
+	 * @param event the new event
+	 */
+	protected void fixTitle(DataEvent event) {
+		String title = getTitle();
+		int index = title.indexOf(evnumAppend);
+		if (index > 0) {
+			title = title.substring(0, index);
+		}
+
+		int seqNum = _eventManager.getSequentialEventNumber();
+		int trueNum = _eventManager.getTrueEventNumber();
+		if (seqNum > 0) {
+			if (trueNum > 0) {
+				setTitle(title + evnumAppend + seqNum + "  True event# " + trueNum + ")");
+			}
+			else {
+			    setTitle(title + evnumAppend + seqNum + ")");
+			}
+		}
+	}
+
 
 	/**
 	 * Tests whether this listener is interested in events while accumulating

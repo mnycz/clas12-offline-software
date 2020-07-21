@@ -3,13 +3,21 @@ package cnuphys.ced.cedview.sectorview;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.jlab.io.base.DataBank;
+import org.jlab.io.base.DataEvent;
+
 import cnuphys.bCNU.format.DoubleFormat;
+import cnuphys.bCNU.graphics.SymbolDraw;
 import cnuphys.bCNU.graphics.container.IContainer;
+import cnuphys.bCNU.graphics.world.WorldGraphicsUtilities;
 import cnuphys.bCNU.util.UnicodeSupport;
+import cnuphys.bCNU.view.FBData;
+import cnuphys.ced.cedview.CedView;
 import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.ced.event.data.AIDC;
 import cnuphys.ced.event.data.AllEC;
@@ -27,11 +35,18 @@ import cnuphys.ced.event.data.FTOF;
 import cnuphys.ced.event.data.Hit1;
 import cnuphys.ced.event.data.Hit1List;
 import cnuphys.ced.frame.CedColors;
-import cnuphys.lund.LundId;
-import cnuphys.lund.LundStyle;
-import cnuphys.lund.LundSupport;
 
 public class ReconDrawer extends SectorViewDrawer {
+	
+	// the event manager
+	ClasIoEventManager _eventManager = ClasIoEventManager.getInstance();
+	
+	//the current event
+	private DataEvent _currentEvent;
+	
+	// cached for feedback
+	private ArrayList<FBData> _fbData = new ArrayList<>();
+
 
 	/**
 	 * Reconstructed hits drawer
@@ -44,14 +59,20 @@ public class ReconDrawer extends SectorViewDrawer {
 
 	@Override
 	public void draw(Graphics g, IContainer container) {
+		
+		_fbData.clear();
 
-		if (ClasIoEventManager.getInstance().isAccumulating()) {
+
+		if (_eventManager.isAccumulating()) {
 			return;
 		}
 
 		if (!_view.isSingleEventMode()) {
 			return;
 		}
+		
+		_currentEvent = _eventManager.getCurrentEvent();
+
 
 		// DC HB and TB Hits
 		drawDCReconAndDOCA(g, container);
@@ -94,7 +115,94 @@ public class ReconDrawer extends SectorViewDrawer {
 				_view.getSuperLayerDrawer(0, supl).drawAITimeBasedSegments(g, container);
 			}
 		}
+		
+		if (_view.showRecCal()) {
+			drawRecCal(g, container);
+		}
 
+	}
+	
+	// draw data from the REC::Calorimeter bank
+	private void drawRecCal(Graphics g, IContainer container) {
+		
+		if (_currentEvent == null) {
+			return;
+		}
+		
+		
+		DataBank bank = _currentEvent.getBank("REC::Calorimeter");
+		
+		if (bank == null) {
+			return;
+		}
+		
+		
+		byte[] sector = bank.getByte("sector");
+
+		int len = (sector == null) ? 0 : sector.length;
+		if (len == 0) {
+			return;
+		}
+
+		byte[] layer = bank.getByte("layer");
+		float[] energy = bank.getFloat("energy");
+		float[] x = bank.getFloat("x"); // CLAS system
+		float[] y = bank.getFloat("y");
+		float[] z = bank.getFloat("z");
+		
+//		float[] hx = bank.getFloat("hx"); // CLAS system
+//		float[] hy = bank.getFloat("hy");
+//		float[] hz = bank.getFloat("hz");
+
+		
+		Point pp = new Point();
+		Point2D.Double wp = new Point2D.Double();
+		Rectangle2D.Double wr = new Rectangle2D.Double();
+
+		
+		for (int i = 0; i < len; i++) {
+			if (_view.containsSector(sector[i])) {
+				
+//				_view.projectClasToWorld(hx[i], hy[i], hz[i], _view.getProjectionPlane(), wp);
+//				container.worldToLocal(pp, wp);
+//				SymbolDraw.drawDavid(g, pp.x, pp.y, 4, Color.black, Color.green);		
+
+				
+				
+				_view.projectClasToWorld(x[i], y[i], z[i], _view.getProjectionPlane(), wp);
+				container.worldToLocal(pp, wp);
+				SymbolDraw.drawDavid(g, pp.x, pp.y, 4, Color.black, Color.red);		
+				
+				
+				
+				double r = Math.sqrt(x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
+				double theta = Math.toDegrees(Math.acos(z[i]/r));
+				double phi = Math.toDegrees(Math.atan2(y[i], x[i]));
+				
+				
+				_fbData.add(new FBData(pp, 
+						String.format("$magenta$REC xyz (%-6.3f, %-6.3f, %-6.3f) cm", x[i], y[i], z[i]), 
+						String.format("$magenta$REC %s (%-6.3f, %-6.3f, %-6.3f)", CedView.rThetaPhi, r, theta, phi), 
+						String.format("$magenta$REC layer %d", layer[i]),
+						String.format("$magenta$REC Energy %-7.4f GeV", energy[i])));
+
+				if (energy[i] > 0.05) {
+					float radius = (float) (Math.log((energy[i] + 1.0e-8) / 1.0e-8));
+					radius = Math.max(1, Math.min(40f, radius));
+
+					container.localToWorld(pp, wp);
+					wr.setRect(wp.x - radius, wp.y - radius, 2 * radius, 2 * radius);
+
+					if (layer[i] < 4) { // pcal
+						WorldGraphicsUtilities.drawWorldOval(g, container, wr, CedColors.RECPcalFill, null);
+					} else {
+						WorldGraphicsUtilities.drawWorldOval(g, container, wr, CedColors.RECEcalFill, null);
+					}
+				}
+
+			}
+		}
+		
 	}
 
 	// draw neural net overlays
@@ -187,6 +295,18 @@ public class ReconDrawer extends SectorViewDrawer {
 					}
 				}
 
+			}
+						
+		}
+		
+		
+		//data from REC::Calorimeter
+		if (_view.showRecCal()) {
+			for (FBData fbdata : _fbData) {
+				boolean added = fbdata.addFeedback(screenPoint, feedbackStrings);
+				if (added) {
+					break;
+				}
 			}
 		}
 

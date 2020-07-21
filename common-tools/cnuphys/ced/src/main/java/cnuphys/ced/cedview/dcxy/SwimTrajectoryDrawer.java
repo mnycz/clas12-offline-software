@@ -91,20 +91,24 @@ public class SwimTrajectoryDrawer extends ASwimTrajectoryDrawer {
 	@Override
 	public boolean acceptSimpleTrack(SwimTrajectory2D trajectory) {
 
-		String source = trajectory.getSource().toLowerCase();
+		
+		boolean show = true;
+		String source = trajectory.getSource();
 
-		if (source.contains("hbtracks")) {
-//			System.err.println("DCXY HB TRACK ACCEPT: " + _view.showHB());
-			return _view.showHB();
-		} else if (source.contains("tbtracks")) {
-//			System.err.println("DCXY TB TRACK ACCEPT: " + _view.showTB());
-			return _view.showTB();
-		} else if (source.contains("cvtrec")) {
-//			System.err.println("DCXY CVT TRACK ACCEPT: " +  _view.showCVTTracks());
-			return _view.showCVTTracks();
+		if (source != null) {
+			if (source.contains("HitBasedTrkg::HBTracks")) {
+				show = _view.showHB();
+			} else if (source.contains("TimeBasedTrkg::TBTracks")) {
+				show = _view.showTB();
+			} else if (source.contains("HitBasedTrkg::AITracks")) {
+				show = _view.showAIHB();
+			} else if (source.contains("TimeBasedTrkg::AITracks")) {
+				show = _view.showAITB();
+			}
 		}
 
-		return true;
+
+		return show;
 	}
 
 }

@@ -25,20 +25,24 @@ import cnuphys.ced.item.HexSectorItem;
 
 public class CrossDrawer extends DCXYViewDrawer {
 
-	public static final int HB = DataDrawSupport.HB_CROSS;
-	public static final int TB = DataDrawSupport.TB_CROSS;;
-	public static final int AIHB = DataDrawSupport.AIHB_CROSS;
-	public static final int AITB = DataDrawSupport.AITB_CROSS;;
+	public static final int HB = cnuphys.ced.common.CrossDrawer.HB;
+	public static final int TB = cnuphys.ced.common.CrossDrawer.TB;
+	public static final int AIHB = cnuphys.ced.common.CrossDrawer.AIHB;
+	public static final int AITB = cnuphys.ced.common.CrossDrawer.AITB;
 
 
-	private static final int ARROWLEN = 30; // pixels
-	private static final Stroke THICKLINE = new BasicStroke(1.5f);
+	private static final int ARROWLEN = cnuphys.ced.common.CrossDrawer.ARROWLEN;
+	private static final Stroke THICKLINE = cnuphys.ced.common.CrossDrawer.THICKLINE;
 
 	// feedback string color
-	private static String fbcolors[] = { "$wheat$", "$misty rose$" };
+	private static String fbcolors[] = cnuphys.ced.common.CrossDrawer.fbcolors;
 
 	private int _mode = HB;
 
+	/**
+	 * A cross drawer for the DCXY view
+	 * @param view the view
+	 */
 	public CrossDrawer(DCXYView view) {
 		super(view);
 	}

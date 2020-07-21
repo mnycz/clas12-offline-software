@@ -29,7 +29,7 @@ public class TextDisplayDialog extends SimpleDialog {
 	private JPanel _centerPanel;
 
 	/**
-	 * Create a yaml display dialog
+	 * Create a simple display dialog
 	 */
 	public TextDisplayDialog(String title) {
 		super(title, false, CLOSE);

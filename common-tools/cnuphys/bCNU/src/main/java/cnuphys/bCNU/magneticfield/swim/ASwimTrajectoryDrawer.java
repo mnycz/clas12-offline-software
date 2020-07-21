@@ -175,26 +175,14 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 			return;
 		}
 
-//		//unknowns (orange--track based)
-//		_lundIds.add(new LundId("Lepton", "?TB" + SUPERPLUS,   -99,  0,  3, 0));
-//		_lundIds.add(new LundId("Lepton", "?TB" + SUPERMINUS, -101,  0, -3, 0));
-//		_lundIds.add(new LundId("Lepton", "?TB" + SUPERZERO,   -100, 0, 0, 0));
-//		
-//		//unknowns (yellow--hit based)
-//		_lundIds.add(new LundId("Lepton", "?HB" + SUPERPLUS,   -199,  0,  3, 0));
-//		_lundIds.add(new LundId("Lepton", "?HB" + SUPERMINUS, -201,  0, -3, 0));
-//		_lundIds.add(new LundId("Lepton", "?HB" + SUPERZERO,   -300, 0, 0, 0));
-
 		LundId lid = trajectory.getTrajectory3D().getLundId();
-//		int id = lid.getId();
 
 		String source = trajectory.getSource().toLowerCase();
-		// System.err.println("SOURCE of TRAJ: [" + source + "]");
 
-		if (source.contains("hbtracks")) {
+		if (source.contains("hitbasedtrkg::hbtracks")) {
 			plainDrawSwimTrajectory(g, container, trajectory, Color.yellow);
 			return;
-		} else if (source.contains("tbtracks")) {
+		} else if (source.contains("timebasedtrkg::tbtracks")) {
 			plainDrawSwimTrajectory(g, container, trajectory, X11Colors.getX11Color("dark orange"));
 			return;
 		} else if (source.contains("cvtrec::tracksca")) {
@@ -203,19 +191,13 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 		} else if (source.contains("cvtrec::tracks")) {
 			plainDrawSwimTrajectory(g, container, trajectory, X11Colors.getX11Color("dark green"));
 			return;
+		} else if (source.contains("hitbasedtrkg::aitracks")) {
+			plainDrawSwimTrajectory(g, container, trajectory, X11Colors.getX11Color("spring green"));
+			return;
+		} else if (source.contains("timebasedtrkg::aitracks")) {
+			plainDrawSwimTrajectory(g, container, trajectory, X11Colors.getX11Color("magenta"));
+			return;
 		}
-
-//		
-//		
-//		if ((id == -99) || (id == -100) || (id == -101)) { //time based
-//			plainDrawSwimTrajectory(g, container, trajectory, X11Colors.getX11Color("dark orange"));
-//			return;
-//		}
-//
-//		else if ((id == -199) || (id == -200) || (id == -201)) { //hitbased based
-//			plainDrawSwimTrajectory(g, container, trajectory, Color.yellow);
-//			return;
-//		}
 
 		Graphics2D g2 = (Graphics2D) g;
 		g2.setRenderingHints(renderHints);

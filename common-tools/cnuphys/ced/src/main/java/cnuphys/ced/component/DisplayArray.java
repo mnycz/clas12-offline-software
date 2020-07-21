@@ -86,6 +86,9 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 
 	/** Label for dc HB Hits button */
 	private static final String DC_HIT_LABEL = "DC Recon Hits";
+	
+	/** Label for REC::Calorimeter Hits button */
+	private static final String RECCAL_LABEL = "REC Cal";
 
 	/** Label for dc reconstructed segments button */
 	private static final String SEGMENT_LABEL = "Segments";
@@ -143,6 +146,9 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 
 	// controls whether dc reconstructed Hits are displayed
 	private AbstractButton _dcHitsButton;
+	
+	// controls whether REC::Calorimeter data are displayed
+    private AbstractButton _recCalButton;
 
 	// controls whether reconstructed segments are displayed
 	private AbstractButton _segmentButton;
@@ -317,6 +323,12 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 		if (Bits.checkBit(bits, DisplayBits.DC_HITS)) {
 			_dcHitsButton = add(DC_HIT_LABEL, true, true, this, _buttonColor).getCheckBox();
 		}
+		
+		// dc reonstructed hits?
+		if (Bits.checkBit(bits, DisplayBits.RECCAL)) {
+			_recCalButton = add(RECCAL_LABEL, true, true, this, _buttonColor).getCheckBox();
+		}
+
 
 		// reconstructed dc segments?
 		if (Bits.checkBit(bits, DisplayBits.SEGMENTS)) {
@@ -598,6 +610,16 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	public boolean showDCTBHits() {
 		return showTB() && (_dcHitsButton != null) && _dcHitsButton.isSelected();
 	}
+	
+	/**
+	 * Convenience method to see if we show REC::Calorimeter data
+	 * 
+	 * @return <code>true</code> if we are to show REC::Calorimeter.
+	 */
+	public boolean showRecCal() {
+		return (_recCalButton != null) && _recCalButton.isSelected();
+	}
+	
 	/**
 	 * Convenience method to see if we show the dc HB reconstructed clusters.
 	 * 
