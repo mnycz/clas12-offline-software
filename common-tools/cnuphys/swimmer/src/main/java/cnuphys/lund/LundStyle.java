@@ -16,7 +16,7 @@ public class LundStyle {
 	private static BasicStroke _solid = new BasicStroke(_LINEWIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
 	private static BasicStroke _dashed = new BasicStroke(_LINEWIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
-			new float[] { 10.0f, 10.0f }, 0.0f);
+			new float[] { 8.0f, 2.0f }, 0.0f);
 	/**
 	 * Hashtable of styles.
 	 */
@@ -27,7 +27,9 @@ public class LundStyle {
 	private Color _fillColor;
 	private Color _transparentFillColor;
 
-	private static final LundStyle _unknownStyle = new LundStyle(Color.darkGray);
+	private static final LundStyle _unknownStylePlus = new LundStyle(Color.black);
+	private static final LundStyle _unknownStyleMinus = new LundStyle(Color.white);
+	private static final LundStyle _unknownStyleZero = new LundStyle(Color.gray);
 
 	/**
 	 * A drawing style for the trajectory
@@ -148,9 +150,22 @@ public class LundStyle {
 	 * @return the style
 	 */
 	public static LundStyle getStyle(LundId lundId) {
+		
+		if (lundId == null) {
+			return _unknownStyleZero;
+		}
 
-		if ((lundId == null) || (styles.get(lundId) == null)) {
-			return _unknownStyle;
+		if (styles.get(lundId) == null) {
+			int q = lundId.getCharge();
+			if (q < 0) {
+				return _unknownStyleMinus;
+			}
+			else if (q > 0) {
+				return _unknownStylePlus;
+			}
+			else {
+				return _unknownStyleZero;
+			}
 		}
 
 		return styles.get(lundId);

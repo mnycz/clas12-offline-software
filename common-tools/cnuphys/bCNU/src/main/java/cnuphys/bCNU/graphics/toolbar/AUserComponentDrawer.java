@@ -131,13 +131,19 @@ public abstract class AUserComponentDrawer extends DrawableAdapter {
 
 		int linelen = 30;
 
-		if ((lid != null)) {
-			GraphicsUtilities.drawHighlightedLine(g2, x, yc, x + linelen, yc, style.getLineColor(),
-					ASwimTrajectoryDrawer.getHighlightColor(lid));
-		} else {
-			g.setColor(style.getLineColor());
-			g2.drawLine(x, yc, x + linelen, yc);
-		}
+//		if ((lid != null)) {
+//			GraphicsUtilities.drawHighlightedLine(g2, x, yc, x + linelen, yc, style.getLineColor(),
+//					ASwimTrajectoryDrawer.getHighlightColor(lid));
+//		} else {
+//			g.setColor(style.getLineColor());
+//			g2.drawLine(x, yc, x + linelen, yc);
+//		}
+		
+		g.setColor(style.getLineColor());
+		g2.setStroke(style.getStroke());
+
+		g2.drawLine(x, yc, x + linelen, yc);
+
 
 		x += linelen + 3;
 

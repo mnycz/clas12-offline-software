@@ -25,6 +25,8 @@ public class LundSupport {
 	private static final String SMALL_RHO = "\u03C1";
 
 	private static Color brown = X11Colors.getX11Color("Brown");
+	private static Color goldenrod = X11Colors.getX11Color("Dark Goldenrod");
+	
 	private static Color darkGreen = X11Colors.getX11Color("Dark Green");
 	private static Color darkOrange = X11Colors.getX11Color("Dark Orange");
 	private static Color wheat = X11Colors.getX11Color("Wheat");
@@ -33,16 +35,16 @@ public class LundSupport {
 	private static Color lawnGreen = X11Colors.getX11Color("Lawn Green");
 	private static Color orangeRed = X11Colors.getX11Color("Orange Red");
 	private static Color olive = X11Colors.getX11Color("Olive");
-	private static Color powder = X11Colors.getX11Color("Powder Blue");
+	private static Color deepsky = X11Colors.getX11Color("Deep Sky Blue");
+
+	/** Unknown positive lepton */
+	public static LundId unknownPlus = new LundId("Lepton", "?" + SUPERPLUS, 0, 0, 3, 0);
 
 	/** Unknown negative lepton */
-	public static LundId unknownPlus = new LundId("Lepton", "G" + SUPERPLUS, 0, 0, 3, 0);
-
-	/** Unknown negative lepton */
-	public static LundId unknownMinus = new LundId("Lepton", "G" + SUPERMINUS, -1, 0, -3, 0);
+	public static LundId unknownMinus = new LundId("Lepton", "?" + SUPERMINUS, -1, 0, -3, 0);
 
 	/** Unknown neutral "lepton" */
-	public static LundId unknownNeutral = new LundId("Lepton", "G" + SUPERZERO, -2, 0, 0, 0);
+	public static LundId unknownNeutral = new LundId("Lepton", "?" + SUPERZERO, -2, 0, 0, 0);
 
 	/**
 	 * private constructor for the singleton.
@@ -947,7 +949,9 @@ public class LundSupport {
 	 */
 	private void initStyles() {
 		// Geatininos
-		setStyle(0, Color.pink);
+		setStyle(0, Color.black);
+		setStyle(-1, Color.white);
+		setStyle(-2, Color.gray);
 
 		// recon tracks
 		setStyle(-99, darkOrange);
@@ -965,7 +969,7 @@ public class LundSupport {
 		setStyle(111, wheat); // pi0
 		setStyle(211, X11Colors.getX11Color("purple")); // pi+
 		setStyle(-211, X11Colors.getX11Color("medium purple")); // pi-
-		setStyle(321, Color.green); // K+
+		setStyle(321, goldenrod); // K+
 		setStyle(-321, olive); // K-
 		setStyle(213, Color.yellow); // rho+
 		setStyle(-213, purple); // rho-
@@ -973,7 +977,7 @@ public class LundSupport {
 		setStyle(-13, brown); // mu+
 		setStyle(2212, Color.blue); // proton
 		setStyle(2112, lawnGreen); // neutron
-		setStyle(22, powder); // photon
+		setStyle(22, deepsky); // photon
 		setStyle(1011, Color.darkGray); // deuteron
 		setStyle(1021, Color.red); // triton
 		setStyle(3122, Color.pink); // Lambda0
@@ -991,7 +995,7 @@ public class LundSupport {
 		LundSupport ls = LundSupport.getInstance();
 		LundId lid = ls.get(lundId);
 		if (lid != null) {
-			LundStyle style = LundStyle.addLundStyle(lid, lineColor);
+			LundStyle.addLundStyle(lid, lineColor);
 		}
 	}
 

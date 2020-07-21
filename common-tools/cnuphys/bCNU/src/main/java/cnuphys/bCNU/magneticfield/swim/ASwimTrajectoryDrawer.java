@@ -222,17 +222,22 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 		if (poly.npoints > 1) {
 
 			// tracer traj
-			g2.setColor(tracerColor);
-			g2.setStroke(tracerStroke);
-			g.drawPolyline(poly.xpoints, poly.ypoints, poly.npoints);
+//			g2.setColor(tracerColor);
+//			g2.setStroke(tracerStroke);
+//			g.drawPolyline(poly.xpoints, poly.ypoints, poly.npoints);
 
 			LundStyle style = LundStyle.getStyle(lid);
 			g.setColor(style.getLineColor());
 			g2.setStroke(style.getStroke());
 			// g.drawPolyline(poly.xpoints, poly.ypoints, poly.npoints);
 
-			GraphicsUtilities.drawHighlightedPolyline(g2, poly.xpoints, poly.ypoints, poly.npoints,
-					style.getLineColor(), getHighlightColor(lid));
+			g2.setStroke(style.getStroke());
+			g2.setColor(style.getLineColor());
+			g2.drawPolyline(poly.xpoints, poly.ypoints, poly.npoints);
+
+			
+//			GraphicsUtilities.drawHighlightedPolyline(g2, poly.xpoints, poly.ypoints, poly.npoints,
+//					style.getLineColor(), getHighlightColor(lid));
 
 		}
 
