@@ -4,6 +4,8 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 
 import cnuphys.ced.clasio.ClasIoEventManager;
+import cnuphys.lund.LundId;
+import cnuphys.lund.LundSupport;
 
 /**
  * This is for caching the relevant data from the REC::Calorimeter bank
@@ -92,7 +94,7 @@ public class RECCalorimeter extends DetectorData {
 
 		pindex = bank.getShort("pindex");
 
-		getPID(event);
+		getPIDArray(event);
 
 	} //update
 	
@@ -115,7 +117,7 @@ public class RECCalorimeter extends DetectorData {
 
 	//get the pids from the REC::Particle bank
 	//the pindex array points to rows in this bank
-	private void getPID(DataEvent event) {
+	private void getPIDArray(DataEvent event) {
 
 		pid = null;
 
@@ -134,17 +136,18 @@ public class RECCalorimeter extends DetectorData {
 	 * @return the pid string
 	 */
 	public String getPIDStr(int index) {
-		int pidval = NOPID;
-		
-		if (pid != null) {
-			pidval = pid[pindex[index]];
-		}
+		int pidval = getPID(index);
 		
 		if (pidval == NOPID) {
 			return "REC PID not available";
-		}
-		else {
-			return "REC PID " + pidval;
+		} else {
+			LundId lundId = getLundId(index);
+
+			if (lundId == null) {
+				return "REC PID " + pidval;
+			} else {
+				return "REC PID " + lundId.getName();
+			}
 		}
 	}
 	
@@ -166,5 +169,13 @@ public class RECCalorimeter extends DetectorData {
 			return NOPID;
 		}
 		return pid[pindex[index]];
+	}
+	
+	public LundId getLundId(int index) {
+		int pid = getPID(index);
+		if (pid == NOPID) {
+			return null;
+		}
+		return LundSupport.getInstance().get(pid);
 	}
 }

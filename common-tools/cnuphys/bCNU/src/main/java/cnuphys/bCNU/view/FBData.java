@@ -15,7 +15,7 @@ public class FBData {
 	
 	public FBData(Point pp, String... text) {
 		_text = text;
-		_rect = new Rectangle(pp.x - 3, pp.y - 3, 6, 6);
+		_rect = new Rectangle(pp.x - 4, pp.y - 4, 8, 8);
 	}
 
 	public boolean addFeedback(Point screenPoint, List<String> feedbackStrings) {

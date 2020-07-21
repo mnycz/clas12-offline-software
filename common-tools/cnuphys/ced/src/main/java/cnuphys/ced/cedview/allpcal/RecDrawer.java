@@ -18,8 +18,10 @@ import cnuphys.bCNU.graphics.container.IContainer;
 import cnuphys.bCNU.graphics.world.WorldGraphicsUtilities;
 import cnuphys.bCNU.view.FBData;
 import cnuphys.ced.clasio.ClasIoEventManager;
+import cnuphys.ced.event.data.RECCalorimeter;
 import cnuphys.ced.frame.CedColors;
 import cnuphys.ced.geometry.PCALGeometry;
+import cnuphys.lund.LundId;
 
 /**
  * Rec drawer for the AllPCALView
@@ -71,63 +73,55 @@ public class RecDrawer extends PCALViewDrawer {
 		if (ignore()) {
 			return;
 		}
-
-		DataBank bank = _currentEvent.getBank("REC::Calorimeter");
-		if (bank == null) {
-			return;
-		}
-
-		byte[] sector = bank.getByte("sector");
-
-		int len = (sector == null) ? 0 : sector.length;
-		if (len == 0) {
-			return;
-		}
-
-		byte[] layer = bank.getByte("layer");
-		float[] energy = bank.getFloat("energy");
-		float[] x = bank.getFloat("x"); // CLAS system
-		float[] y = bank.getFloat("y");
-		float[] z = bank.getFloat("z");
 		
+		RECCalorimeter recCal = RECCalorimeter.getInstance();
+		if (recCal.isEmpty()) {
+			return;
+		}
+
 		Point pp = new Point();
 		Rectangle2D.Double wr = new Rectangle2D.Double();
 		Point2D.Double wp = new Point2D.Double();
 
-
-		for (int i = 0; i < len; i++) {
+		for (int i = 0; i < recCal.count; i++) {
 			
-			if (layer[i] > 3) {  //is it ecal rather than pcal?
+			if (recCal.layer[i] > 3) {  //is it ecal rather than pcal?
 				continue;
 			} 
 			
-			Point3D clasP = new Point3D(x[i], y[i], z[i]);
+			Point3D clasP = new Point3D(recCal.x[i], recCal.y[i], recCal.z[i]);
 			Point3D localP = new Point3D();
 			PCALGeometry.getTransformations().clasToLocal(localP, clasP);
 			
 			localP.setZ(0);
 
 			// get the right item
-			_view.getHexSectorItem(sector[i]).ijkToScreen(container, localP, pp);
+			_view.getHexSectorItem(recCal.sector[i]).ijkToScreen(container, localP, pp);
 
 
 			SymbolDraw.drawDavid(g, pp.x, pp.y, 4, Color.black, Color.red);			
 			
 			
-			_fbData.add(new FBData(pp, 
-					String.format("$magenta$REC xyz (%-6.3f, %-6.3f, %-6.3f) cm", x[i], y[i], z[i]), 
-					String.format("$magenta$REC layer %d", layer[i]),
-					String.format("$magenta$REC Energy %-7.4f GeV", energy[i])));
-			
-			if (energy[i] > 0.05) {
-				float radius = (float) (Math.log((energy[i] + 1.0e-8) / 1.0e-8));
-				radius = Math.max(1, Math.min(40f, radius));
-
+			float radius = recCal.getRadius(recCal.energy[i]);
+			if (radius > 0) {
 				container.localToWorld(pp, wp);
 				wr.setRect(wp.x - radius, wp.y - radius, 2 * radius, 2 * radius);
-				WorldGraphicsUtilities.drawWorldOval(g, container, wr, CedColors.RECPcalFill, null);
+				
+				LundId lid = recCal.getLundId(i);
+				Color color = (lid == null) ? CedColors.RECEcalFill : lid.getStyle().getTransparentFillColor();
+				
+				
+				WorldGraphicsUtilities.drawWorldOval(g, container, wr, color, null);
 			}
-		}
+
+
+			_fbData.add(new FBData(pp,
+					String.format("$magenta$REC xyz (%-6.3f, %-6.3f, %-6.3f) cm", recCal.x[i], recCal.y[i],
+							recCal.z[i]),
+					String.format("$magenta$REC layer %d", recCal.layer[i]),
+					String.format("$magenta$%s", recCal.getPIDStr(i)),
+					String.format("$magenta$REC Energy %-7.4f GeV", recCal.energy[i])));
+		} //for i
 
 
 	}

@@ -8,6 +8,9 @@ import java.util.Hashtable;
 public class LundStyle {
 
 	private static final float _LINEWIDTH = 1.5f;
+	
+	//default transparent color
+	private static final Color defaultTransColor = new Color(64, 64, 64, 64);
 
 	// strokes for line drawing
 	private static BasicStroke _solid = new BasicStroke(_LINEWIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
@@ -22,6 +25,7 @@ public class LundStyle {
 	private Stroke _stroke;
 	private Color _lineColor;
 	private Color _fillColor;
+	private Color _transparentFillColor;
 
 	private static final LundStyle _unknownStyle = new LundStyle(Color.darkGray);
 
@@ -71,6 +75,26 @@ public class LundStyle {
 	 */
 	public Color getFillColor() {
 		return _fillColor;
+	}
+	
+	/**
+	 * Get a transparent version of the fill color.
+	 * @return a transparent version of the fill color.
+	 */
+	public Color getTransparentFillColor() {
+		if (_transparentFillColor == null) {
+			if (_fillColor == null) {
+				_transparentFillColor = defaultTransColor;
+			}
+			else {
+				int r = _fillColor.getRed();
+				int g = _fillColor.getGreen();
+				int b = _fillColor.getBlue();
+				_transparentFillColor = new Color(r, g, b, 64);
+			}
+		}
+		
+		return _transparentFillColor;
 	}
 
 	/**

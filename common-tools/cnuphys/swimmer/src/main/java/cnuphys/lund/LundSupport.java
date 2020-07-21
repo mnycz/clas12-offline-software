@@ -972,8 +972,8 @@ public class LundSupport {
 		setStyle(13, Color.cyan); // mu-
 		setStyle(-13, brown); // mu+
 		setStyle(2212, Color.blue); // proton
-		setStyle(2112, powder); // neutron
-		setStyle(22, lawnGreen); // photon
+		setStyle(2112, lawnGreen); // neutron
+		setStyle(22, powder); // photon
 		setStyle(1011, Color.darkGray); // deuteron
 		setStyle(1021, Color.red); // triton
 		setStyle(3122, Color.pink); // Lambda0

@@ -19,6 +19,8 @@ import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.ced.event.data.RECCalorimeter;
 import cnuphys.ced.frame.CedColors;
 import cnuphys.ced.geometry.ECGeometry;
+import cnuphys.lund.LundId;
+import cnuphys.lund.LundSupport;
 
 /**
  * Rec drawer for the AllECView
@@ -107,11 +109,17 @@ public class RecDrawer extends ECViewDrawer {
 
 			SymbolDraw.drawDavid(g, pp.x, pp.y, 4, Color.black, Color.red);
 			
+			
 			float radius = recCal.getRadius(recCal.energy[i]);
 			if (radius > 0) {
 				container.localToWorld(pp, wp);
 				wr.setRect(wp.x - radius, wp.y - radius, 2 * radius, 2 * radius);
-				WorldGraphicsUtilities.drawWorldOval(g, container, wr, CedColors.RECEcalFill, null);
+				
+				LundId lid = recCal.getLundId(i);
+				Color color = (lid == null) ? CedColors.RECEcalFill : lid.getStyle().getTransparentFillColor();
+				
+				
+				WorldGraphicsUtilities.drawWorldOval(g, container, wr, color, null);
 			}
 
 
