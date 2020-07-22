@@ -35,8 +35,6 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 
 	// colors
 	protected static final Color sectChangeColor = X11Colors.getX11Color("purple", 128);
-	protected static final Color tracerColor = new Color(0, 0, 0, 50);
-	protected static final Stroke tracerStroke = GraphicsUtilities.getStroke(3f, LineStyle.SOLID);
 	protected static final Stroke planeStroke = GraphicsUtilities.getStroke(1.5f, LineStyle.SOLID);
 
 	private static RenderingHints renderHints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
@@ -73,8 +71,7 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 
 				for (SwimTrajectory trajectory : trajectories) {
 					// give a chance to veto a trajectory, e.g. no chance it
-					// will
-					// appear on this view (for example)
+					// will appear on this view (for example)
 					if (!veto(trajectory)) {
 						_trajectories2D.add(new SwimTrajectory2D(trajectory, this));
 					}
@@ -221,10 +218,6 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 
 		if (poly.npoints > 1) {
 
-			// tracer traj
-//			g2.setColor(tracerColor);
-//			g2.setStroke(tracerStroke);
-//			g.drawPolyline(poly.xpoints, poly.ypoints, poly.npoints);
 
 			LundStyle style = LundStyle.getStyle(lid);
 			g.setColor(style.getLineColor());
@@ -284,33 +277,6 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 		g2.setStroke(oldStroke);
 	}
 
-	/**
-	 * Obtain the highlight color for drawing a particle trajectory
-	 * 
-	 * @param lid the Lund Id
-	 * @returnthe highlight color for drawing a particle trajectory
-	 */
-	public static Color getHighlightColor(LundId lid) {
-		Color hcolor = null;
-		if (lid != null) {
-			String type = lid.getType();
-
-			boolean particle = lid.getId() >= 0;
-
-			if ("Lepton".equalsIgnoreCase(type)) {
-				hcolor = particle ? Color.red : Color.cyan;
-			} else if ("Meson".equalsIgnoreCase(type)) {
-				hcolor = particle ? Color.green : Color.magenta;
-			} else if ("Baryon".equalsIgnoreCase(type)) {
-				hcolor = particle ? Color.blue : Color.yellow;
-			} else if ("Interboson".equalsIgnoreCase(type)) {
-				hcolor = Color.lightGray;
-			} else {
-				hcolor = Color.lightGray;
-			}
-		}
-		return hcolor;
-	}
 
 	/**
 	 * Get the distance of closest approach to any 2D (projected) trajectory.
@@ -327,7 +293,7 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 			return minDist;
 		}
 
-		// loop over all trajectories
+		// loop over all trajectories that are drawn
 		for (SwimTrajectory2D trajectory2D : _trajectories2D) {
 			double dist = trajectory2D.closestDistance(wp);
 

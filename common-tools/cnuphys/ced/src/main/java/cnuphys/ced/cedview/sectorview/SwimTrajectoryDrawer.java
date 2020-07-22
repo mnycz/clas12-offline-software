@@ -66,6 +66,56 @@ public class SwimTrajectoryDrawer extends ASwimTrajectoryDrawer {
 		}
 	}
 
+	
+	/**
+	 * Get the distance of closest approach to any 2D (projected) trajectory.
+	 * 
+	 * @param wp the point in question
+	 * @return the closest distance. The closest trajectory will be cached in
+	 *         <code>closestTrajectory</code>.
+	 */
+	@Override
+	public double closestApproach(Point2D.Double wp) {
+		_closestTrajectory = null;
+
+		double minDist = Double.POSITIVE_INFINITY;
+		if ((_trajectories2D == null) || (_trajectories2D.size() < 1)) {
+			return minDist;
+		}
+
+		// loop over all trajectories that are drawn
+		for (SwimTrajectory2D trajectory2D : _trajectories2D) {
+			
+			boolean show = true;
+			
+			String source = trajectory2D.getSource();
+
+			if (source != null) {
+				if (source.contains("HitBasedTrkg::HBTracks")) {
+					show = _view.showHB();
+				} else if (source.contains("TimeBasedTrkg::TBTracks")) {
+					show = _view.showTB();
+				} else if (source.contains("HitBasedTrkg::AITracks")) {
+					show = _view.showAIHB();
+				} else if (source.contains("TimeBasedTrkg::AITracks")) {
+					show = _view.showAITB();
+				}
+			}
+			
+			if (!show) {
+				continue;
+			}
+
+			double dist = trajectory2D.closestDistance(wp);
+
+			if (dist < minDist) {
+				_closestTrajectory = trajectory2D;
+				minDist = dist;
+			}
+		}
+
+		return minDist;
+	}
 
 	/**
 	 * Here we have a chance to veto a trajectory. For example, we may decide that
@@ -85,7 +135,6 @@ public class SwimTrajectoryDrawer extends ASwimTrajectoryDrawer {
 		}
 
 		boolean onThisView = _view.inThisView(getMostCommonSector(trajectory));
-//		System.err.println("On this view " + _view.getTitle() + " " + onThisView + "  size " + trajectory.size());
 		return !onThisView;
 	}
 

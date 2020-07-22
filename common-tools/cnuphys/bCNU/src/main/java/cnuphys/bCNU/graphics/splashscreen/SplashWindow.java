@@ -30,6 +30,14 @@ public class SplashWindow extends JWindow {
 	private JComponent _center;
 
 	private StreamCapturePane _scp;
+	
+	public static final String[] animatedGifs = { "images/anicat.gif", "images/anir2d2.gif", "images/coffee.gif", "images/sun.gif", "images/rubik80.gif",
+			"images/bee.gif", "images/loading.gif", "images/progress33.gif", "images/saucer.gif",
+			"images/spinglobe.gif", "images/runner.gif", "images/sun2.gif", "images/push.gif", "images/walker.gif",
+			"images/rooftop.gif", "images/bee2.gif", "images/stickdancer.gif", "images/cricket.gif",
+			"images/wiggly.gif" };
+	
+
 
 	// If <code>true</code>, tile the background with an image.
 	boolean tile;
@@ -89,21 +97,15 @@ public class SplashWindow extends JWindow {
 		sp.setLayout(new FlowLayout(FlowLayout.CENTER, 80, 2));
 		sp.setBackground(Color.white);
 
-		String imageNames[] = { "images/anicat.gif", "images/anir2d2.gif", "images/sun.gif", "images/rubik80.gif",
-				"images/bee.gif", "images/loading.gif", "images/progress33.gif", "images/saucer.gif",
-				"images/spinglobe.gif", "images/runner.gif", "images/sun2.gif", "images/push.gif", "images/walker.gif",
-				"images/rooftop.gif", "images/bee2.gif", "images/stickdancer.gif", "images/cricket.gif",
-				"images/wiggly.gif" };
-
-		int index = (new Random()).nextInt(imageNames.length);
+		int index = (new Random()).nextInt(animatedGifs.length);
 		if (index < 0) {
 			System.err.println("Bad index in splashWindow: " + index);
 			index = 0;
-		} else if (index >= imageNames.length) {
+		} else if (index >= animatedGifs.length) {
 			System.err.println("Bad index in splashWindow: " + index);
-			index = imageNames.length - 1;
+			index = animatedGifs.length - 1;
 		}
-		ImageIcon icon = ImageManager.getInstance().loadImageIcon(imageNames[index]);
+		ImageIcon icon = ImageManager.getInstance().loadImageIcon(animatedGifs[index]);
 		if ((icon != null) && (icon.getImage() != null)) {
 			JLabel rlab = new JLabel(icon);
 			sp.add(rlab);

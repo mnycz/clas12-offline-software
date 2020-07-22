@@ -22,6 +22,7 @@ import javax.swing.border.EmptyBorder;
 
 import cnuphys.bCNU.graphics.GraphicsUtilities;
 import cnuphys.bCNU.graphics.ImageManager;
+import cnuphys.bCNU.graphics.splashscreen.SplashWindow;
 import cnuphys.bCNU.util.Fonts;
 import cnuphys.splot.plot.X11Colors;
 
@@ -169,11 +170,7 @@ public class SplashWindowCED extends JWindow {
 		sp.setLayout(new FlowLayout(FlowLayout.CENTER, 100, 0));
 		sp.setBackground(Color.white);
 
-		String imageNames[] = { "images/anicat.gif", "images/anir2d2.gif", "images/sun.gif", "images/rubik80.gif",
-				"images/bee.gif", "images/loading.gif", "images/progress33.gif", "images/saucer.gif",
-				"images/spinglobe.gif", "images/runner.gif", "images/sun2.gif", "images/push.gif", "images/walker.gif",
-				"images/rooftop.gif", "images/bee2.gif", "images/stickdancer.gif", "images/cricket.gif",
-				"images/wiggly.gif" };
+		String imageNames[] = SplashWindow.animatedGifs;
 
 		int index = (new Random()).nextInt(imageNames.length);
 		if (index < 0) {

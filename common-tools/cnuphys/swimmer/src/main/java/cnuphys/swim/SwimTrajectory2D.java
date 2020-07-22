@@ -211,13 +211,12 @@ public class SwimTrajectory2D {
 		String s1 = null;
 
 		if (lid != null) {
-
 			s1 = fbColor + String.format("Swam  %-4s %-6.2f MeV/c" + SUPER2, lid.getName(), lid.getMass() * 1000.0);
 		} else {
 			s1 = fbColor + "[No PID]";
 		}
 
-		s1 += String.format(" P %-6.2f Mev/c", genPart.getMomentum() * 1000.0);
+		s1 += String.format(" P %-6.2f GeV/c", genPart.getMomentum());
 
 		String s2 = fbColor + String.format("Vtx (%-3.1f, %-3.1f, %-3.1f) cm %-1s: %-6.2f  %-1s: %-6.2f",
 				genPart.getVertexX(), genPart.getVertexY(), genPart.getVertexZ(), SMALL_THETA, genPart.getTheta(),

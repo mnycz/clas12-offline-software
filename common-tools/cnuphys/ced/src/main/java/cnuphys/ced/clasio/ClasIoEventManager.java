@@ -87,15 +87,13 @@ public class ClasIoEventManager {
 	private RingBuffer<PrevIndexedEvent> _previousEvents;
 	
 	//maps sequential event number to true event numbers
-	private NumberMap[] _numberMap;
-	private Comparator<NumberMap> _nmComparator;
+	private long[] _numberMap;
 
 	// all the filters
 	private ArrayList<IEventFilter> _eventFilters = new ArrayList<>();
 
 	// sources of events (the type, not the actual source)
 	public enum EventSourceType {
-		// HIPOFILE, HIPORING, ET, EVIOFILE
 		HIPOFILE, ET, EVIOFILE
 	}
 
@@ -107,14 +105,7 @@ public class ClasIoEventManager {
 	private EventSourceType _sourceType = EventSourceType.HIPOFILE;
 
 	// ET dialog
-	// private ETDialog _etDialog;
-	// private ConnectionDialog _connectionDialog;
-
 	private ConnectETDialog _etDialog;
-
-	// hipo ring dialog
-	// private RingDialog _ringDialog;
-	// private ConnectionDialogHipo _hipoDialog;
 
 	// flag that set set to <code>true</code> if we are accumulating events
 	private boolean _accumulating = false;
@@ -142,11 +133,6 @@ public class ClasIoEventManager {
 	// the current evio event file
 	private File _currentEvioFile;
 
-	// current ip address of HIPO ring
-	// private String _currentHIPOAddress;
-
-	// current ip address of ET ring
-	// private String _currentETAddress;
 	private String _currentMachine;
 	private String _currentStation;
 
@@ -231,17 +217,7 @@ public class ClasIoEventManager {
 				for (String bankName : cbanks) {
 					if (bankName.contains("::true") || (bankName.contains("::Particle"))) {
 
-						// boolean hasBank = _currentEvent.hasBank(bankName);
-						//
-						//
-						// boolean hasData = (DataManager.getInstance().hasData(_currentEvent, bankName)
-						// != null);
-						// System.out.println("****** BANK NAME [" + bankName + "] + hasData: " +
-						// hasData + " hasBank: " + hasBank);
-
 						ColumnData cd = DataManager.getInstance().getColumnData(bankName, "pid");
-
-						// System.out.println("****** pid column null: " + (cd == null));
 
 						if (cd != null) {
 							int pid[] = (cd.getIntArray(_currentEvent));
@@ -333,10 +309,6 @@ public class ClasIoEventManager {
 		} else if ((_sourceType == EventSourceType.EVIOFILE) && (_currentEvioFile != null)) {
 			return "Evio " + _currentEvioFile.getName();
 		}
-		// else if ((_sourceType == EventSourceType.HIPORING) && (_currentHIPOAddress !=
-		// null)) {
-		// return "Hipo Ring " + _currentHIPOAddress;
-		// }
 		else if ((_sourceType == EventSourceType.ET) && (_currentMachine != null) && (_currentETFile != null)) {
 			return "ET " + _currentMachine + " " + _currentETFile;
 		}
@@ -351,8 +323,6 @@ public class ClasIoEventManager {
 	 * @throws IOException
 	 */
 	public void openHipoEventFile(File file) throws FileNotFoundException, IOException {
-
-		System.err.println("opening hipo file " + file.getPath());
 
 		if (!file.exists()) {
 			throw (new FileNotFoundException("Event event file not found"));
@@ -391,8 +361,6 @@ public class ClasIoEventManager {
 	 * @throws IOException
 	 */
 	public void openEvioEventFile(File file) throws FileNotFoundException, IOException {
-
-		System.err.println("opening evio file " + file.getPath());
 
 		if (!file.exists()) {
 			throw (new FileNotFoundException("Event event file not found"));
@@ -445,8 +413,6 @@ public class ClasIoEventManager {
 			_currentETFile = _etDialog.getFile();
 			_currentStation = _etDialog.getStation();
 			_currentPort = _etDialog.getPort();
-
-			// System.err.println("CURRENT PORT: " + _currentPort);
 
 			// does the file exist?
 
@@ -522,15 +488,6 @@ public class ClasIoEventManager {
 	}
 
 	/**
-	 * Check whether current event source type is the hippo ring
-	 * 
-	 * @return <code>true</code> is source type is the hippo ring.
-	 */
-	// public boolean isSourceHipoRing() {
-	// return getEventSourceType() == EventSourceType.HIPORING;
-	// }
-
-	/**
 	 * Check whether current event source type is the ET ring
 	 * 
 	 * @return <code>true</code> is source type is the ET ring.
@@ -552,9 +509,6 @@ public class ClasIoEventManager {
 		} else if (isSourceEvioFile()) {
 			evcount = (_dataSource == null) ? 0 : _dataSource.getSize();
 		}
-		// else if (isSourceHipoRing()) {
-		// return Integer.MAX_VALUE;
-		// }
 		else if (isSourceET()) {
 			return Integer.MAX_VALUE;
 		}
@@ -607,7 +561,6 @@ public class ClasIoEventManager {
 		case EVIOFILE:
 			isOK = (isSourceEvioFile() && (getEventCount() > 0) && (getSequentialEventNumber() < getEventCount()));
 			break;
-		// case HIPORING:
 		case ET:
 			isOK = true;
 			break;
@@ -631,7 +584,6 @@ public class ClasIoEventManager {
 		case EVIOFILE:
 			numRemaining = getEventCount() - getSequentialEventNumber();
 			break;
-		// case HIPORING:
 		case ET:
 			numRemaining = Integer.MAX_VALUE;
 		}
@@ -646,7 +598,6 @@ public class ClasIoEventManager {
 	 */
 	public boolean isPrevOK() {
 		return (_previousEvents.size() > 1);
-//		return (isSourceHipoFile() || isSourceEvioFile()) && (_eventIndex > 1);
 	}
 
 	/**
@@ -860,11 +811,9 @@ public class ClasIoEventManager {
 		EventSourceType estype = getEventSourceType();
 		switch (estype) {
 		case HIPOFILE:
-			// case HIPORING:
 		case ET:
 		case EVIOFILE:
 			boolean hasETEvent = ((_dataSource != null) && _dataSource.hasEvent());
-			// System.err.println("ET DEBUG: has event: " + hasETEvent);
 			return hasETEvent;
 		default:
 			return true;
@@ -1153,7 +1102,6 @@ public class ClasIoEventManager {
 			return;
 		}
 
-		// System.err.println("FINAL STEPS");
 		// some scaling factors for gradient displays
 		computeSomeScalingFactors();
 
@@ -1350,31 +1298,6 @@ public class ClasIoEventManager {
 		_specialListeners.add(listener);
 	}
 
-	//to debug the ring buffer
-	private void debugPrintPreviousEvents() {
-		System.err.println("Prev Event Buffer current = " + _previousEvents.currentIndex + "  oldest = " + _previousEvents.oldestIndex);
-
-		for (int i = 0; i < _previousEvents.size(); i++) {
-			PrevIndexedEvent prev = _previousEvents.elementAt(i);
-
-			if (i == _previousEvents.currentIndex) {
-				System.err.print(" current -> " + prev.index);
-			} else {
-				System.err.print("            " + prev.index);
-			}
-
-			if (i == _previousEvents.oldestIndex) {
-				System.err.println(" <-- oldest");
-
-			} else {
-				System.err.println();
-			}
-
-		}
-		
-		System.err.println();
-	}
-
 	
 	/**
 	 * Minimal event getter for running through events as fast as possibe
@@ -1418,15 +1341,15 @@ public class ClasIoEventManager {
 		return _currentEvent;
 	}
 	
+	//the sequential index is in the lower 32 bits
 	private int getSequentialFromTrue(int trueIndex) {
-		NumberMap testMap = new NumberMap(-1, trueIndex);
-		int index =  Arrays.binarySearch(_numberMap, testMap, _nmComparator);
+		int index =  Arrays.binarySearch(_numberMap, ((long)trueIndex << 32));
 		
 		if (index < 0) {
-			return -1;
+			index = -(index + 1); // now the insertion point.
 		}
 		
-		return _numberMap[index].sequentialNum;
+		return (int)(_numberMap[index] & 0xffffffffL);
 	}
 	
 	//run through the hipo file to make a mapping of sequential to true
@@ -1443,33 +1366,15 @@ public class ClasIoEventManager {
 			int count = getEventCount();
 
 			if (count > 0) {
-				_numberMap = new NumberMap[count];
+				_numberMap = new long[count];
 			} else {
 				_numberMap = null;
-			}
-			
-			if (_nmComparator == null) {
-				_nmComparator = new Comparator<NumberMap>() {
-
-					@Override
-					public int compare(NumberMap o1, NumberMap o2) {
-						if (o1.trueNum < o2.trueNum) {
-							return -1;
-						} else if (o1.trueNum > o2.trueNum) {
-							return 1;
-						} else {
-							return 0;
-						}
-					}
-
-				};
 			}
 			break;
 			
 		case EVIOFILE:
 			gotoEvent(0);
-			_eventIndex = 0;
-			break;
+			return;
 
 			
 			default:
@@ -1477,26 +1382,33 @@ public class ClasIoEventManager {
 		}
 		
 		int trueNum = getTrueEventNumber();
-		
-		_numberMap[0] = new NumberMap(1, trueNum);
+		_numberMap[0] = ((long)trueNum << 32) + 1;
 
 		IRunThrough rthrough = new IRunThrough() {
-			
+
 			int index = 1;
-			
+
 			@Override
 			public void nextRunthroughEvent(DataEvent event) {
 				if (event != null) {
-					int trueNum = getTrueEventNumber();
-					_numberMap[index] = new NumberMap(index+1, trueNum);
+					try {
+						int trueNum = getTrueEventNumber();
+						_numberMap[index] = ((long)trueNum << 32) + index + 1;
+						index++;
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
 				}
-				
-				index++;
+				else {
+					System.err.println("null event in nextRunthroughEvent");
+				}
+
 			}
 
 			@Override
-			public void runThroughtDone() {
-				Arrays.sort(_numberMap, _nmComparator);
+			public void runThroughtDone() {					
+				Arrays.sort(_numberMap);
 				
 				int seqIndex = getSequentialFromTrue(gotoIndex);
 
@@ -1528,17 +1440,7 @@ public class ClasIoEventManager {
 			this.index = index;
 		}
 	}
-	
-	//inner class for mapping seq event to true event number
-	class NumberMap {
-		public int sequentialNum;
-		public int trueNum;
-		
-		public NumberMap(int sequentialNum, int trueNum) {
-			this.sequentialNum = sequentialNum;
-			this.trueNum = trueNum;
-		}
-	}
+
 	
 	
 }
