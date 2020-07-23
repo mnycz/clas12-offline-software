@@ -119,6 +119,7 @@ public class SVTConstants
 		cp.loadTable( ccdbPath +"material/box");
 		cp.loadTable( ccdbPath +"material/tube");
 		cp.loadTable( ccdbPath +"alignment");
+		cp.loadTable( ccdbPath +"position");
                 //shift by target
                 cp.loadTable("/geometry/target");
                 
@@ -362,6 +363,12 @@ public class SVTConstants
                                 System.out.println(" a Region "+aRegion +" aSector "+aSector+" RSI "+RSI[aRegion][aSector] );
                             }
                         }
+			System.out.println("Reading detector global position from database");
+                        double xpos = cp.getDouble(ccdbPath+"position/x", 0 );
+                        double ypos = cp.getDouble(ccdbPath+"position/y", 0 );
+                        double zpos = cp.getDouble(ccdbPath+"position/z", 0 );
+                        System.out.println("SVT position set to (" + xpos + "," + ypos + "," + zpos + ") mm");
+                        
 			System.out.println("Reading alignment shifts from database");
 		
                         SECTORSHIFTDATA = new double[NTOTALSECTORS][];
@@ -376,8 +383,12 @@ public class SVTConstants
                                 double rz = cp.getDouble(ccdbPath+"alignment/rz", i );
                                 double ra = cp.getDouble(ccdbPath+"alignment/ra", i );
                                 System.out.println("SVT alignment pars "+new Point3D(tx, ty, tz)+ " "+ new Point3D(rx, ry, rz)+" "+ Math.toRadians(ra));
+                                // adding global shift to internal alignment shifts
+                                tx += xpos;
+                                ty += ypos;
+                                tz += zpos;
                                 SECTORSHIFTDATA[i] = new double[]{ tx, ty, tz, rx, ry, rz, Math.toRadians(ra) };
-
+                                
                         }
                         
 			if( VERBOSE )
