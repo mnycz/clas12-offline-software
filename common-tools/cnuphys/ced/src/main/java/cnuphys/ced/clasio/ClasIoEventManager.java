@@ -168,12 +168,11 @@ public class ClasIoEventManager {
 	 * 
 	 * @param event the new event
 	 */
-	private void setNextEvent(DataEvent event) {
+	private void setEvent(DataEvent event) {
 		
 		_currentEvent = event;
 
 		if (event != null) {
-			// _runData.set(_currentEvent);
 
 			if (isAccumulating()) {
 				AccumulationManager.getInstance().newClasIoEvent(event);
@@ -706,31 +705,30 @@ public class ClasIoEventManager {
 	public DataEvent getNextEvent() {
 
 		EventSourceType estype = getEventSourceType();
+		boolean done = false; //for filters  
 
 		switch (estype) {
 
 		case HIPOFILE:
+		case EVIOFILE:
+			
 			if (_dataSource.hasEvent()) {
-				_currentEvent = _dataSource.getNextEvent();
-				_eventIndex++;
-				ifPassSetEvent(_currentEvent, 0);
+				
+				while (!done) {
+					_currentEvent = _dataSource.getNextEvent();
+					
+					if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
+						_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
+					}
+
+					done = (_currentEvent == null) || passFilters(_currentEvent);
+				}
+				if (_currentEvent != null) {
+					_eventIndex++;
+				}
 			}
 			break;
 
-		case EVIOFILE:
-			if (_dataSource.hasEvent()) {
-				_currentEvent = _dataSource.getNextEvent();
-
-				if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
-					
-					_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
-					
-					_eventIndex++;
-					ifPassSetEvent(_currentEvent, 0);
-				}
-			}
-
-			break; // end case eviofile
 
 		case ET:
 			int maxTries = 30;
@@ -748,57 +746,30 @@ public class ClasIoEventManager {
 			}
 
 			_currentEvent = null;
-			// boolean goodEvent = false;
 
 			if (_dataSource.hasEvent()) {
 
 				_currentEvent = _dataSource.getNextEvent();
 
 				if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
-					
-					_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
+					_currentEvent = decodeEvioToHipo((EvioDataEvent) _currentEvent);
+				}
 
+				if (passFilters(_currentEvent)) {
 					_eventIndex++;
-					ifPassSetEvent(_currentEvent, 0);
-
-					break;
 				} else {
 					_currentEvent = null;
 				}
 
-			}
+				break;
+			} 
 
 			break; // end case ET
 
 		} // end switch
 
+		setEvent(_currentEvent);
 		return _currentEvent;
-	}
-
-	// set the event only if it passes filtering
-	// option = 1 used by previous event
-	private void ifPassSetEvent(DataEvent event, int option) {
-		if (event != null) {
-			if (passFilters(event)) {
-				setNextEvent(event);
-				
-				if (option == 0) {
-					_previousEvents.add(new PrevIndexedEvent(_currentEvent, _eventIndex));
-				}
-				//debugPrintPreviousEvents();
-			} else {
-				if (option == 0) {
-					getNextEvent();
-				} else if (option == 1) {
-					if (_eventIndex == 0) {
-						setNextEvent(event);
-					} else {
-						getPreviousEvent();
-					}
-				}
-			}
-		}
-
 	}
 
 
@@ -835,7 +806,7 @@ public class ClasIoEventManager {
 		_currentEvent = prev.event;
 		_eventIndex = prev.index;
 		
-		ifPassSetEvent(_currentEvent, 1);
+		setEvent(_currentEvent);
 		return _currentEvent;
 	}
 
@@ -956,7 +927,7 @@ public class ClasIoEventManager {
 		}
 
 
-		setNextEvent(_currentEvent);
+		setEvent(_currentEvent);
 
 		return _currentEvent;
 	}
@@ -1223,7 +1194,7 @@ public class ClasIoEventManager {
 	}
 
 	/**
-	 * Get a sorted list of known banks from the dictinary
+	 * Get a sorted list of known banks from the dictionary
 	 * 
 	 * @return a sorted list of known banks
 	 */
@@ -1349,7 +1320,18 @@ public class ClasIoEventManager {
 			index = -(index + 1); // now the insertion point.
 		}
 		
-		return (int)(_numberMap[index] & 0xffffffffL);
+		int seqIndex = 1;
+		try {
+			seqIndex = (int)(_numberMap[index] & 0xffffffffL);
+		}
+		catch (Exception e ) {
+			System.err.println("Problem in getSequentialFromTrue: " + e.getMessage());
+			System.err.println("Requested true index: " + trueIndex);
+			System.err.println("Index from binary search: " + index);
+			System.err.println("Length of map array: " + _numberMap.length);
+		}
+		
+		return seqIndex;
 	}
 	
 	//run through the hipo file to make a mapping of sequential to true
@@ -1390,7 +1372,7 @@ public class ClasIoEventManager {
 
 			@Override
 			public void nextRunthroughEvent(DataEvent event) {
-				if (event != null) {
+				if ((event != null) && passFilters(event)) {
 					try {
 						int trueNum = getTrueEventNumber();
 						_numberMap[index] = ((long)trueNum << 32) + index + 1;
@@ -1407,8 +1389,26 @@ public class ClasIoEventManager {
 			}
 
 			@Override
-			public void runThroughtDone() {					
+			public void runThroughtDone() {		
+				
+				
+				int num = 50;
+				
+				System.err.println("Before sort");
+				for (int i = 0; i < num; i++) {
+					long v = _numberMap[i];
+					System.err.println("Seq: [" + (v & 0xffffffffL) + "]  true: " + (v >> 32));
+				}
+				
+				
 				Arrays.sort(_numberMap);
+				
+				System.err.println("\nAfter sort");
+				for (int i = 0; i < num; i++) {
+					long v = _numberMap[i];
+					System.err.println("Seq: [" + (v & 0xffffffffL) + "]  true: " + (v >> 32));
+				}
+
 				
 				int seqIndex = getSequentialFromTrue(gotoIndex);
 
