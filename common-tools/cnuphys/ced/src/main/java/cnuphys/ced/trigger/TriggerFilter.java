@@ -5,6 +5,7 @@ import org.jlab.io.base.DataEvent;
 import cnuphys.ced.alldata.ColumnData;
 import cnuphys.ced.alldata.DataManager;
 import cnuphys.ced.clasio.AEventFilter;
+import cnuphys.ced.clasio.ClasIoEventManager;
 
 public class TriggerFilter extends AEventFilter {
 
@@ -40,9 +41,9 @@ public class TriggerFilter extends AEventFilter {
 
 		int triggerData[] = DataManager.getInstance().getIntArray(event, _columnName);
 
-		if ((_columnName != null) && (triggerData.length > 0)) {
-			System.err.println("TRIG FILTER CHECKING BITS: " + triggerData[0]);
-		}
+//		if ((_columnName != null) && (triggerData.length > 0)) {
+//			System.err.println("TRIG FILTER CHECKING BITS: " + triggerData[0]);
+//		}
 
 		int triggerWord = triggerData[0];
 
@@ -64,6 +65,7 @@ public class TriggerFilter extends AEventFilter {
 	@Override
 	protected void toggleActiveState() {
 		super.toggleActiveState();
+		ClasIoEventManager.getInstance().resetIndexMap();
 		TriggerDialog.getInstance().getTriggerActiveCheckBox().setSelected(isActive());
 	}
 
@@ -120,6 +122,7 @@ public class TriggerFilter extends AEventFilter {
 		}
 
 		public Builder setActive(boolean active) {
+			ClasIoEventManager.getInstance().resetIndexMap();
 			_filter.setActive(active);
 			return this;
 		}

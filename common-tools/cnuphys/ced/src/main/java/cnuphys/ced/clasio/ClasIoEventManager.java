@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -80,14 +79,15 @@ public class ClasIoEventManager {
 	private SchemaFactory _schemaFactory;
 
 	// reset everytime hipo or evio file is opened
-	private int _eventIndex;
+	private int _currentEventIndex;
 	
 	
 	//a ringbuffer for previous events
-	private RingBuffer<PrevIndexedEvent> _previousEvents;
+	private RingBuffer<PrevIndexedEvent> _prevEventBuffer;
 	
 	//maps sequential event number to true event numbers
 	private long[] _numberMap;
+	private int _numberMapCount = 0;
 
 	// all the filters
 	private ArrayList<IEventFilter> _eventFilters = new ArrayList<>();
@@ -148,10 +148,14 @@ public class ClasIoEventManager {
 	// the current event
 	private DataEvent _currentEvent;
 	
+	// the previous event and index
+	private PrevIndexedEvent _prevIndexedEvent = new PrevIndexedEvent(null, -1);
+
+	
 	// private constructor for singleton
 	private ClasIoEventManager() {
 		_dataSource = new HipoDataSource();
-		_previousEvents = new RingBuffer<>(10);
+		_prevEventBuffer = new RingBuffer<>(10);
 	}
 
 	/**
@@ -164,25 +168,21 @@ public class ClasIoEventManager {
 	}
 
 	/**
-	 * Set the next event (after a getNextEvent)
-	 * 
-	 * @param event the new event
+	 * Set the displayed event to the current event
 	 */
-	private void setEvent(DataEvent event) {
+	private void setCurrentEvent() {
 		
-		_currentEvent = event;
-
-		if (event != null) {
+		if (_currentEvent != null) {
 
 			if (isAccumulating()) {
-				AccumulationManager.getInstance().newClasIoEvent(event);
-				notifyAllDefinedPlots(event);
+				AccumulationManager.getInstance().newClasIoEvent(_currentEvent);
+				notifyAllDefinedPlots(_currentEvent);
 
 				// notify special listeners
 				// the get events even if we are accumulating
 				// e.g., AddDCAccumView
 				for (IClasIoEventListener listener : _specialListeners) {
-					listener.newClasIoEvent(event);
+					listener.newClasIoEvent(_currentEvent);
 				}
 
 			} else {
@@ -191,6 +191,7 @@ public class ClasIoEventManager {
 				// notifyAllDefinedPlots(event);
 			}
 		}
+		
 	}
 
 	/**
@@ -273,15 +274,6 @@ public class ClasIoEventManager {
 		_accumulating = accumulating;
 	}
 
-	// /**
-	// * Get the current event file
-	// *
-	// * @return the current file
-	// */
-	// public File getCurrentEventFile() {
-	// return _currentEventFile;
-	// }
-
 	/**
 	 * Get the current event
 	 * 
@@ -291,16 +283,10 @@ public class ClasIoEventManager {
 		return _currentEvent;
 	}
 
-	// /**
-	// * Get the path of the current file
-	// *
-	// * @return the path of the current file
-	// */
-	// public String getCurrentEventFilePath() {
-	// return (_currentEventFile == null) ? "(none)" :
-	// _currentEventFile.getPath();
-	// }
-
+	/**
+	 * Get a description of the current event source.
+	 * @return a description of the current event source.
+	 */
 	public String getCurrentSourceDescription() {
 
 		if ((_sourceType == EventSourceType.HIPOFILE) && (_currentHipoFile != null)) {
@@ -339,9 +325,10 @@ public class ClasIoEventManager {
 
 		_runData.reset();
 		_currentEvent = null;
-		_eventIndex = 0;
-		_previousEvents.clear();
-		_numberMap = null;
+		_prevIndexedEvent.reset();
+		_currentEventIndex = 0;
+		_prevEventBuffer.clear();
+		resetIndexMap();
 		
 		// TODO check if I need to skip the first event
 
@@ -350,6 +337,14 @@ public class ClasIoEventManager {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Reset the index map
+	 */
+	public void resetIndexMap() {
+		_numberMap = null;
+		_numberMapCount = 0;
 	}
 
 	/**
@@ -377,9 +372,10 @@ public class ClasIoEventManager {
 
 		_runData.reset();
 		_currentEvent = null;
-		_eventIndex = 0;
-		_previousEvents.clear();
-		_numberMap = null;
+		_prevIndexedEvent.reset();
+		_currentEventIndex = 0;
+		_prevEventBuffer.clear();
+		resetIndexMap();
 
 		// TODO check if I need to skip the first event
 
@@ -403,9 +399,10 @@ public class ClasIoEventManager {
 		if (_etDialog.reason() == DialogUtilities.OK_RESPONSE) {
 			_runData.reset();
 			_currentEvent = null;
-			_eventIndex = 0;
-			_previousEvents.clear();
-			_numberMap = null;
+			_prevIndexedEvent.reset();
+			_currentEventIndex = 0;
+			_prevEventBuffer.clear();
+			resetIndexMap();
 
 			_dataSource = null;
 			_currentMachine = _etDialog.getMachine();
@@ -520,7 +517,7 @@ public class ClasIoEventManager {
 	 * @return the sequential number of the current event.
 	 */
 	public int getSequentialEventNumber() {
-		return _eventIndex;
+		return _currentEventIndex;
 	}
 	
 	/**
@@ -596,7 +593,7 @@ public class ClasIoEventManager {
 	 * @return <code>true</code> if any prev event control should be enabled.
 	 */
 	public boolean isPrevOK() {
-		return (_previousEvents.size() > 1);
+		return (_prevEventBuffer.size() > 0);
 	}
 
 	/**
@@ -697,38 +694,51 @@ public class ClasIoEventManager {
         return new HipoDataEvent(decodedEvent, _schemaFactory);
 	}
 
-
 	/**
 	 * Get the next event from the current  reader
 	 * @return the next event, if possible
 	 */
 	public DataEvent getNextEvent() {
+		return getNextEvent(true);
+	}
+
+	/**
+	 * Get the next event from the current  reader
+	 * @return the next event, if possible
+	 */
+	private DataEvent getNextEvent(boolean addToBuffer) {
 
 		EventSourceType estype = getEventSourceType();
-		boolean done = false; //for filters  
+		boolean done = false; //for filters 
+
+		if (addToBuffer) {
+			_prevIndexedEvent.set(_currentEvent, _currentEventIndex);
+		}
 
 		switch (estype) {
 
 		case HIPOFILE:
 		case EVIOFILE:
-			
-			if (_dataSource.hasEvent()) {
-				
-				while (!done) {
+
+			while (!done) {
+
+				if (_dataSource.hasEvent()) {
 					_currentEvent = _dataSource.getNextEvent();
-					
-					if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
-						_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
-					}
+				} else {
+					_currentEvent = null;
+				}
 
-					done = (_currentEvent == null) || passFilters(_currentEvent);
+				if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
+					_currentEvent = decodeEvioToHipo((EvioDataEvent) _currentEvent);
 				}
-				if (_currentEvent != null) {
-					_eventIndex++;
-				}
+
+				done = (_currentEvent == null) || passFilters(_currentEvent);
 			}
-			break;
+			if (_currentEvent != null) {
+				_currentEventIndex++;
+			}
 
+			break;
 
 		case ET:
 			int maxTries = 30;
@@ -756,7 +766,7 @@ public class ClasIoEventManager {
 				}
 
 				if (passFilters(_currentEvent)) {
-					_eventIndex++;
+					_currentEventIndex++;
 				} else {
 					_currentEvent = null;
 				}
@@ -768,7 +778,13 @@ public class ClasIoEventManager {
 
 		} // end switch
 
-		setEvent(_currentEvent);
+		if (addToBuffer) {
+			if ((_prevIndexedEvent.event != null) && (_prevIndexedEvent.event != _currentEvent)) {
+				_prevEventBuffer.add(new PrevIndexedEvent(_prevIndexedEvent.event, _prevIndexedEvent.index));
+			}
+		}
+
+		setCurrentEvent();
 		return _currentEvent;
 	}
 
@@ -798,15 +814,15 @@ public class ClasIoEventManager {
 	 */
 	public DataEvent getPreviousEvent() {
 		
-		PrevIndexedEvent prev = _previousEvents.previous();
+		PrevIndexedEvent prev = _prevEventBuffer.previous();
 		if ((prev == null) || (prev.event == _currentEvent)) {
 			return _currentEvent;
 		}
 		
 		_currentEvent = prev.event;
-		_eventIndex = prev.index;
+		_currentEventIndex = prev.index;
 		
-		setEvent(_currentEvent);
+		setCurrentEvent();
 		return _currentEvent;
 	}
 
@@ -817,6 +833,11 @@ public class ClasIoEventManager {
 		}
 
 		EventSourceType estype = getEventSourceType();
+		
+		if (_currentEvent != null) {
+			_prevEventBuffer.add(new PrevIndexedEvent(_currentEvent, _currentEventIndex));
+		}
+
 
 		switch (estype) {
 		case HIPOFILE:
@@ -824,10 +845,18 @@ public class ClasIoEventManager {
 			int numRemaining = getNumRemainingEvents();
 			n = Math.min(numRemaining, n);
 
-			for (int i = 0; i < n; i++) {
+			int stopIndex = _currentEventIndex + n;
+			boolean done = false;
+			
+			while (!done && (_currentEventIndex < stopIndex)) {
 				if (_dataSource.hasEvent()) {
-					_dataSource.getNextEvent();
-					_eventIndex++;
+					DataEvent event = _dataSource.getNextEvent();
+					if (passFilters(event)) {
+						_currentEventIndex++;
+					}
+				}
+				else {
+					done = true;
 				}
 			}
 
@@ -857,7 +886,7 @@ public class ClasIoEventManager {
 			break;
 
 		case EVIOFILE: // assume the event numbers are sequential
-			return gotoEvent(_eventIndex + (desiredTrueNumber - currentTrueEvent));
+			return gotoEvent(_currentEventIndex + (desiredTrueNumber - currentTrueEvent));
 
 		default:
 			return _currentEvent;
@@ -870,7 +899,7 @@ public class ClasIoEventManager {
 			runThroughEvents(desiredTrueNumber);
 		} else {
 
-			int saveIndex = _eventIndex;
+			int saveIndex = _currentEventIndex;
 			int seqIndex = getSequentialFromTrue(desiredTrueNumber);
 
 			if (seqIndex >= 0) {
@@ -889,8 +918,8 @@ public class ClasIoEventManager {
 	 * @return the event at the given number (if possible).
 	 */
 	public DataEvent gotoEvent(int eventNumber) {
-
-		if ((eventNumber < 1) || (eventNumber == _eventIndex) || (eventNumber > getEventCount())) {
+		
+		if ((eventNumber < 1) || (eventNumber == _currentEventIndex) || (eventNumber > getEventCount())) {
 			return _currentEvent;
 		}
 
@@ -898,15 +927,14 @@ public class ClasIoEventManager {
 		switch (estype) {
 
 		case HIPOFILE:
-			if (eventNumber > _eventIndex) {
-				int numToSkip = (eventNumber - _eventIndex) - 1;
+			if (eventNumber > _currentEventIndex) {
+				int numToSkip = (eventNumber - _currentEventIndex) - 1;
 				skipEvents(numToSkip);
-				getNextEvent();
+				getNextEvent(false);
 			} else {
 				_dataSource.close();
 				_currentEvent = null;
-				_eventIndex = 0;
-				_previousEvents.clear();
+				_currentEventIndex = 0;
 				_dataSource.open(_currentHipoFile);
 				gotoEvent(eventNumber);
 			}
@@ -914,11 +942,10 @@ public class ClasIoEventManager {
 			break;
 
 		case EVIOFILE:
-			_previousEvents.add(new PrevIndexedEvent(_currentEvent, _eventIndex));
 			_currentEvent = _dataSource.gotoEvent(eventNumber);
 			if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {		
 				_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
-				_eventIndex = eventNumber;
+				_currentEventIndex = eventNumber;
 			}
 			break;
 			
@@ -927,8 +954,7 @@ public class ClasIoEventManager {
 		}
 
 
-		setEvent(_currentEvent);
-
+		setCurrentEvent();
 		return _currentEvent;
 	}
 
@@ -957,8 +983,8 @@ public class ClasIoEventManager {
 		if (_dataSource != null) {
 			_dataSource.close();
 			_currentEvent = null;
-			_eventIndex = 0;
-			_previousEvents.clear();
+			_currentEventIndex = 0;
+			_prevEventBuffer.clear();
 		}
 
 		for (int index = 0; index < 3; index++) {
@@ -1224,6 +1250,7 @@ public class ClasIoEventManager {
 			for (IEventFilter filter : _eventFilters) {
 				if (filter.isActive()) {
 					boolean pass = filter.pass(event);
+					
 					if (!pass) {
 						return false;
 					}
@@ -1271,50 +1298,63 @@ public class ClasIoEventManager {
 
 	
 	/**
-	 * Minimal event getter for running through events as fast as possibe
+	 * Minimal event getter for running through events as fast as possible
 	 * @return the next event
 	 */
 	public DataEvent bareNextEvent() {
 
 		EventSourceType estype = getEventSourceType();
+		
+		boolean done = false;
 
 		switch (estype) {
 
 		case HIPOFILE:
-			if (_dataSource.hasEvent()) {
-				_currentEvent = _dataSource.getNextEvent();
-				_eventIndex++;
-			}
-			else {
-				return null;
-			}
-			break;
-
 		case EVIOFILE:
-			if (_dataSource.hasEvent()) {
-				_currentEvent = _dataSource.getNextEvent();
+
+			while (!done) {
+				if (_currentEventIndex >= getEventCount()) {
+					return null;
+				}
+
+				try {
+					if (_dataSource.hasEvent()) {
+						_currentEvent = _dataSource.getNextEvent();
+					} else {
+						_currentEvent = null;
+					}
+				} catch (Exception e) {
+					System.err.println("Exception in bareNextEvent: " + e.getMessage());
+					_currentEvent = null;
+				}
+
+				done = (_currentEvent == null) || passFilters(_currentEvent);
 
 				if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
-					_currentEvent = decodeEvioToHipo((EvioDataEvent)_currentEvent);
-					_eventIndex++;
+					_currentEvent = decodeEvioToHipo((EvioDataEvent) _currentEvent);
 				}
+
+				if (_currentEvent != null) {
+					_currentEventIndex++;
+				}
+
 				else {
 					return null;
 				}
 			}
-
-			break; // end case eviofile
+			break;
 
 		case ET:
 			break;
 		}
+		
 		
 		return _currentEvent;
 	}
 	
 	//the sequential index is in the lower 32 bits
 	private int getSequentialFromTrue(int trueIndex) {
-		int index =  Arrays.binarySearch(_numberMap, ((long)trueIndex << 32));
+		int index =  Arrays.binarySearch(_numberMap, 0, _numberMapCount-1, ((long)trueIndex << 32));
 		
 		if (index < 0) {
 			index = -(index + 1); // now the insertion point.
@@ -1337,7 +1377,7 @@ public class ClasIoEventManager {
 	//run through the hipo file to make a mapping of sequential to true
 	private void runThroughEvents(int gotoIndex) {
 		
-		int saveIndex = _eventIndex;
+		int saveIndex = _currentEventIndex;
 
 		EventSourceType estype = getEventSourceType();
 		switch (estype) {
@@ -1376,6 +1416,7 @@ public class ClasIoEventManager {
 					try {
 						int trueNum = getTrueEventNumber();
 						_numberMap[index] = ((long)trueNum << 32) + index + 1;
+						_numberMapCount++;
 						index++;
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -1401,7 +1442,7 @@ public class ClasIoEventManager {
 				}
 				
 				
-				Arrays.sort(_numberMap);
+				Arrays.sort(_numberMap, 0, _numberMapCount-1);
 				
 				System.err.println("\nAfter sort");
 				for (int i = 0; i < num; i++) {
@@ -1436,8 +1477,16 @@ public class ClasIoEventManager {
 		public int index;
 		
 		public PrevIndexedEvent(DataEvent event, int index) {
+			set(event, index);
+		}
+		
+		public void set(DataEvent event, int index) {
 			this.event = event;
-			this.index = index;
+			this.index = index;			
+		}
+		
+		public void reset() {
+			set(null, -1);
 		}
 	}
 

@@ -1,6 +1,6 @@
 package cnuphys.bCNU.util;
 
-import java.util.Vector;
+import java.util.LinkedList;
 
 /**
  * A standard FIFO ring buffer
@@ -8,25 +8,18 @@ import java.util.Vector;
  *
  * @param <T>
  */
-public class RingBuffer<T> extends Vector<T> {
+public class RingBuffer<T> extends LinkedList<T> {
 	
 	//capacity of the buffer
 	private int _capacity;
 	
-	//index of oldest entry
-	public int oldestIndex = -1;
-	
-	//index of the current entry
-	public int currentIndex;
-
 	/**
 	 * Create a RingBuffer
 	 * @param capacity the capacity of the buffer
 	 */
 	public RingBuffer(int capacity) {
-		super(capacity);
+		super();
 		_capacity = capacity;
-		reset();
 	}
 	
 	/**
@@ -35,43 +28,28 @@ public class RingBuffer<T> extends Vector<T> {
 	@Override
 	public void clear() {
 		super.clear();
-		reset();
-	}
-	
-	private void reset() {
-		currentIndex = 0;
-		oldestIndex = -1;		
 	}
 	
 	@Override
 	public boolean add(T elem) {
+		addFirst(elem);
+		return true;
+	}
+	
+	@Override
+	public void addFirst(T elem) {	
 		
 		//don't allow nulls
 		if (elem == null) {
-			return false;
+			return;
 		}
 		
-		
-		//this will add, placing the element in the 0 position, unless
-		//we are full, in which case it replaces at the 0 position
-		
+		//full? remove last
 		if (isFull()) {
-			removeElementAt(oldestIndex);
-			insertElementAt(elem, oldestIndex);
-			currentIndex = oldestIndex;
-			oldestIndex--;
-			
-			if (oldestIndex < 0) {
-				oldestIndex = _capacity-1;
-			}
-		}
-		else {
-			insertElementAt(elem, 0);
-			currentIndex = 0;
-			oldestIndex = (oldestIndex + 1) % _capacity;
+			removeLast();
 		}
 		
-		return true;
+		super.addFirst(elem);
 	}
 	
 	/**
@@ -93,11 +71,12 @@ public class RingBuffer<T> extends Vector<T> {
 			return null;
 		}
 		
-		if (size() == 1) {
-			return firstElement();
-		}
+		T elem = this.removeFirst();
 		
-		currentIndex = (currentIndex + 1) % size();
-		return get(currentIndex);
+		addLast(elem);
+		
+
+		return elem;
+		
 	}
 }

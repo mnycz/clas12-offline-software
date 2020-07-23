@@ -50,6 +50,7 @@ public class TriggerManager implements IClasIoEventListener {
 	 * @param active the active state of the trigger filter
 	 */
 	public void setFilterActive(boolean active) {
+		ClasIoEventManager.getInstance().resetIndexMap();
 		_filter.setActive(active);
 	}
 

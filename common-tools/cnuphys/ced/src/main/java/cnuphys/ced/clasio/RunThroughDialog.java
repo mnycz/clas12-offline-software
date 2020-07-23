@@ -149,6 +149,8 @@ public class RunThroughDialog extends JDialog {
 			if (totalCount < 1) {
 				_reason = DialogUtilities.CANCEL_RESPONSE;
 			}
+			
+			_eventManager.gotoEvent(1);
 
 			Runnable runnable = new Runnable() {
 
@@ -156,17 +158,22 @@ public class RunThroughDialog extends JDialog {
 				public void run() {
 
 					int modCount = Math.max(2, totalCount / 100);
+					boolean nullEvent = false;
 
 					int count = 0;
-					while (isVisible() && (count < totalCount)) {
+					while (isVisible() && !nullEvent && _eventManager.hasEvent()) {
 						count++;
-						
-						DataEvent event = _eventManager.bareNextEvent();
-						_rthrough.nextRunthroughEvent(event);
 
-						if (((count + 1) % modCount) == 0) {
-							int value = (int) ((100.0 * count) / totalCount);
-							_progressBar.setValue(value);
+						DataEvent event = _eventManager.bareNextEvent();
+						nullEvent = (event == null);
+
+						if (!nullEvent) {
+							_rthrough.nextRunthroughEvent(event);
+
+							if (((count + 1) % modCount) == 0) {
+								int value = (int) ((100.0 * count) / totalCount);
+								_progressBar.setValue(value);
+							}
 						}
 					}
 

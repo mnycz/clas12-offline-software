@@ -65,8 +65,6 @@ public class ClasIoBankDialog extends JDialog implements ItemListener {
 		setLocation(x, y);
 		count++;
 
-		// BankEntryMasks mask = getMask(_bankName);
-
 		readVisibility();
 		pack();
 	}
@@ -97,9 +95,6 @@ public class ClasIoBankDialog extends JDialog implements ItemListener {
 				val = Bits.setBitAtLocation(val, bit);
 			}
 		}
-
-		// System.out.println("bankName = [" + _bankName + "] val out = " +
-		// Long.toBinaryString(val));
 
 		PropertiesManager.getInstance().putAndWrite(_bankName, "" + val);
 	}
@@ -199,8 +194,6 @@ public class ClasIoBankDialog extends JDialog implements ItemListener {
 				_checkboxPanel.add(_cbarray[i]);
 			}
 
-			// cache the checbox array
-			// _visHash.put(_bankName, cbarray);
 		}
 
 		add(_checkboxPanel, BorderLayout.SOUTH);
@@ -225,13 +218,11 @@ public class ClasIoBankDialog extends JDialog implements ItemListener {
 			if (cb.isSelected()) {
 				column.setMinWidth(20);
 				column.setMaxWidth(500);
-//				column.setWidth(BankDataTable.COLWIDTH);
 				column.setPreferredWidth(BankDataTable.COLWIDTH);
 				column.setResizable(true);
 			} else {
 				column.setMinWidth(0);
 				column.setMaxWidth(0);
-//				column.setWidth(0);
 				column.setPreferredWidth(0);
 				column.setResizable(false);
 			}

@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import org.jlab.io.base.DataEvent;
 
 import cnuphys.bCNU.component.ActionLabel;
+import cnuphys.bCNU.view.ViewManager;
 import cnuphys.ced.clasio.table.NodeTable;
 import cnuphys.ced.event.AccumulationManager;
 import cnuphys.ced.event.IAccumulationListener;
@@ -37,7 +38,7 @@ public class ClasIoPresentBankPanel extends JPanel
 	// the node table
 	private NodeTable _nodeTable;
 
-	private Hashtable<String, ClasIoBankDialog> _dataBanks = new Hashtable<>(193);
+	private Hashtable<String, ClasIoBankView> _dataBanks = new Hashtable<>(193);
 
 	/**
 	 * This panel holds all the known banks in a grid of buttons. Banks present will
@@ -79,12 +80,12 @@ public class ClasIoPresentBankPanel extends JPanel
 				boolean inCurrent = _eventManager.isBankInCurrentEvent(s);
 				alabel.setEnabled(inCurrent);
 
-				ClasIoBankDialog bdlog = _dataBanks.get(s);
-				if (bdlog != null) {
+				ClasIoBankView bankView = _dataBanks.get(s);
+				if (bankView != null) {
 					if (inCurrent) {
-						bdlog.update();
+						bankView.update();
 					} else {
-						bdlog.clear();
+						bankView.clear();
 					}
 				}
 			}
@@ -106,16 +107,20 @@ public class ClasIoPresentBankPanel extends JPanel
 					if (clickCount == 1) {
 						_nodeTable.makeNameVisible(label);
 					} else if (clickCount == 2) {
-						ClasIoBankDialog bdlog = _dataBanks.get(label);
+						ClasIoBankView bankView = _dataBanks.get(label);
 
-						if (bdlog == null) {
-							bdlog = new ClasIoBankDialog(label);
-							_dataBanks.put(label, bdlog);
+						if (bankView == null) {
+							if (_dataBanks.isEmpty()) {
+								ViewManager.getInstance().getViewMenu().addSeparator();
+							}
+							
+							bankView = new ClasIoBankView(label);
+							_dataBanks.put(label, bankView);
 						}
-						bdlog.update();
+						bankView.update();
 
-						if (!bdlog.isVisible()) {
-							bdlog.setVisible(true);
+						if (!bankView.isVisible()) {
+							bankView.setVisible(true);
 						}
 					}
 				}
