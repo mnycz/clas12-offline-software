@@ -6,6 +6,7 @@
 package org.jlab.clas.tracking.kalmanfilter.helical;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.jlab.clas.swimtools.Swim;
 import org.jlab.clas.tracking.kalmanfilter.Surface;
@@ -14,6 +15,7 @@ import org.jlab.clas.tracking.kalmanfilter.helical.StateVecs.StateVec;
 import org.jlab.clas.tracking.objects.Strip;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
+import org.jlab.geom.prim.Vector3D;
 
 /**
  *
@@ -25,6 +27,7 @@ public class MeasVecs {
     public List<MeasVec> measurements = new ArrayList<MeasVec>();
 
     public void setMeasVecs(List<Surface> measSurfaces) {
+        Collections.sort(measSurfaces);
         for(int i = 0; i < measSurfaces.size(); i++) {
             MeasVec mvec = new MeasVec();
             mvec.k = i + 1;
@@ -33,6 +36,7 @@ public class MeasVecs {
             mvec.surface = measSurfaces.get(i);
             if(mvec.surface.getError()!=0)
                 mvec.error = mvec.surface.getError();
+            
             measurements.add(mvec);
         }
     }
@@ -53,7 +57,7 @@ public class MeasVecs {
         }
         if( this.measurements.get(stateVec.k).surface.type == Type.CYLINDERWITHARC) {
             double phia = this.measurements.get(stateVec.k).surface.arc.theta();
-            value = value = Math.atan2(stateVec.y, stateVec.x)-phia;
+            value = Math.atan2(stateVec.y, stateVec.x)-phia;
             System.err.println("ARC MEAS. NOT FULLY IMPLEMENTED!!!!!!");
         }
         if( this.measurements.get(stateVec.k).surface.type == Type.PLANEWITHLINE || 
@@ -67,6 +71,10 @@ public class MeasVecs {
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.XYZ) {
                 Line3D l = new Line3D(this.measurements.get(stateVec.k).surface.lineEndPoint1, 
                 this.measurements.get(stateVec.k).surface.lineEndPoint2);
+                Vector3D toP = new Vector3D(stateVec.x, stateVec.y, stateVec.z).
+                        sub(this.measurements.get(stateVec.k).surface.lineEndPoint1.toVector3D());
+                Vector3D dir = this.measurements.get(stateVec.k).surface.lineEndPoint2.toVector3D().
+                        sub(this.measurements.get(stateVec.k).surface.lineEndPoint1.toVector3D()).asUnit();
                 value = l.distance(new Point3D(stateVec.x, stateVec.y, stateVec.z)).length();
             }
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.Z) {
@@ -123,7 +131,7 @@ public class MeasVecs {
 
     private double[] delta_d_a = new double[] {1, Math.toRadians(0.25),  0.01, 1, 0.01};
     private double[] Hval = new double[5];
-    public double[] H(StateVecs.StateVec stateVec, StateVecs sv, MeasVec mv, Swim swimmer) {
+    public double[] H(StateVecs.StateVec stateVec, StateVecs sv, MeasVec mv, Swim swimmer, int dir) {
         StateVecs.StateVec SVplus = null;// = new StateVec(stateVec.k);
         StateVecs.StateVec SVminus = null;// = new StateVec(stateVec.k);
         for(int i = 0; i < getHval().length; i++)

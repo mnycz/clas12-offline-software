@@ -58,7 +58,7 @@ public class Helix {
         _turningSign = q;
         _B = B;
         double pt = Math.sqrt(px0*px0 + py0*py0);
-        _R = pt/(B*Constants.LIGHTVEL);
+        _R = pt/(B*Constants.getLIGHTVEL());
         _phi0 = Math.atan2(py0, px0);
         _tanL = pz0/pt;
         _z0 = z0;
@@ -81,7 +81,7 @@ public class Helix {
     }
     
     public double getPt(double B) {
-        return Constants.LIGHTVEL * _R * B;
+        return Constants.getLIGHTVEL() * _R * B;
     }
     public double getX(double l){
         return getXc() + getTurningSign()*_R*Math.sin(getPhi(l));
@@ -216,7 +216,7 @@ public class Helix {
         _xd = -getD0()*Math.sin(getPhi0());
         _yd =  getD0()*Math.cos(getPhi0());
         setXc(-(_turningSign*_R + _d0)*Math.sin(getPhi0()));
-        setYc((getTurningSign()*_R + getD0())*Math.cos(getPhi0()));
+        setYc((_turningSign*_R + _d0)*Math.cos(getPhi0()));
         setX(getX(tFlightLen));
         setY(getY(tFlightLen));
         setZ(getZ(tFlightLen));

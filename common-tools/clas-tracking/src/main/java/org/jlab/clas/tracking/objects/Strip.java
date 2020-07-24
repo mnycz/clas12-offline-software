@@ -228,6 +228,9 @@ public class Strip extends TObject {
         super(id, x1, y1, z1);
         Line3D l = new Line3D(x1,y1,z1,x2,y2,z2);
         Vector3D dir = l.direction().asUnit();
+        _x      = x1;
+        _y      = y1;
+        _z      = z1;
         _ux     = dir.x();
         _uy     = dir.y();
         _uz     = dir.z();
@@ -238,6 +241,9 @@ public class Strip extends TObject {
     public Strip(int id, double centroid, double x, double y, double z, 
             double ux, double uy, double uz, double length) {
         super(id, x, y, z);
+        _x      = x;
+        _y      = y;
+        _z      = z;
         _ux     = ux;
         _uy     = uy;
         _uz     = uz;
@@ -256,6 +262,7 @@ public class Strip extends TObject {
     public Strip(int id, double centroid, double z) {
         super(id, -999, -999, z);
         _c = centroid;
+        _z = z;
         type = Type.Z;
     }
     @Override

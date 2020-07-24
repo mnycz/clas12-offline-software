@@ -15,7 +15,7 @@ import org.jlab.geom.prim.Cylindrical3D;
  *
  * @author ziegler
  */
-public class Surface {
+public class Surface implements Comparable<Surface> {
     
     public Type type;
     public Plane3D plane;
@@ -121,6 +121,15 @@ public class Surface {
         }
         if(endPoint2 == null) {
             lineEndPoint2 = arc.end();
+        }
+    }
+
+    @Override
+    public int compareTo(Surface o) {
+       if (this.layer > o.layer) {
+            return 1;
+        } else {
+            return -1;
         }
     }
 
