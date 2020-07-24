@@ -462,8 +462,6 @@ public class DCGeometry {
 
 		Point2D.Double hex[] = GeometryManager.allocate(6);
 
-		boolean useOldGeo = Ced.useOldDCGeo();
-
 		int firstWire = 1;
 		while ((firstWire < 112) && !getHexagon(superLayer, layer, firstWire, plane, hex, null)) {
 			firstWire++;
@@ -477,69 +475,35 @@ public class DCGeometry {
 		 * 3 --> 2 4 --> 1 5 --> 0
 		 */
 
-		if (useOldGeo) {
-			assignFromHex(wp, 0, hex, 0);
-			assignFromHex(wp, 11, hex, 3);
-			assignFromHex(wp, 12, hex, 4);
-			assignFromHex(wp, 13, hex, 5);
-		} else {
-			assignFromHex(wp, 0, hex, 5);
-			assignFromHex(wp, 11, hex, 2);
-			assignFromHex(wp, 12, hex, 1);
-			assignFromHex(wp, 13, hex, 0);
-		}
-
-//		if ((superLayer == 1) && (layer == 1)) {
-//		for (int i = 0; i < 6; i++)
-//		System.err.println(String.format("hex[%d] = [%-6.1f, %-6.1f]", i, hex[i].x, hex[i].y));
-//	}
+		assignFromHex(wp, 0, hex, 5);
+		assignFromHex(wp, 11, hex, 2);
+		assignFromHex(wp, 12, hex, 1);
+		assignFromHex(wp, 13, hex, 0);
 
 		int sindex = Math.max(13, firstWire + 8);
 		getHexagon(superLayer, layer, sindex, plane, hex, null);
 
-		if (useOldGeo) {
-			assignFromHex(wp, 1, hex, 0);
-			assignFromHex(wp, 10, hex, 3);
-		} else {
-			assignFromHex(wp, 1, hex, 5);
-			assignFromHex(wp, 10, hex, 2);
-		}
+		assignFromHex(wp, 1, hex, 5);
+		assignFromHex(wp, 10, hex, 2);
 
 		sindex = Math.max(57, sindex + 12);
 		getHexagon(superLayer, layer, 57, plane, hex, null);
 
-		if (useOldGeo) {
-			assignFromHex(wp, 2, hex, 0);
-			assignFromHex(wp, 9, hex, 3);
-		} else {
-			assignFromHex(wp, 2, hex, 5);
-			assignFromHex(wp, 9, hex, 2);
-		}
+		assignFromHex(wp, 2, hex, 5);
+		assignFromHex(wp, 9, hex, 2);
 
 		sindex = Math.max(99, sindex + 29);
 		getHexagon(superLayer, layer, 99, plane, hex, null);
 
-		if (useOldGeo) {
-			assignFromHex(wp, 3, hex, 0);
-			assignFromHex(wp, 8, hex, 3);
-		} else {
-			assignFromHex(wp, 3, hex, 5);
-			assignFromHex(wp, 8, hex, 2);
-		}
+		assignFromHex(wp, 3, hex, 5);
+		assignFromHex(wp, 8, hex, 2);
 
 		getHexagon(superLayer, layer, 112, plane, hex, null);
 
-		if (useOldGeo) {
-			assignFromHex(wp, 4, hex, 0);
-			assignFromHex(wp, 5, hex, 1);
-			assignFromHex(wp, 6, hex, 2);
-			assignFromHex(wp, 7, hex, 3);
-		} else {
-			assignFromHex(wp, 4, hex, 5);
-			assignFromHex(wp, 5, hex, 4);
-			assignFromHex(wp, 6, hex, 3);
-			assignFromHex(wp, 7, hex, 2);
-		}
+		assignFromHex(wp, 4, hex, 5);
+		assignFromHex(wp, 5, hex, 4);
+		assignFromHex(wp, 6, hex, 3);
+		assignFromHex(wp, 7, hex, 2);
 	}
 
 	/**

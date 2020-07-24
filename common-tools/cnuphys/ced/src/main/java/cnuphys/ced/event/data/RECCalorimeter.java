@@ -19,21 +19,28 @@ public class RECCalorimeter extends DetectorData {
 	//the singleton
 	private static RECCalorimeter _instance;
 	
-	//the number of rows in the current 
+	/** the number of rows in the current bank */
 	public int count;
 	
+	/** 1 based sector [1..6] */
 	public byte sector[];
 	
+	/** (1-3) PCAL (4-6) ECAL inner (7-9) ECAL outer */
 	public byte layer[];
 	
+	/** Energy in GeV */
 	public float energy[];
 	
+	/** x coordinate in (CLAS 3D system) in  cm */
 	public float x[];
 	
+	/** coordinate in (CLAS 3D system) in cm */
 	public float y[];
 	
+	/** z coordinate in (CLAS 3D system) in cm */
 	public float z[];
 	
+	/** Lund particle ids */
 	public int pid[];
 		
 	private short pindex[];
@@ -59,6 +66,7 @@ public class RECCalorimeter extends DetectorData {
 		update(event);
 	}
 
+	//nullify the arrays
 	private void nullify() {
 		count = 0;
 		sector = null;
@@ -70,6 +78,7 @@ public class RECCalorimeter extends DetectorData {
 		pid = null;		
 	}
 
+	//update due to new event arriving
 	private void update(DataEvent event) {
 		
 		if (event == null) {
@@ -171,6 +180,11 @@ public class RECCalorimeter extends DetectorData {
 		return pid[pindex[index]];
 	}
 	
+	/**
+	 * Get the LundId object 
+	 * @param index the index (row)
+	 * @return the LindId if available, or <code>null</code>
+	 */
 	public LundId getLundId(int index) {
 		int pid = getPID(index);
 		if (pid == NOPID) {

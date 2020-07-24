@@ -125,16 +125,13 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	private static String _geoVariation = "default";
 	
 	//ced release 
-	private static final String _release = "build 1.4.61";
+	private static final String _release = "build 1.4.62";
 
 	// used for one time inits
 	private int _firstTime = 0;
 
 	// for the event count
 	private JMenuItem _eventCountLabel;
-
-	// use old DC Geo
-	private static boolean _useOldDCGeo = false;
 
 	// using 3D?
 	private static boolean _use3D = true;
@@ -1112,14 +1109,6 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		return _use3D;
 	}
 
-	/**
-	 * Check whether we old DC Geometry
-	 * 
-	 * @return <code>true</code> if we use OldDCGeo
-	 */
-	public static boolean useOldDCGeo() {
-		return _useOldDCGeo;
-	}
 
 	/**
 	 * Get the parent frame
@@ -1285,9 +1274,6 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 				else if (arg[i].contains("NO3D")) {
 					_use3D = false;
 					System.err.println("Not using 3D");
-				} else if (arg[i].contains("OLDDCGEO")) {
-					_useOldDCGeo = true;
-					System.err.println("Using Old DC Geometry");
 				} 
 
 				i++;

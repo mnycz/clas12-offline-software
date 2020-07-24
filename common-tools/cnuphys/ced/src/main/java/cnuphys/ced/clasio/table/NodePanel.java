@@ -226,7 +226,7 @@ public class NodePanel extends JPanel
 						if (trueNum > -1) {
 							try {
 								int enumber = Integer.parseInt(trueEventNumberInput.getText());
-								_eventManager.gotoEvent(_eventManager.getSequentialEventNumber() + (enumber - trueNum));
+								_eventManager.gotoTrueEvent(enumber);
 							} catch (Exception e) {
 								seqEventNumberInput.setText("");
 							}
