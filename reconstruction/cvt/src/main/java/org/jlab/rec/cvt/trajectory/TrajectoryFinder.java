@@ -559,10 +559,10 @@ public class TrajectoryFinder {
             if (c.get_Sector() != sector) {
                 value = false;		// same sector 
             } 
-            double deltaXt = Math.sqrt((stVec.x() - c.get_Point().x()) * (stVec.x() - c.get_Point().x()) + (stVec.y() - c.get_Point().y()) * (stVec.y() - c.get_Point().y()));
-            if (deltaXt > org.jlab.rec.cvt.svt.Constants.ACTIVESENWIDTH / 2) {
-                value = false; // within 1/2 module width
-            }
+//            double deltaXt = Math.sqrt((stVec.x() - c.get_Point().x()) * (stVec.x() - c.get_Point().x()) + (stVec.y() - c.get_Point().y()) * (stVec.y() - c.get_Point().y()));
+//            if (deltaXt > org.jlab.rec.cvt.svt.Constants.ACTIVESENWIDTH / 2) {
+//                value = false; // within 1/2 module width
+//            }
             
         }
 
