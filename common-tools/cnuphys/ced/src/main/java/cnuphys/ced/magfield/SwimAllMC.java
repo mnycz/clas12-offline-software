@@ -1,5 +1,6 @@
 package cnuphys.ced.magfield;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 import org.jlab.io.base.DataEvent;
@@ -7,10 +8,13 @@ import org.jlab.io.base.DataEvent;
 import cnuphys.adaptiveSwim.AdaptiveSwimException;
 import cnuphys.adaptiveSwim.AdaptiveSwimResult;
 import cnuphys.adaptiveSwim.AdaptiveSwimmer;
+import cnuphys.adaptiveSwim.test.InitialValues;
 import cnuphys.bCNU.log.Log;
 import cnuphys.bCNU.magneticfield.swim.ISwimAll;
 import cnuphys.ced.alldata.DataManager;
 import cnuphys.ced.clasio.ClasIoEventManager;
+import cnuphys.ced.clasio.ClasIoMonteCarloView;
+import cnuphys.lund.GeneratedParticleRecord;
 import cnuphys.lund.LundId;
 import cnuphys.lund.LundSupport;
 import cnuphys.lund.TrajectoryRowData;
@@ -35,75 +39,8 @@ public class SwimAllMC implements ISwimAll {
 	 * @return a vector of TrajectoryRowData objects.
 	 */
 	@Override
-	public Vector<TrajectoryRowData> getRowData() {
-
-		DataEvent event = ClasIoEventManager.getInstance().getCurrentEvent();
-		if (event == null) {
-			return null;
-		}
-
-		boolean hasBank = event.hasBank("MC::Particle");
-		if (!hasBank) {
-			return null;
-		}
-
-		DataManager dm = DataManager.getInstance();
-
-		int pid[] = dm.getIntArray(event, "MC::Particle.pid");
-
-		int len = (pid == null) ? 0 : pid.length;
-		if (len < 1) {
-			return null;
-		}
-
-		float px[] = dm.getFloatArray(event, "MC::Particle.px");
-		if (px == null) {
-			return null;
-		}
-		float py[] = dm.getFloatArray(event, "MC::Particle.py");
-		float pz[] = dm.getFloatArray(event, "MC::Particle.pz");
-		float vx[] = dm.getFloatArray(event, "MC::Particle.vx");
-		float vy[] = dm.getFloatArray(event, "MC::Particle.vy");
-		float vz[] = dm.getFloatArray(event, "MC::Particle.vz");
-
-		// According to email from Raffella of 11/14/18 the units in MC::Particle
-		// are now cm and GeV.
-
-		Vector<TrajectoryRowData> v = new Vector<TrajectoryRowData>(len);
-
-		try {
-
-			for (int index = 0; index < len; index++) {
-				LundId lid = LundSupport.getInstance().get(pid[index]);
-
-				if (lid != null) {
-					double pxo = 1000 * px[index]; // Convert GeV to MeV
-					double pyo = 1000 * py[index];
-					double pzo = 1000 * pz[index];
-					double p = Math.sqrt(pxo * pxo + pyo * pyo + pzo * pzo);
-					double theta = Math.toDegrees(Math.acos(pzo / p));
-					// filter out 0 theta
-					if (theta > 0.01) {
-
-						double x = vx[index]; // keep in cm
-						double y = vy[index];
-						double z = vz[index];
-
-						double phi = Math.toDegrees(Math.atan2(pyo, pxo));
-
-						v.add(new TrajectoryRowData(index, lid, x, y, z, p, theta, phi, 0, "MC::Particle"));
-					}
-				}
-
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			Log.getInstance().error("Exception while load MC records into table");
-			Log.getInstance().exception(e);
-			return null;
-		}
-
-		return v;
+	public Vector<TrajectoryRowData> getRowData() {	
+		return ClasIoMonteCarloView.getInstance().getRowData();
 	}
 
 	/**
@@ -114,135 +51,65 @@ public class SwimAllMC implements ISwimAll {
 	@Override
 	public void swimAll() {
 
-		// System.err.println("SWIM ALL MC");
 		if (ClasIoEventManager.getInstance().isAccumulating()) {
 			return;
 		}
 
 		Swimming.clearMCTrajectories(); // clear all existing trajectories
 
-		DataEvent event = ClasIoEventManager.getInstance().getCurrentEvent();
-		if (event == null) {
+		Vector<TrajectoryRowData> data = getRowData();
+		if (data == null) {
 			return;
 		}
-
-		boolean hasBank = event.hasBank("MC::Particle");
-		if (!hasBank) {
-			return;
-		}
-
-//		if (ClasIoEventManager.getInstance().isSourceEvioFile()) {
-//			System.err.println("not swimming for evio file");
-//			return;
-//		}
-
-		DataManager dm = DataManager.getInstance();
-
-		int pid[] = dm.getIntArray(event, "MC::Particle.pid");
-
-		int len = (pid == null) ? 0 : pid.length;
-		if (len < 1) {
-			return;
-		}
-
-		float px[] = dm.getFloatArray(event, "MC::Particle.px");
-		if (px == null) {
-			return;
-		}
-
-		// According to email from Raffella of 11/14/18 the units in MC::Particle
-		// are now cm and GeV.
-
-		float py[] = dm.getFloatArray(event, "MC::Particle.py"); // GeV
-		float pz[] = dm.getFloatArray(event, "MC::Particle.pz");
-		float vx[] = dm.getFloatArray(event, "MC::Particle.vx"); // cm
-		float vy[] = dm.getFloatArray(event, "MC::Particle.vy");
-		float vz[] = dm.getFloatArray(event, "MC::Particle.vz");
-
-		try {
-
-			for (int index = 0; index < pid.length; index++) {
-				int pdgid = pid[index];
-				LundId lid = LundSupport.getInstance().get(pdgid);
-
-				if (lid == null) {
-					System.err.println("null LundId object for id: " + pdgid);
-				} else {
-					if (lid != null) {
-						double pxo = px[index]; // in Gev/c
-						double pyo = py[index];
-						double pzo = pz[index];
-						double p = Math.sqrt(pxo * pxo + pyo * pyo + pzo * pzo);
-						double theta = Math.toDegrees(Math.acos(pzo / p));
-						// filter out 0 theta
-						if (theta > 0.01) {
-
-							// covert momenta to GeV/c from MeV/c
-							// note vertices are in cm must convert to meters
-							double x = vx[index] / 100.0;
-							double y = vy[index] / 100.0;
-							double z = vz[index] / 100.0;
-
-							swim(lid, pxo, pyo, pzo, x, y, z);
-						}
-					} // lid != null
-				} // else
-
-			}
-		} catch (Exception e) {
-			Log.getInstance().error("Exception while swimming all MC particles");
-			Log.getInstance().exception(e);
-			return;
-		}
-
-	}
-
-	/**
-	 * 
-	 * @param lid the lund id
-	 * @param px  x component of momentum in GeV/c
-	 * @param py  y component of momentum in GeV/c
-	 * @param pz  z component of momentum in GeV/c
-	 * @param x   x vertex coordinate in meters
-	 * @param y   y vertex coordinate in meters
-	 * @param z   z vertex coordinate in meters
-	 */
-	private void swim(LundId lid, double px, double py, double pz, double x, double y, double z) {
 		
-		
-		double p = Math.sqrt(px * px + py * py + pz * pz);
-		double theta = Math.toDegrees(Math.acos(pz / p));
-		double phi = Math.toDegrees(Math.atan2(py, px));
-
 		AdaptiveSwimmer swimmer = new AdaptiveSwimmer();
 		double stepSize = 1.0e-3;
-		AdaptiveSwimResult result = new AdaptiveSwimResult(true);
 		double eps = 1.0e-6;
-		try {
-			swimmer.swim(lid.getCharge(), x, y, z, p, theta, phi, PATHMAX, stepSize, eps, result);
-			result.getTrajectory().setLundId(lid);
-			Swimming.addMCTrajectory(result.getTrajectory());
-		} catch (AdaptiveSwimException e) {
-			e.printStackTrace();
-		}
 		
+		//used to avoid swimming duplicates
+		ArrayList<String> swam = new ArrayList<>();
 		
+		for (TrajectoryRowData trd : data) {
+			LundId lid = LundSupport.getInstance().get(trd.getId());
+			
+			double sf = PATHMAX;
+						
+			if (lid != null) {
+				try {
+					AdaptiveSwimResult result = new AdaptiveSwimResult(true);
+					
+					String summaryStr = String.format("%s %10.6f  %10.6f  %10.6f  %10.6f  %10.6f  %10.6f", 
+							lid.getName(), trd.getXo(), trd.getYo(), trd.getZo(),
+							trd.getMomentum(), trd.getTheta(), trd.getPhi());
+					
+					if (swam.contains(summaryStr)) {
+			//			System.err.println("Skipping duplicate swim, probably MC::Particle and MC::Lund [" + lid.getName() + "]");
+						continue;
+					}
+					
+					swam.add(summaryStr);
+					
+					swimmer.swim(lid.getCharge(), trd.getXo() / 100, trd.getYo() / 100, trd.getZo() / 100,
+							trd.getMomentum() / 1000, trd.getTheta(), trd.getPhi(), sf, stepSize, eps, result);
+					result.getTrajectory().setLundId(lid);
+					result.getTrajectory().setSource(trd.getSource());
+					
+					if (result.getTrajectory().getGeneratedParticleRecord() == null) {
+						InitialValues iv = result.getInitialValues();
+						GeneratedParticleRecord genPart =  new GeneratedParticleRecord(iv.charge,
+								iv.xo, iv.yo, iv.zo, iv.p, iv.theta, iv.phi);
+						result.getTrajectory().setGeneratedParticleRecord(genPart);
+					}
+					
+					Swimming.addMCTrajectory(result.getTrajectory());
+				} catch (AdaptiveSwimException e) {
+					e.printStackTrace();
+				}
+				
+			}
+		} //for trd
 		
-//		Swimmer swimmer = new Swimmer();
-//		double stepSize = 5e-4; // m
-//		DefaultSwimStopper stopper = new DefaultSwimStopper(RMAX);
-//
-//		// System.err.println("swim vertex: (" + x + ", " + y + ", "
-//		// + z + ")");
-//		SwimTrajectory traj;
-//		try {
-//			traj = swimmer.swim(lid.getCharge(), x, y, z, p, theta, phi, stopper, 0, PATHMAX, stepSize,
-//					Swimmer.CLAS_Tolerance, null);
-//			traj.setLundId(lid);
-//			Swimming.addMCTrajectory(traj);
-//		} catch (RungeKuttaException e) {
-//			Log.getInstance().error("Exception while swimming all MC particles");
-//			Log.getInstance().exception(e);
-//		}
+
+
 	}
 }

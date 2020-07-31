@@ -1010,7 +1010,13 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 			feedbackStrings.add("$orange red$" + "sequential event " + _eventManager.getSequentialEventNumber());
 			int trueEventNum = _eventManager.getTrueEventNumber();
 			feedbackStrings.add("$orange red$" + "true event " + ((trueEventNum < 0) ? "n/a" : trueEventNum ));
-			feedbackStrings.add("$orange red$" + _eventManager.getCurrentSourceDescription());
+			
+			String source = _eventManager.getCurrentSourceDescription();
+			
+			if ((source != null) && (source.length() > 31)) {
+				source = source.substring(0, 30) + "...";
+			}
+			feedbackStrings.add("$orange red$" + source);
 		}
 
 		// get the sector

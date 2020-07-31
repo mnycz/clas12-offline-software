@@ -17,12 +17,21 @@ public class LundSupport {
 	private static final String SUPERMINUS = "\u207B";
 	private static final String SUPERZERO = "\u2070";
 	private static final String SUBZERO = "\u2080";
+	
+	private static final String BIG_DELTA = "\u0394";
+	private static final String BIG_SIGMA = "\u03A3";
 
 	private static final String BIG_LAMBDA = "\u039B";
 	private static final String SMALL_GAMMA = "\u03B3";
 	private static final String SMALL_MU = "\u03BC";
 	private static final String SMALL_PI = "\u03C0";
 	private static final String SMALL_RHO = "\u03C1";
+	
+	private static final String SMALL_ETA = "\u03B7";
+	private static final String SMALL_OMEGA = "\u03C9";
+	
+	private static final String OVERLINE = "\u0305";
+	
 
 	private static Color brown = X11Colors.getX11Color("Brown");
 	private static Color goldenrod = X11Colors.getX11Color("Dark Goldenrod");
@@ -227,10 +236,10 @@ public class LundSupport {
 		_lundIds.add(new LundId("Meson", "pi(2S)0", 20111, 1.30, 0, 0));
 		_lundIds.add(new LundId("Meson", "pi(2S)+", 20211, 1.30, 3, 0));
 		_lundIds.add(new LundId("Meson", "pi(2S)-", -20211, 1.30, -3, 0));
-		_lundIds.add(new LundId("Meson", "eta", 221, 0.547853, 0, 0));
+		_lundIds.add(new LundId("Meson", SMALL_ETA, 221, 0.547853, 0, 0));
 		_lundIds.add(new LundId("Meson", "eta(2S)", 20221, 1.297, 0, 0));
 		_lundIds.add(new LundId("Meson", "eta'", 331, 0.95766, 0, 0));
-		_lundIds.add(new LundId("Meson", "rho0", 113, 0.7685, 0, 2));
+		_lundIds.add(new LundId("Meson", SMALL_RHO + SUPERZERO, 113, 0.7685, 0, 2));
 		_lundIds.add(new LundId("Meson", SMALL_RHO + SUPERPLUS, 213, 0.7685, 3, 2));
 		_lundIds.add(new LundId("Meson", SMALL_RHO + SUPERMINUS, -213, 0.7685, -3, 2));
 		_lundIds.add(new LundId("Meson", "rho(2S)0", 30113, 1.46, 0, 2));
@@ -239,7 +248,7 @@ public class LundSupport {
 		_lundIds.add(new LundId("Meson", "rho(3S)0", 40113, 1.70, 0, 2));
 		_lundIds.add(new LundId("Meson", "rho(3S)+", 40213, 1.70, 3, 2));
 		_lundIds.add(new LundId("Meson", "rho(3S)-", -40213, 1.70, -3, 2));
-		_lundIds.add(new LundId("Meson", "omega", 223, 0.78257, 0, 2));
+		_lundIds.add(new LundId("Meson", SMALL_OMEGA, 223, 0.78257, 0, 2));
 		_lundIds.add(new LundId("Meson", "omega(2S)", 30223, 1.42, 0, 2));
 		_lundIds.add(new LundId("Meson", "phi", 333, 1.019455, 0, 2));
 		// _lundIds.add(new LundId("Meson", "a_00", 10111, 0.9847, 0, 0));
@@ -466,19 +475,19 @@ public class LundSupport {
 		// _lundIds.add(new LundId("Meson", "Upsilon_3(2D)", 100557, 10.44430,
 		// 0, 6));
 		// _lundIds.add(new LundId("Meson", "sigma_0", 10222, 0.478, 0, 0));
-		_lundIds.add(new LundId("Baryon", "Delta-", 1114, 1.234, -3, 3));
+		_lundIds.add(new LundId("Baryon", BIG_DELTA + SUPERMINUS, 1114, 1.234, -3, 3));
 		// _lundIds.add(new LundId("Baryon", "anti-Delta+", -1114, 1.234, 3,
 		// 3));
 		// _lundIds.add(new LundId("Baryon", "anti-n0", -2112, 0.93956536, 0,
 		// 1));
-		// _lundIds.add(new LundId("Baryon", "Delta0", 2114, 1.233, 0, 3));
+		 _lundIds.add(new LundId("Baryon", BIG_DELTA + SUPERZERO, 2114, 1.233, 0, 3));
 		// _lundIds.add(new LundId("Baryon", "anti-Delta0", -2114, 1.233, 0,
 		// 3));
-		_lundIds.add(new LundId("Baryon", "anti-p", -2212, 0.93827203, -3, 1));
-		_lundIds.add(new LundId("Baryon", "Delta+", 2214, 1.232, 3, 3));
+		_lundIds.add(new LundId("Baryon", "p" + OVERLINE, -2212, 0.93827203, -3, 1));
+		_lundIds.add(new LundId("Baryon", BIG_DELTA + SUPERPLUS, 2214, 1.232, 3, 3));
 		// _lundIds.add(new LundId("Baryon", "anti-Delta-", -2214, 1.232, -3,
 		// 3));
-		_lundIds.add(new LundId("Baryon", "Delta++", 2224, 1.231, 6, 3));
+		_lundIds.add(new LundId("Baryon", BIG_DELTA + SUPERPLUS + SUPERPLUS, 2224, 1.231, 6, 3));
 		// _lundIds.add(new LundId("Baryon", "anti-Delta--", -2224, 1.231, -6,
 		// 3));
 		_lundIds.add(new LundId("Baryon", BIG_LAMBDA + SUBZERO, 3122, 1.115683, 0, 1));
@@ -545,22 +554,22 @@ public class LundSupport {
 		// _lundIds.add(new LundId("Baryon", "anti-Sigma(1775)0", -3216, 1.775,
 		// 0,
 		// 5));
-		// _lundIds.add(new LundId("Baryon", "Sigma-", 3112, 1.197449, -3, 1));
+		 _lundIds.add(new LundId("Baryon", BIG_SIGMA + SUPERMINUS, 3112, 1.197449, -3, 1));
 		// _lundIds
 		// .add(new LundId("Baryon", "anti-Sigma+", -3112, 1.197449, 3, 1));
-		// _lundIds.add(new LundId("Baryon", "Sigma*-", 3114, 1.3872, -3, 3));
+		 _lundIds.add(new LundId("Baryon", BIG_SIGMA + "*" + SUPERMINUS, 3114, 1.3872, -3, 3));
 		// _lundIds.add(new LundId("Baryon", "anti-Sigma*+", -3114, 1.3872, 3,
 		// 3));
-		// _lundIds.add(new LundId("Baryon", "Sigma0", 3212, 1.192642, 0, 1));
+		 _lundIds.add(new LundId("Baryon", BIG_SIGMA + SUPERZERO, 3212, 1.192642, 0, 1));
 		// _lundIds
 		// .add(new LundId("Baryon", "anti-Sigma0", -3212, 1.192642, 0, 1));
-		// _lundIds.add(new LundId("Baryon", "Sigma*0", 3214, 1.3837, 0, 3));
+		 _lundIds.add(new LundId("Baryon",  BIG_SIGMA + "*" + SUPERZERO, 3214, 1.3837, 0, 3));
 		// _lundIds.add(new LundId("Baryon", "anti-Sigma*0", -3214, 1.3837, 0,
 		// 3));
-		// _lundIds.add(new LundId("Baryon", "Sigma+", 3222, 1.18937, 3, 1));
+		 _lundIds.add(new LundId("Baryon", BIG_SIGMA + SUPERPLUS, 3222, 1.18937, 3, 1));
 		// _lundIds
 		// .add(new LundId("Baryon", "anti-Sigma-", -3222, 1.18937, -3, 1));
-		// _lundIds.add(new LundId("Baryon", "Sigma*+", 3224, 1.3828, 3, 3));
+		 _lundIds.add(new LundId("Baryon",  BIG_SIGMA + "*" + SUPERPLUS, 3224, 1.3828, 3, 3));
 		// _lundIds
 		// .add(new LundId("Baryon", "anti-Sigma*-", -3224, 1.3828, -3, 3));
 		// _lundIds.add(new LundId("Baryon", "Xi-", 3312, 1.32171, -3, 1));
@@ -730,8 +739,6 @@ public class LundSupport {
 		if (index >= 0) {
 			return _lundIds.get(index);
 		} else {
-			System.err.println("LundId not found for pid: " + id);
-//			(new Throwable()).printStackTrace();
 			if (charge == -1) {
 				return unknownMinus;
 			}
@@ -758,8 +765,6 @@ public class LundSupport {
 		if (index >= 0) {
 			return _lundIds.get(index);
 		} else {
-			System.err.println("LundId not found for pid: " + id);
-//			(new Throwable()).printStackTrace();
 			return null;
 		}
 	}
@@ -966,13 +971,14 @@ public class LundSupport {
 
 		setStyle(11, Color.red); // e-
 		setStyle(-11, Color.magenta); // e+
-		setStyle(111, wheat); // pi0
+		setStyle(111, purple); // pi0
 		setStyle(211, X11Colors.getX11Color("purple")); // pi+
 		setStyle(-211, X11Colors.getX11Color("medium purple")); // pi-
 		setStyle(321, goldenrod); // K+
 		setStyle(-321, olive); // K-
-		setStyle(213, Color.yellow); // rho+
-		setStyle(-213, purple); // rho-
+		setStyle(213, X11Colors.getX11Color("Slate Gray")); // rho+
+		setStyle(113, X11Colors.getX11Color("Slate Gray")); // rho0
+		setStyle(-213, Color.orange); // rho-
 		setStyle(13, Color.cyan); // mu-
 		setStyle(-13, brown); // mu+
 		setStyle(2212, Color.blue); // proton
@@ -981,6 +987,23 @@ public class LundSupport {
 		setStyle(1011, Color.darkGray); // deuteron
 		setStyle(1021, Color.red); // triton
 		setStyle(3122, Color.pink); // Lambda0
+		setStyle(2224, X11Colors.getX11Color("brown")); // Delta++
+		setStyle(1114, X11Colors.getX11Color("dark red")); // Delta-
+		setStyle(2114, X11Colors.getX11Color("coral")); // Delta0
+		setStyle(2214, X11Colors.getX11Color("coral")); // Delta+
+		
+		setStyle(3222, X11Colors.getX11Color("dark blue")); // Sigma+
+		setStyle(3212, X11Colors.getX11Color("dark blue")); // Sigma0
+		setStyle(3112, X11Colors.getX11Color("indigo")); // Sigma-
+		setStyle(3224, X11Colors.getX11Color("dark magenta")); // Sigma*+
+		setStyle(3214, X11Colors.getX11Color("dark magenta")); // Sigma*0
+		setStyle(3114, X11Colors.getX11Color("lawn green")); // Sigma*-
+
+		
+		setStyle(221, Color.magenta); // eta
+		setStyle(223, orangeRed); // omega
+
+
 	}
 
 	/**

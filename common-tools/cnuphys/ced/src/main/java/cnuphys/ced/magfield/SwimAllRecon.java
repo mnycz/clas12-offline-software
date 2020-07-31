@@ -39,7 +39,7 @@ public class SwimAllRecon implements ISwimAll {
 	}
 
 	/**
-	 * Swim all Monte Carlo particles
+	 * Swim all reconstructed particles
 	 * 
 	 * @param manager the swim manager
 	 */
@@ -92,7 +92,7 @@ public class SwimAllRecon implements ISwimAll {
 				}
 				
 			}
-		}
+		} //for trd
 		
 		
 		

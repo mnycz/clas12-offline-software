@@ -215,7 +215,8 @@ public class ClasIoEventManager {
 			String[] cbanks = _currentEvent.getBankList();
 			if (cbanks != null) {
 				for (String bankName : cbanks) {
-					if (bankName.contains("::true") || (bankName.contains("::Particle"))) {
+					if (bankName.contains("::true") || bankName.contains("::Particle")
+							|| bankName.contains("::Lund")) {
 
 						ColumnData cd = DataManager.getInstance().getColumnData(bankName, "pid");
 

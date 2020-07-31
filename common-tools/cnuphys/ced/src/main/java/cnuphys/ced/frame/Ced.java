@@ -125,7 +125,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	private static String _geoVariation = "default";
 	
 	//ced release 
-	private static final String _release = "build 1.4.62";
+	private static final String _release = "build 1.4.63";
 
 	// used for one time inits
 	private int _firstTime = 0;
@@ -356,7 +356,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		ViewManager.getInstance().getViewMenu().addSeparator();
 
 		// add monte carlo view
-		_monteCarloView = new ClasIoMonteCarloView();
+		_monteCarloView = ClasIoMonteCarloView.getInstance();
 
 		// add a reconstructed tracks view
 		_reconEventView = ClasIoReconEventView.getInstance();

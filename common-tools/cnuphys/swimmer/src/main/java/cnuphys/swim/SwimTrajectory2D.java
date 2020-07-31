@@ -17,7 +17,7 @@ import cnuphys.magfield.FastMath;
  */
 public class SwimTrajectory2D {
 
-	public static final String fbColor = "$cornsilk$";
+	public static final String fbColor = "$white$";
 
 	public static final String SMALL_THETA = "\u03B8";
 	public static final String SMALL_PHI = "\u03C6";
@@ -211,14 +211,21 @@ public class SwimTrajectory2D {
 		String s1 = null;
 
 		if (lid != null) {
-			s1 = fbColor + String.format("Swam  %-4s %-6.2f MeV/c" + SUPER2, lid.getName(), lid.getMass() * 1000.0);
+			s1 = fbColor + String.format("Swam  %-4s ", lid.getName());
 		} else {
 			s1 = fbColor + "[No PID]";
 		}
 
 		s1 += String.format(" P %-6.2f GeV/c", genPart.getMomentum());
+		
+		String source = getSource(); 
+		
+		if (source != null) {
+			s1 += String.format(" [%s]", source);
+		}
 
-		String s2 = fbColor + String.format("Vtx (%-3.1f, %-3.1f, %-3.1f) cm %-1s: %-6.2f  %-1s: %-6.2f",
+
+		String s2 = fbColor + String.format("Vtx (%.2f, %.2f, %.2f) cm %-1s %-7.3f  %-1s %-7.3f",
 				genPart.getVertexX(), genPart.getVertexY(), genPart.getVertexZ(), SMALL_THETA, genPart.getTheta(),
 				SMALL_PHI, genPart.getPhi());
 
@@ -226,6 +233,10 @@ public class SwimTrajectory2D {
 		feedbackStrings.add(s2);
 	}
 
+	/**
+	 * Get a summary string for the trajectory
+	 * @return a summary string for the trajectory
+	 */
 	public String summaryString() {
 
 		GeneratedParticleRecord genPart = _trajectory3D.getGeneratedParticleRecord();
@@ -241,11 +252,18 @@ public class SwimTrajectory2D {
 
 		sb.append(String.format(" P %-4.1f GeV/c", genPart.getMomentum()));
 
-		sb.append(String.format(" Vtx (%.1f, %.1f, %.1f) cm", genPart.getVertexX(), genPart.getVertexY(),
+		sb.append(String.format(" Vtx (%.2f, %.2f, %.2f) cm", genPart.getVertexX(), genPart.getVertexY(),
 				genPart.getVertexZ()));
 
-		sb.append(String.format("  %-1s %-6.2f  %-1s %-6.2f", SMALL_THETA, genPart.getTheta(), SMALL_PHI,
+		sb.append(String.format("  %-1s %-7.3f  %-1s %-7.3f", SMALL_THETA, genPart.getTheta(), SMALL_PHI,
 				genPart.getPhi()));
+		
+		String source = getSource(); 
+		
+		if (source != null) {
+			sb.append(String.format(" [%s]", source));
+		}
+		
 
 		return sb.toString();
 	}

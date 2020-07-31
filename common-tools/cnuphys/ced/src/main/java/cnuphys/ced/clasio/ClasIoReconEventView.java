@@ -17,7 +17,7 @@ public class ClasIoReconEventView extends ClasIoTrajectoryInfoView {
 	private static ClasIoReconEventView instance;
 
 	// one row for each reconstructed trajectory
-	private static Vector<TrajectoryRowData> _trajData = new Vector<TrajectoryRowData>(25);
+	private static Vector<TrajectoryRowData> _trajData = new Vector<TrajectoryRowData>();
 
 	private ClasIoReconEventView() {
 		super("Reconstructed Tracks");

@@ -9,14 +9,14 @@ public class Clas12Constants {
 	protected static final int NUM_WIRE = 112;
 
 	// default num missing layers for level 1
-	protected static int[] missingLayers_Lev1 = { 2, 2, 2, 2, 2, 2 };
+	protected static int[] missingLayers = { 2, 2, 2, 2, 2, 2 };
 
 	// default left layer shifts for level 1
-	protected static int[][] leftShifts_Lev1 = { { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 },
+	protected static int[][] leftShifts = { { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 },
 			{ 0, 1, 2, 2, 2, 2 }, { 0, 3, 4, 4, 5, 5 }, { 0, 3, 4, 4, 5, 5 } };
 
 	// default right layer shifts for level 1
-	protected static int[][] rightShifts_Lev1 = { { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 },
+	protected static int[][] rightShifts = { { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 }, { 0, 1, 2, 2, 2, 2 },
 			{ 0, 1, 2, 2, 2, 2 }, { 0, 3, 4, 4, 5, 5 }, { 0, 3, 4, 4, 5, 5 } };
 
 }

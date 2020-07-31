@@ -205,7 +205,7 @@ public abstract class ASwimTrajectoryDrawer extends DrawableAdapter implements I
 		Point2D.Double path[] = trajectory.getPath();
 
 		if (path == null) {
-			System.err.println("Null path");
+//			System.err.println("Null path");
 			return;
 		}
 
