@@ -243,9 +243,11 @@ public class TrackSeeder {
             ((ArrayList<Double>) Xs).ensureCapacity(seedcrs.size()+1);
             ((ArrayList<Double>) Ys).ensureCapacity(seedcrs.size()+1);
             ((ArrayList<Double>) Ws).ensureCapacity(seedcrs.size()+1);
-            Xs.add(0, 0.0); 
-            Ys.add(0, 0.0);
+            
+            Xs.add((double) org.jlab.rec.cvt.Constants.getXb());
+            Ys.add((double) org.jlab.rec.cvt.Constants.getYb());
             Ws.add(0, 0.1);
+            
             for (Cross c : seedcrs ) { 
                 if(c.get_DetectorType().equalsIgnoreCase("C") ) continue;
                 c.set_AssociatedTrackID(122221);
