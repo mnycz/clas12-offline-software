@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 package org.jlab.clas.tracking.trackrep;
-import org.jlab.clas.tracking.Constants;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 
@@ -39,9 +38,10 @@ public class Helix {
     private double _py;
     private double _pz;
     
+    private Units units = Units.CM; //default
     
     public Helix(double d0, double phi0, double omega, double z0, double tanL,
-            int turningSign, double B) {
+            int turningSign, double B, Units unit) {
         _d0             = d0;
         _phi0           = phi0;
         _omega          = omega;
@@ -49,21 +49,25 @@ public class Helix {
         _tanL           = tanL;
         _turningSign    = turningSign;
         _B              = B;
-        
+        this.units = unit;
+        this.setUnitScale(unit.unit);
+        setLIGHTVEL(LIGHTVEL*unit.unit);
         this.Update();
     }
     
     public Helix(double x0, double y0, double z0, double px0, double py0, double pz0,
-            int q, double B) {
+            int q, double B, Units unit) {
         _turningSign = q;
         _B = B;
         double pt = Math.sqrt(px0*px0 + py0*py0);
-        _R = pt/(B*Constants.getLIGHTVEL());
+        this.units = unit;
+        setUnitScale(unit.unit);
+        setLIGHTVEL(LIGHTVEL*unit.unit);
+        _R = pt/(B*LIGHTVEL*unit.unit);
         _phi0 = Math.atan2(py0, px0);
         _tanL = pz0/pt;
         _z0 = z0;
-        _omega = (double) q/_R;
-        
+        _omega = (double) -_turningSign/_R;
         double S = Math.sin(_phi0);
         double C = Math.cos(_phi0);
         
@@ -81,13 +85,13 @@ public class Helix {
     }
     
     public double getPt(double B) {
-        return Constants.getLIGHTVEL() * _R * B;
+        return getLIGHTVEL() * getR() * B;
     }
     public double getX(double l){
-        return getXc() + getTurningSign()*_R*Math.sin(getPhi(l));
+        return getXc() + getTurningSign()*getR()*Math.sin(getPhi(l));
     }
     public double getY(double l){
-        return getYc() - getTurningSign()*_R*Math.cos(getPhi(l));
+        return getYc() - getTurningSign()*getR()*Math.cos(getPhi(l));
     }
     public double getZ(double l){
         return getZ0() + getTurningSign()*l*getTanL();
@@ -200,6 +204,20 @@ public class Helix {
         this._turningSign = _turningSign;
     }
 
+    /**
+     * @return the _R
+     */
+    public double getR() {
+        return _R;
+    }
+
+    /**
+     * @param _R the _R to set
+     */
+    public void setR(double _R) {
+        this._R = _R;
+    }
+
     public void Reset(double d0, double phi0, double omega, double z0, double tanL,
             double B){
         setD0(d0);
@@ -212,11 +230,11 @@ public class Helix {
         this.Update();
     }
     public void Update() {
-        _R  = 1./Math.abs(getOmega());
+        setR(1./Math.abs(getOmega()));
         _xd = -getD0()*Math.sin(getPhi0());
         _yd =  getD0()*Math.cos(getPhi0());
         setXc(-(_turningSign*_R + _d0)*Math.sin(getPhi0()));
-        setYc((_turningSign*_R + _d0)*Math.cos(getPhi0()));
+        setYc((_turningSign*getR() + _d0)*Math.cos(getPhi0()));
         setX(getX(tFlightLen));
         setY(getY(tFlightLen));
         setZ(getZ(tFlightLen));
@@ -233,8 +251,8 @@ public class Helix {
         double Y = 0;
         if (X2 - X1 == 0) {
             X = X1;
-            double y1 = getYc() + Math.sqrt(_R * _R - (X - getXc()) * (X - getXc()));
-            double y2 = getYc() - Math.sqrt(_R * _R - (X - getXc()) * (X - getXc()));
+            double y1 = getYc() + Math.sqrt(getR() * getR() - (X - getXc()) * (X - getXc()));
+            double y2 = getYc() - Math.sqrt(getR() * getR() - (X - getXc()) * (X - getXc()));
 
             if (Math.abs(y1 - Y1) < Math.abs(Y2 - Y1)+tolerance) {
                 Y = y1;
@@ -246,8 +264,8 @@ public class Helix {
         }
         if (Y2 - Y1 == 0) {
             Y = Y1;
-            double x1 = getXc() + Math.sqrt(_R * _R - (Y - getYc()) * (Y - getYc()));
-            double x2 = getXc() - Math.sqrt(_R * _R - (Y - getYc()) * (Y - getYc()));
+            double x1 = getXc() + Math.sqrt(getR() * getR() - (Y - getYc()) * (Y - getYc()));
+            double x2 = getXc() - Math.sqrt(getR() * getR() - (Y - getYc()) * (Y - getYc()));
 
             if (Math.abs(x1 - X1) < Math.abs(X2 - X1)+tolerance) {
                 X = x1;
@@ -264,7 +282,7 @@ public class Helix {
 
             //double del = r*r*(1+m*m) - (yc-m*xc-d)*(yc-m*xc-d);
             double del = (getXc() + (-d + getYc()) * m) * (getXc() + (-d + getYc()) * m) - 
-                    (1 + m * m) * (getXc() * getXc() + (d - getYc()) * (d - getYc()) - _R*_R);
+                    (1 + m * m) * (getXc() * getXc() + (d - getYc()) * (d - getYc()) - getR()*getR());
             if (del < 0) {
                 System.err.println("Helix Plane Intersection error - Returning 0 ");
                 return 0;
@@ -279,8 +297,8 @@ public class Helix {
                     X = x2;
                 }
             }
-            double y1 = getYc() + Math.sqrt(_R * _R - (X - getXc()) * (X - getXc()));
-            double y2 = getYc() - Math.sqrt(_R * _R - (X - getXc()) * (X - getXc()));
+            double y1 = getYc() + Math.sqrt(getR() * getR() - (X - getXc()) * (X - getXc()));
+            double y2 = getYc() - Math.sqrt(getR() * getR() - (X - getXc()) * (X - getXc()));
 
             if (Math.abs(y1 - Y1) < Math.abs(Y2 - Y1)+tolerance) {
                 Y = y1;
@@ -328,7 +346,7 @@ public class Helix {
         double x;
         double y;
         
-        double a = 0.5 * (r * r - _R * _R + getXc() * getXc() + getYc() * getYc()) / getYc();
+        double a = 0.5 * (r * r - getR() * getR() + getXc() * getXc() + getYc() * getYc()) / getYc();
         double b = -getXc() / getYc();
 
         double delta = a * a * b * b - (1 + b * b) * (a * a - r * r);
@@ -494,4 +512,48 @@ public class Helix {
         this._yc = _yc;
     }
     
+    
+    public enum Units {
+        MM (10.0),
+        CM   (1.0);
+
+        private final double unit;  
+        Units(double unit) {
+            this.unit = unit;
+        }
+        private double unit() { return unit; }
+    }
+    
+    /**
+     * @return the unitScale
+     */
+    public double getUnitScale() {
+        return unitScale;
+    }
+
+    /**
+     * @param aUnitScale the unitScale to set
+     */
+    public void setUnitScale(double aUnitScale) {
+        unitScale = aUnitScale;
+    }
+
+    /**
+     * @return the LightVel
+     */
+    public double getLIGHTVEL() {
+        return LightVel;
+    }
+
+    /**
+     * @param aLIGHTVEL the LightVel to set
+     */
+    public void setLIGHTVEL(double aLIGHTVEL) {
+        LightVel = aLIGHTVEL;
+    }
+
+    public static final double LIGHTVEL = 0.0000299792458;       // velocity of light (cm/ns) - conversion factor from radius in mm to momentum in GeV/c 
+    
+    private static double LightVel = 0.0000299792458;       // velocity of light (cm/ns) - conversion factor from radius in mm to momentum in GeV/c 
+    private static double unitScale = 1;
 }

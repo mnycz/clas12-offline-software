@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.stream.Collectors.toMap;
-import org.jlab.clas.tracking.Constants;
+import org.jlab.clas.tracking.trackrep.Helix;
 
 /**
  *
@@ -128,7 +128,7 @@ public class CircleHoughTrans {
                         System.out.println("=================");
                         for(int j = 0; j < newset.get(i).size(); j++) {
                             Point2D p =newset.get(i).get(j);
-                            System.out.println(p._layer+" "+p._x+" "+p._y+" rad "+p._radius+" pt "+(p._radius*(5*Constants.LIGHTVEL)));
+                            System.out.println(p._layer+" "+p._x+" "+p._y+" rad "+p._radius+" pt "+(p._radius*(5*Helix.LIGHTVEL)));
                         }
                     }
                 }

@@ -8,12 +8,13 @@ import org.jlab.io.base.DataEvent;
 
 import Jama.Matrix;
 import org.jlab.clas.swimtools.Swim;
-import org.jlab.clas.tracking.Constants;
 import org.jlab.clas.tracking.kalmanfilter.Surface;
 import org.jlab.clas.tracking.kalmanfilter.helical.StateVecs.StateVec;
 import org.jlab.clas.tracking.trackrep.Helix;
 
 public class KFitter {
+    
+    public static boolean USESWIMMER = false;
     
     public static int polarity = -1;
     
@@ -28,26 +29,22 @@ public class KFitter {
     private double _Xb;
     private double _Yb;
     
-    private Units units = Units.CM; //default
-    
     public void setMeasurements(List<Surface> measSurfaces) {
         mv.setMeasVecs(measSurfaces);
     }
     
     public KFitter(Helix helix, Matrix cov, DataEvent event, Swim swimmer, double Xb, double Yb, 
-            double Zref, List<Surface> measSurfaces, Units unit) {
+            double Zref, List<Surface> measSurfaces) {
         _Xb = Xb;
         _Yb = Yb;
-        units = unit;
-        Constants.setUnitScale(units.unit);
-        Constants.setLIGHTVEL(Constants.LIGHTVEL*Constants.getUnitScale());
+        
         this.init(helix, cov, event, swimmer, Xb, Yb, 
              Zref, mv, measSurfaces);
     }
-
+    private Matrix iCov;
     public void init(Helix helix, Matrix cov, DataEvent event, Swim swimmer, double Xb, double Yb, 
             double Zref, MeasVecs mv, List<Surface> measSurfaces) {
-
+        iCov = cov;
         mv.setMeasVecs(measSurfaces);
         if (sv.Layer != null) {
             sv.Layer.clear();
@@ -88,15 +85,16 @@ public class KFitter {
             sv.Y0.add(ref.y());
             sv.Z0.add(ref.z());
         }
-        sv.init( helix, cov, Xb, Yb, this, mv.measurements.get(1), swimmer);
+        sv.init( helix, cov, Xb, Yb, this, swimmer);
     }
 
-    public int totNumIter = 5;
+    public int totNumIter = 10;
     double newChisq = Double.POSITIVE_INFINITY;
 
     public void runFitter(Swim swimmer) {
         double newchisq = Double.POSITIVE_INFINITY;
         this.NDF = sv.X0.size()-5; 
+        
         for (int it = 0; it < totNumIter; it++) {
             this.chi2 = 0;
             TrjPoints.clear();
@@ -109,20 +107,22 @@ public class KFitter {
                 this.filter(k + 1, swimmer, 1);
             }
             
-            for (int k =  sv.X0.size() - 1; k>1 ;k--) {
+            for (int k =  sv.X0.size() - 1; k>0 ;k--) {
                 if (sv.trackCov.get(k) == null || mv.measurements.get(k - 1) == null) {
                     return;
                 }
                 sv.transport(k, k - 1, sv.trackTraj.get(k), sv.trackCov.get(k), mv.measurements.get(k-1), 
                         swimmer);
-                this.filter(k - 1, swimmer, -1);
+                 if(k>1)
+                    this.filter(k - 1, swimmer, -1);
             }
 
-            
-            this.chi2=this.calc_chi2();
+            //sv.trackCov.get(0).covMat = iCov;
+            this.chi2=this.calc_chi2(swimmer);
             if(this.chi2<newchisq) {
                 newchisq=this.chi2;
-                KFHelix = sv.setTrackPars(1);
+                KFHelix = sv.setTrackPars(0);
+                //KFHelix = sv.getHelixAtBeamLine(1, swimmer); 
                 this.setTrajectory();
                 setFitFailed = false;
             } else {
@@ -131,9 +131,6 @@ public class KFitter {
             }
         }
        
-        //KFHelix = sv.setTrackPars(sv.X0.size() - 1);
-        //this.setTrajectory();
-        
     }
     public List<HitOnTrack> TrjPoints = new ArrayList<HitOnTrack>();
 
@@ -162,7 +159,7 @@ public class KFitter {
     public double chi2 = 0;
     public int NDF = 0;
 
-    private double calc_chi2() {
+    private double calc_chi2(Swim swimmer) {
         //get the measurement
         double m = 0;
         //get the projector state
@@ -170,9 +167,13 @@ public class KFitter {
         double chi2 =0;
         m=0;
         h=0;
-        for(int k = 1; k< sv.X0.size(); k++) {
-            double dh = mv.dh(k, sv.trackTraj.get(k));
-            chi2 += dh*dh / mv.measurements.get(k).error;
+        StateVec stv = sv.transported(0, 1, sv.trackTraj.get(0), mv.measurements.get(1), swimmer);
+        double dh = mv.dh(1, stv);
+        chi2 = dh*dh / mv.measurements.get(1).error;
+        for(int k = 1; k< sv.X0.size()-1; k++) {
+            stv = sv.transported(k, k+1, stv, mv.measurements.get(k+1), swimmer);
+            dh = mv.dh(k+1, stv);
+            chi2 += dh*dh / mv.measurements.get(k+1).error;
         }  
        return chi2;
 
@@ -185,6 +186,7 @@ public class KFitter {
             double V = mv.measurements.get(k).error;
 
             double dh = mv.dh(k, sv.trackTraj.get(k));
+            
             //get the projector Matrix
             double[] H = new double[5];
             H = mv.H(sv.trackTraj.get(k), sv,  mv.measurements.get(k), swimmer, dir);
@@ -198,7 +200,7 @@ public class KFitter {
 
             Matrix Ci = null;
             if (this.isNonsingular(sv.trackCov.get(k).covMat) == false) {
-                System.err.println("Covariance Matrix is non-invertible - quit filter!");
+                //System.err.println("Covariance Matrix is non-invertible - quit filter!");
                 //this.printMatrix(sv.trackCov.get(k).covMat);
                 return;
             }
@@ -229,14 +231,13 @@ public class KFitter {
             } else {
                 return;
             }
-
+            
             for (int j = 0; j < 5; j++) {
                 // the gain matrix
                 K[j] = 0;
                 for (int i = 0; i < 5; i++) {
                     K[j] += H[i] * sv.trackCov.get(k).covMat.get(j, i) / V;
-                }
-
+                } 
             }
             double drho_filt = sv.trackTraj.get(k).d_rho;
             double phi0_filt = sv.trackTraj.get(k).phi0;
@@ -251,7 +252,7 @@ public class KFitter {
                 dz_filt -= K[3] * dh;
                 tanL_filt -= K[4] * dh;
             }
-          
+            
             StateVec fVec = sv.new StateVec(sv.trackTraj.get(k).k);
             fVec.d_rho = drho_filt;
             fVec.phi0 = phi0_filt;
@@ -263,9 +264,7 @@ public class KFitter {
 
             double dh_filt = mv.dh(k, fVec);
             
-            //if(Math.signum(sv.trackTraj.get(k).d_rho)!=Math.signum(drho_filt))
-             //   return;
-            if (Math.abs(dh_filt) < Math.abs(dh)) {
+            if (Math.abs(dh_filt) < Math.abs(dh)) { 
                 sv.trackTraj.get(k).d_rho = drho_filt;
                 sv.trackTraj.get(k).phi0 = phi0_filt;
                 sv.trackTraj.get(k).kappa = kappa_filt;
@@ -342,14 +341,4 @@ public class KFitter {
         }
     }
 
-    public enum Units {
-        MM (10.0),
-        CM   (1.0);
-
-        private final double unit;  
-        Units(double unit) {
-            this.unit = unit;
-        }
-        private double unit() { return unit; }
-    }
 }

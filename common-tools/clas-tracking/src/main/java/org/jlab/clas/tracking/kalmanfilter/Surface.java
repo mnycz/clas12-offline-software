@@ -22,6 +22,8 @@ public class Surface implements Comparable<Surface> {
     public Point3D refPoint;
     public Point3D lineEndPoint1;
     public Point3D lineEndPoint2;
+    public Point3D finitePlaneCorner1;
+    public Point3D finitePlaneCorner2;
     public Cylindrical3D cylinder;
     public Arc3D arc;
     public Strip strip;
@@ -29,21 +31,27 @@ public class Surface implements Comparable<Surface> {
     private int layer;
     private int sector;
     
-    public Surface(Plane3D plane3d, Point3D refrPoint) {
+    public Surface(Plane3D plane3d, Point3D refrPoint, Point3D c1, Point3D c2) {
         type = Type.PLANEWITHPOINT;
         plane = plane3d;
         refPoint = refrPoint;
+        finitePlaneCorner1 = c1;
+        finitePlaneCorner2 = c2;
     }
-    public Surface(Plane3D plane3d, Point3D endPoint1, Point3D endPoint2) {
+    public Surface(Plane3D plane3d, Point3D endPoint1, Point3D endPoint2, Point3D c1, Point3D c2) {
         type = Type.PLANEWITHLINE;
         plane = plane3d;
         lineEndPoint1 = endPoint1;
         lineEndPoint2 = endPoint2;
+        finitePlaneCorner1 = c1;
+        finitePlaneCorner2 = c2;
     }
-    public Surface(Plane3D plane3d, Strip strp) {
+    public Surface(Plane3D plane3d, Strip strp, Point3D c1, Point3D c2) {
         type = Type.PLANEWITHSTRIP;
         plane = plane3d;
         strip = strp;
+        finitePlaneCorner1 = c1;
+        finitePlaneCorner2 = c2;
         lineEndPoint1 = new Point3D(strip.getX(), strip.getY(), strip.getZ());
         lineEndPoint2 = new Point3D(strip.getX()+strip.getLength()*strip.getUx(), 
                 strip.getY()+strip.getLength()*strip.getUy(), 

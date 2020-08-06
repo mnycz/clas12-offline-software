@@ -30,13 +30,12 @@ public class MeasVecs {
         Collections.sort(measSurfaces);
         for(int i = 0; i < measSurfaces.size(); i++) {
             MeasVec mvec = new MeasVec();
-            mvec.k = i + 1;
+            mvec.k = i ;
             mvec.layer = measSurfaces.get(i).getLayer();
             mvec.sector = measSurfaces.get(i).getSector();
             mvec.surface = measSurfaces.get(i);
             if(mvec.surface.getError()!=0)
                 mvec.error = mvec.surface.getError();
-            
             measurements.add(mvec);
         }
     }
@@ -71,17 +70,15 @@ public class MeasVecs {
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.XYZ) {
                 Line3D l = new Line3D(this.measurements.get(stateVec.k).surface.lineEndPoint1, 
                 this.measurements.get(stateVec.k).surface.lineEndPoint2);
-                Vector3D toP = new Vector3D(stateVec.x, stateVec.y, stateVec.z).
-                        sub(this.measurements.get(stateVec.k).surface.lineEndPoint1.toVector3D());
-                Vector3D dir = this.measurements.get(stateVec.k).surface.lineEndPoint2.toVector3D().
-                        sub(this.measurements.get(stateVec.k).surface.lineEndPoint1.toVector3D()).asUnit();
                 value = l.distance(new Point3D(stateVec.x, stateVec.y, stateVec.z)).length();
             }
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.Z) {
                value = stateVec.z-this.measurements.get(stateVec.k).surface.strip.getZ();
+               //value = 0;
             }
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.PHI) {
                value = Math.atan2(stateVec.y, stateVec.x)-this.measurements.get(stateVec.k).surface.strip.getPhi();
+               //value = 0;
             }
         }
         return value;
@@ -129,14 +126,13 @@ public class MeasVecs {
         return value;
     }
 
-    private double[] delta_d_a = new double[] {1, Math.toRadians(0.25),  0.01, 1, 0.01};
+    private double[] delta_d_a = new double[] {1, Math.toRadians(0.25),  0.05, 1, 0.01};
     private double[] Hval = new double[5];
     public double[] H(StateVecs.StateVec stateVec, StateVecs sv, MeasVec mv, Swim swimmer, int dir) {
         StateVecs.StateVec SVplus = null;// = new StateVec(stateVec.k);
         StateVecs.StateVec SVminus = null;// = new StateVec(stateVec.k);
         for(int i = 0; i < getHval().length; i++)
             getHval()[i] = 0;
-        
         for(int i = 0; i < getDelta_d_a().length; i++) {
             SVplus = this.reset(SVplus, stateVec, sv);
             SVminus = this.reset(SVminus, stateVec, sv);
@@ -153,8 +149,8 @@ public class MeasVecs {
                 SVminus.kappa = stateVec.kappa - getDelta_d_a()[i] / 2.;
             }
             if(i ==3) {
-                SVplus.z = stateVec.z + getDelta_d_a()[i] / 2.;
-                SVminus.z = stateVec.z - getDelta_d_a()[i] / 2.;
+                SVplus.dz = stateVec.dz + getDelta_d_a()[i] / 2.;
+                SVminus.dz = stateVec.dz - getDelta_d_a()[i] / 2.;
             }
             if(i ==4) {
                 SVplus.tanL = stateVec.tanL + getDelta_d_a()[i] / 2.;
