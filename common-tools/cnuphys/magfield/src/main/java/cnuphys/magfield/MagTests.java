@@ -7,15 +7,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Random;
-import java.util.StringTokenizer;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -97,12 +93,27 @@ public class MagTests {
 
 		td.testResult = new float[td.count()][3];
 		
-		System.err.println("Number of field values in test: " + td.count());
 
-		Instant start = Instant.now();
-		for (int i = 0; i < td.count(); i++) {
-			ifield.field(td.x[i], td.y[i], td.z[i], td.testResult[i]);
+		int nLoop = 10;
+
+		System.err.println("Number of field values in test: " + td.count());
+		System.err.println("Number of loops over the points: " + nLoop);
+		System.err.println("Priming the pump.");
+
+		for (int j = 0; j < nLoop; j++) {
+			for (int i = 0; i < td.count(); i++) {
+				ifield.field(td.x[i], td.y[i], td.z[i], td.testResult[i]);
+			}
 		}
+
+		System.err.println("Timing start.");
+		Instant start = Instant.now();
+		for (int j = 0; j < nLoop; j++) {
+			for (int i = 0; i < td.count(); i++) {
+				ifield.field(td.x[i], td.y[i], td.z[i], td.testResult[i]);
+			}
+		}
+
 		Instant end = Instant.now();
 		long millis = Duration.between(start, end).toMillis();
 		System.err.println("Calculation time: " + millis + "ms");
@@ -163,16 +174,25 @@ public class MagTests {
 		System.err.println("TORUS: [" + td.torusFile + "]");
 		System.err.println("SOLENOID: [" + td.solenoidFile + "]");
 
-		Random rand = new Random(seed);
+	//	Random rand = new Random(seed);
+
+		double phi = Math.toRadians(15.);
+		double delRho = 300./(n-1);
+		double delZ = 600./(n-1);
 
 		for (int i = 0; i < n; i++) {
-			double rho = 300 * rand.nextFloat();
-			double phi = 2 * Math.PI * rand.nextFloat();
+//			double rho = 300 * rand.nextFloat();
+//			double phi = 2 * Math.PI * rand.nextFloat();
+//			td.x[i] = (float) (rho * Math.cos(phi));
+//			td.y[i] = (float) (rho * Math.sin(phi));
+//			td.z[i] = 600 * rand.nextFloat();
+			
+			double rho = (float)(i*delRho);
 			td.x[i] = (float) (rho * Math.cos(phi));
 			td.y[i] = (float) (rho * Math.sin(phi));
-			td.z[i] = 600 * rand.nextFloat();
+			td.z[i] = (float)(i*delZ);
 			ifield.field(td.x[i], td.y[i], td.z[i], td.result[i]);
-//			
+			
 //			System.err.println(String.format("(%7.3f, %7.3f, %7.3f), (%7.3f, %7.3f, %7.3f)", td.x[i], td.y[i], td.z[i],
 //					td.result[i][0], td.result[i][1], td.result[i][2]));
 		}
@@ -1045,8 +1065,9 @@ public class MagTests {
 		}
 
 		// write out data file
-		String path = (new File(_homeDir, "magTestData")).getPath();
+//		String path = (new File(_homeDir, "magTestData")).getPath();
 //		serializeTestData(path, 1000000, 19923456L);
+//		serializeTestData(path, 100, 19923456L);
 		
 		
 		//look for the file
