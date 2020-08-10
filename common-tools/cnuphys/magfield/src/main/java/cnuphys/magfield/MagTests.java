@@ -48,47 +48,7 @@ public class MagTests {
 	private static String _homeDir = System.getProperty("user.home");
 	private static String _currentWorkingDirectory = System.getProperty("user.dir");
 
-	// test many traj on different threads
-	private static void threadTest(final int num, final int numThread) {
 
-		memoryReport("starting thread test");
-
-		MagneticFields.getInstance().setActiveField(FieldType.COMPOSITE);
-
-		final long seed = 5347632765L;
-
-		final Random rand = new Random(seed);
-
-		Runnable runnable = new Runnable() {
-
-			@Override
-			public void run() {
-				System.err.println("Starting thread " + Thread.currentThread().getName());
-				long time = System.currentTimeMillis();
-				float[] result = new float[3];
-				FieldProbe probe = FieldProbe.factory();
-
-				for (int i = 0; i < num; i++) {
-
-					float z = 400 * rand.nextFloat();
-					double rho = 400 * rand.nextFloat();
-					double phi = Math.toRadians(-25 + 50 * rand.nextFloat());
-					float x = (float) (rho * FastMath.cos(phi));
-					float y = (float) (rho * FastMath.sin(phi));
-					probe.field(x, y, z, result);
-
-				}
-				System.err.println("Thread " + Thread.currentThread().getName() + "  ending millis: "
-						+ (System.currentTimeMillis() - time));
-			}
-
-		};
-
-		for (int i = 0; i < numThread; i++) {
-			Thread thread = new Thread(runnable);
-			thread.start();
-		}
-	}
 
 	// test the test data file.
 	public static void testTestData(String path) {
@@ -116,7 +76,7 @@ public class MagTests {
 
 		boolean sameJava = td.javaVersion.contentEquals(javaVersion);
 
-		System.err.println(String.format("Data java version: [%s] this java version: [%s] same: %s", td.javaVersion,
+		System.err.println(String.format("Data java version: [%s] This java version: [%s] same: %s", td.javaVersion,
 				javaVersion, sameJava));
 
 		// using the same fields?
@@ -127,12 +87,12 @@ public class MagTests {
 
 		boolean sameTorus = td.torusFile.contentEquals(torusFile);
 		System.err.println(
-				String.format("Data Torus: [%s] this Torus: [%s] same: %s", td.torusFile, torusFile, sameTorus));
+				String.format("Data Torus: [%s] This Torus: [%s] same: %s", td.torusFile, torusFile, sameTorus));
 
 		String solenoidFile = new String(MagneticFields.getInstance().getSolenoidBaseName());
 
 		boolean sameSolenoid = td.solenoidFile.contentEquals(solenoidFile);
-		System.err.println(String.format("Data Solenoid: [%s] this Solenoid: [%s] same: %s", td.solenoidFile,
+		System.err.println(String.format("Data Solenoid: [%s] This Solenoid: [%s] same: %s", td.solenoidFile,
 				solenoidFile, sameSolenoid));
 
 		td.testResult = new float[td.count()][3];
@@ -325,92 +285,7 @@ public class MagTests {
 
 	}
 
-	// sameness tests (overlap not overlap)
-	private static void mathTest() {
 
-		FastMath.MathLib libs[] = { FastMath.MathLib.DEFAULT, FastMath.MathLib.FAST, FastMath.MathLib.SUPERFAST };
-		System.err.println("Sameness Test Math Lib");
-
-		int num = 10000000;
-
-		float x[] = new float[num];
-		float y[] = new float[num];
-		float z[] = new float[num];
-
-		long seed = 5347632765L;
-
-		Random rand = new Random(seed);
-
-		System.err.println("Creating " + num + " random points");
-		for (int i = 0; i < num; i++) {
-
-			z[i] = 400 * rand.nextFloat();
-			float rho = 400 * rand.nextFloat();
-			// double phi = Math.toRadians(75 + 30*rand.nextFloat());
-			double phi = Math.toRadians(89 * rand.nextFloat());
-
-			x[i] = (float) (rho * FastMath.cos(phi));
-			y[i] = (float) (rho * FastMath.sin(phi));
-		}
-
-		float result[][][] = new float[3][num][3];
-		float diff[] = new float[3];
-
-		System.err.println("Creating space");
-		for (int i = 0; i < num; i++) {
-			result[0][i] = new float[3];
-			result[1][i] = new float[3];
-			result[2][i] = new float[3];
-		}
-
-		MagneticFields.getInstance().setActiveField(FieldType.COMPOSITE);
-
-		IField ifield = FieldProbe.factory();
-
-		for (int index = 0; index < 3; index++) {
-			FastMath.setMathLib(libs[index]);
-			System.err.println("Computing with " + FastMath.getMathLib());
-			long time = System.currentTimeMillis();
-			for (int i = 0; i < num; i++) {
-				ifield.field(x[i], y[i], z[i], result[index][i]);
-			}
-			time = System.currentTimeMillis() - time;
-			System.err.println("Time for " + FastMath.getMathLib() + " math: " + (time) / 1000.);
-		}
-
-		// now get biggest diff superfast to default
-		double maxDiff = -1;
-		int iMax = -1;
-
-		for (int i = 0; i < num; i++) {
-
-			for (int j = 0; j < 3; j++) {
-				diff[j] = result[2][i][j] - result[0][i][j];
-			}
-			double dlen = FastMath.vectorLength(diff);
-
-			if (dlen > maxDiff) {
-				iMax = i;
-				maxDiff = dlen;
-			}
-		}
-
-		System.err.println("maxDiff = " + maxDiff + "   at index: " + iMax);
-		System.err.println(String.format("xyz = (%8.4f, %8.4f, %8.4f)", x[iMax], y[iMax], z[iMax]));
-		double phi = FastMath.atan2Deg(y[iMax], x[iMax]);
-		if (phi < 0) {
-			phi += 360;
-		}
-		double rho = FastMath.hypot(x[iMax], y[iMax]);
-		System.err.println(String.format("cyl = (%8.4f, %8.4f, %8.4f)", phi, rho, z[iMax]));
-
-		for (int index = 0; index < 3; index++) {
-			System.err.println(String.format("%s (%8.4f, %8.4f, %8.4f) %8.4f kG", libs[index].toString(),
-					result[index][iMax][0], result[index][iMax][1], result[index][iMax][2],
-					FastMath.vectorLength(result[index][iMax])));
-		}
-
-	}
 
 	// check active field
 	private static void checkSectors() {
@@ -877,66 +752,7 @@ public class MagTests {
 
 	}
 
-	private static void scanCSVFile() {
 
-		try {
-			FileReader fileReader = new FileReader("/Users/heddle/magfield/FullTorus.csv");
-			final BufferedReader bufferedReader = new BufferedReader(fileReader);
-
-			int lineCount = 0;
-
-			String vals[] = new String[6];
-
-			float bmax = Float.NEGATIVE_INFINITY;
-			float phi = Float.NaN;
-			float r = Float.NaN;
-			float z = Float.NaN;
-
-			boolean reading = true;
-			while (reading) {
-				String s = bufferedReader.readLine();
-				if (s != null) {
-					tokens(s, ",", vals);
-
-					float bx = Float.parseFloat(vals[3]);
-					float by = Float.parseFloat(vals[4]);
-					float bz = Float.parseFloat(vals[5]);
-
-					float b = (float) (Math.sqrt(bx * bx + by * by + bz * bz));
-					if (b > bmax) {
-						bmax = b;
-						phi = Float.parseFloat(vals[0]);
-						r = Float.parseFloat(vals[1]);
-						z = Float.parseFloat(vals[2]);
-					}
-
-					lineCount++;
-					if ((lineCount % 500000) == 0) {
-						System.out.println("line count = " + lineCount);
-					}
-				} else {
-					reading = false;
-				}
-			}
-
-			System.out.println("line count = " + lineCount);
-			System.out.println("bmax = " + bmax + " kG at (phi, rho, z) = (" + phi + ", " + r + ", " + z + ")");
-			bufferedReader.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private static void tokens(String str, String delimiter, String[] vals) {
-
-		StringTokenizer t = new StringTokenizer(str, delimiter);
-		int num = t.countTokens();
-		String lines[] = new String[num];
-
-		for (int i = 0; i < num; i++) {
-			vals[i] = t.nextToken();
-		}
-	}
 
 	// convert the torus to ASCII
 	private static void convertTorusToAscii() {
@@ -958,11 +774,8 @@ public class MagTests {
 		final JMenuItem test0Item = new JMenuItem("Timing Test Random Points");
 		final JMenuItem test1Item = new JMenuItem("Timing Test Along a Line");
 		final JMenuItem test4Item = new JMenuItem("Overlap/No overlap Sameness Test");
-		final JMenuItem test5Item = new JMenuItem("MathLib Test");
-		final JMenuItem threadItem = new JMenuItem("Thread Test");
 		final JMenuItem asciiTorusItem = new JMenuItem("Convert Torus to ASCII");
 		final JMenuItem asciiSolenoidItem = new JMenuItem("Convert Solenoid to ASCII");
-		final JMenuItem scanItem = new JMenuItem("Scan csv file");
 		final JMenuItem loadItem = new JMenuItem("Load ASCII Torus");
 		final JMenuItem gemcSolenoidItem = new JMenuItem("Compare GEMC Solenoid");
 		final JMenuItem gemcTorusItem = new JMenuItem("Compare GEMC Torus");
@@ -980,16 +793,10 @@ public class MagTests {
 					timingTest(1);
 				} else if (e.getSource() == test4Item) {
 					samenessTest();
-				} else if (e.getSource() == test5Item) {
-					mathTest();
-				} else if (e.getSource() == threadItem) {
-					threadTest(10000000, 8);
 				} else if (e.getSource() == asciiTorusItem) {
 					convertTorusToAscii();
 				} else if (e.getSource() == asciiSolenoidItem) {
 					convertSolenoidToAscii();
-				} else if (e.getSource() == scanItem) {
-					scanCSVFile();
 				} else if (e.getSource() == loadItem) {
 					loadAsciiTorus();
 				} else if (e.getSource() == gemcSolenoidItem) {
@@ -1009,11 +816,8 @@ public class MagTests {
 		test0Item.addActionListener(al1);
 		test1Item.addActionListener(al1);
 		test4Item.addActionListener(al1);
-		test5Item.addActionListener(al1);
-		threadItem.addActionListener(al1);
 		asciiTorusItem.addActionListener(al1);
 		asciiSolenoidItem.addActionListener(al1);
-		scanItem.addActionListener(al1);
 		loadItem.addActionListener(al1);
 		gemcSolenoidItem.addActionListener(al1);
 		gemcTorusItem.addActionListener(al1);
@@ -1023,12 +827,9 @@ public class MagTests {
 		testMenu.add(test0Item);
 		testMenu.add(test1Item);
 		testMenu.add(test4Item);
-		testMenu.add(test5Item);
-		testMenu.add(threadItem);
 		testMenu.addSeparator();
 		testMenu.add(asciiTorusItem);
 		testMenu.add(asciiSolenoidItem);
-		testMenu.add(scanItem);
 		testMenu.add(loadItem);
 		testMenu.addSeparator();
 		testMenu.add(gemcSolenoidItem);
