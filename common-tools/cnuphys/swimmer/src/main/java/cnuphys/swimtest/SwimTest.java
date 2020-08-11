@@ -30,10 +30,12 @@ import cnuphys.lund.LundSupport;
 import cnuphys.lund.LundTrackDialog;
 import cnuphys.lund.SwimTrajectoryListener;
 import cnuphys.magfield.FastMath;
+import cnuphys.magfield.FieldProbe;
 import cnuphys.magfield.MagneticFieldCanvas;
 import cnuphys.magfield.MagneticFieldChangeListener;
 import cnuphys.magfield.MagneticFieldInitializationException;
 import cnuphys.magfield.MagneticFields;
+
 import cnuphys.magfield.MagneticFields.FieldType;
 import cnuphys.rk4.RungeKuttaException;
 import cnuphys.swim.DefaultSwimStopper;
@@ -44,6 +46,9 @@ import cnuphys.swim.Swimming;
 import cnuphys.swimZ.SwimZStateVector;
 
 public class SwimTest {
+
+	private static String _homeDir = System.getProperty("user.home");
+	private static String _currentWorkingDirectory = System.getProperty("user.dir");
 
 	// we only need one swimmer it will adapt to changing fields.
 	private static Swimmer _swimmer;
@@ -120,9 +125,7 @@ public class SwimTest {
 		final JMenuItem polyItem = new JMenuItem("SwimZ vs. Poly Approx Test");
 
 		final JMenuItem csvItem = new JMenuItem("Output to CSV");
-		
-		
-		
+
 		ActionListener al = new ActionListener() {
 
 			@Override
@@ -152,9 +155,9 @@ public class SwimTest {
 		testSectorItem.addActionListener(al);
 		reconfigItem.addActionListener(al);
 		csvItem.addActionListener(al);
-		
+
 		menu.add(adaptiveTestMenu());
-		
+
 		menu.add(createTrajItem);
 		menu.add(oneVtwoItem);
 		menu.add(polyItem);
@@ -165,10 +168,10 @@ public class SwimTest {
 		menu.add(csvItem);
 		return menu;
 	}
-	
+
 	private static JMenu adaptiveTestMenu() {
 		JMenu atmenu = new JMenu("Test AdaptiveSwim Package");
-		
+
 		final JMenuItem rhoItem = new JMenuItem("Rho Test");
 		final JMenuItem beamLineItem = new JMenuItem("Beamline Test");
 		final JMenuItem retraceItem = new JMenuItem("Retrace Test");
@@ -178,42 +181,33 @@ public class SwimTest {
 		final JMenuItem cylinderItem = new JMenuItem("Cylinder Test");
 		final JMenuItem sphereItem = new JMenuItem("Sphere Test");
 		final JMenuItem noStopperItem = new JMenuItem("No Stopper Test");
-		
-		
+
 		ActionListener al = new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-                if (e.getSource() == rhoItem) {
+				if (e.getSource() == rhoItem) {
 					AdaptiveTests.rhoTest();
-				}
-                else if (e.getSource() == beamLineItem) {
+				} else if (e.getSource() == beamLineItem) {
 					AdaptiveBeamlineSwimTest.beamLineTest();
-				}
-                else if (e.getSource() == retraceItem) {
+				} else if (e.getSource() == retraceItem) {
 					AdaptiveTests.retraceTest();
-				}
-                else if (e.getSource() == planeItem) {
+				} else if (e.getSource() == planeItem) {
 					AdaptiveTests.planeTest();
-				}
-                else if (e.getSource() == lineItem) {
+				} else if (e.getSource() == lineItem) {
 					AdaptiveTests.lineTest();
-				}
-                else if (e.getSource() == zItem) {
+				} else if (e.getSource() == zItem) {
 					AdaptiveSectorSwimTest.zTest();
-				}
-                else if (e.getSource() == cylinderItem) {
+				} else if (e.getSource() == cylinderItem) {
 					AdaptiveTests.cylinderTest();
-				}
-                else if (e.getSource() == sphereItem) {
+				} else if (e.getSource() == sphereItem) {
 					AdaptiveTests.sphereTest();
-				}
-                else if (e.getSource() == noStopperItem) {
+				} else if (e.getSource() == noStopperItem) {
 					AdaptiveTests.noStopperTest();
 				}
 			}
 		};
-		
+
 		rhoItem.addActionListener(al);
 		beamLineItem.addActionListener(al);
 		retraceItem.addActionListener(al);
@@ -234,73 +228,69 @@ public class SwimTest {
 
 		return atmenu;
 	}
-	
-	//for Nicholas at VaTech
+
+	// for Nicholas at VaTech
 	private static void outToCSV() {
-		
+
 		double rMax = 6;
 		double sMax = 8;
-		double stepSize = 1.0e-3; //m
+		double stepSize = 1.0e-3; // m
 		double distanceBetweenSaves = stepSize;
-		
-		
+
 		double xo = 0;
 		double yo = 0;
 		double zo = 0;
-		
-		
+
 		Swimmer swimmer = new Swimmer();
 		MagneticFields mf = MagneticFields.getInstance();
-		
-		
-		double torusScale = (mf.hasActiveTorus()? mf.getTorus().getScaleFactor() : 0);
-		double solenoidScale = (mf.hasActiveSolenoid()? mf.getSolenoid().getScaleFactor() : 0);
-		
-		//CHANGE THESE
+
+		double torusScale = (mf.hasActiveTorus() ? mf.getTorus().getScaleFactor() : 0);
+		double solenoidScale = (mf.hasActiveSolenoid() ? mf.getSolenoid().getScaleFactor() : 0);
+
+		// CHANGE THESE
 		LundId lid = LundSupport.getElectron();
 		int id = LundSupport.getElectron().getId();
-		double p = 2; //GeV/c
-		double theta = 15; //degrees
-		double phi = 10; //degrees;
-		
+		double p = 2; // GeV/c
+		double theta = 15; // degrees
+		double phi = 10; // degrees;
+
 		String fn = String.format("%s_%-2.0fGeV.csv", lid.getName(), p);
-		fn = fn.replace("  ", "");		
-		fn = fn.replace(" ", "");		
+		fn = fn.replace("  ", "");
+		fn = fn.replace(" ", "");
 		String dir = System.getProperty("user.home");
 		File file = new File(dir, fn);
 		String path = file.getPath();
-		
+
 		try {
 			DataOutputStream dos = new DataOutputStream(new FileOutputStream(path));
-			
-			String header = String.format("%d,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f", id, torusScale, solenoidScale, xo, yo, zo, p, theta, phi);
+
+			String header = String.format("%d,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f,%-3.1f", id, torusScale,
+					solenoidScale, xo, yo, zo, p, theta, phi);
 			stringLn(dos, header);
-			
-			
-			SwimTrajectory traj = swimmer.swim(lid.getCharge(), xo, yo, zo, p, theta, phi, rMax, sMax, stepSize, distanceBetweenSaves);
-			
+
+			SwimTrajectory traj = swimmer.swim(lid.getCharge(), xo, yo, zo, p, theta, phi, rMax, sMax, stepSize,
+					distanceBetweenSaves);
+
 			for (double u[] : traj) {
-				String s = String.format("%f,%f,%f,%f,%f,%f", u[0], u[1], u[2], p*u[3], p*u[4], p*u[5]);
+				String s = String.format("%f,%f,%f,%f,%f,%f", u[0], u[1], u[2], p * u[3], p * u[4], p * u[5]);
 				stringLn(dos, s);
 			}
 			dos.close();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
-	
-	//for csv output
-	private static void stringLn(DataOutputStream dos, String s) {
-		
-		s = s.replace("  ", "");		
-		s = s.replace(" ", "");		
-		s = s.replace(", ", ",");		
-		s = s.replace(", ", ",");		
-		s = s.replace(" ,", ",");		
 
-		
+	// for csv output
+	private static void stringLn(DataOutputStream dos, String s) {
+
+		s = s.replace("  ", "");
+		s = s.replace(" ", "");
+		s = s.replace(", ", ",");
+		s = s.replace(", ", ",");
+		s = s.replace(" ,", ",");
+
 		try {
 			dos.writeBytes(s);
 			dos.writeBytes("\n");
@@ -308,7 +298,6 @@ public class SwimTest {
 			e.printStackTrace();
 		}
 	}
-
 
 	private static JFrame createFrame() {
 		final JFrame testFrame = new JFrame("Swim Test Frame");
@@ -493,7 +482,8 @@ public class SwimTest {
 			return;
 		}
 
-		String out = String.format("%s [%-10.5f, %-10.5f, %-10.5f %-10.5f, %-10.5f, %-10.5f]", s, v[0], v[1], v[2], v[3], v[4], v[5]);
+		String out = String.format("%s [%-10.5f, %-10.5f, %-10.5f %-10.5f, %-10.5f, %-10.5f]", s, v[0], v[1], v[2],
+				v[3], v[4], v[5]);
 		System.out.println(out);
 	}
 
@@ -554,13 +544,11 @@ public class SwimTest {
 				String.format("R = [%9.7f, %9.7f, %9.7f] |R| = %9.7f m\nP = [%9.7e, %9.7e, %9.7e] |P| =  %9.7e GeV/c",
 						y[0], y[1], y[2], R, P * y[3], P * y[4], P * y[5], P));
 
-		
-		//now in cylindrical
+		// now in cylindrical
 		double phi = FastMath.atan2(y[1], y[0]);
 		double rho = FastMath.hypot(y[0], y[1]);
-		System.out.println(String.format("[phi, rho, z] = [%9.6f, %9.6f, %9.6f]",
-				Math.toDegrees(phi), rho, y[2]));
-		
+		System.out.println(String.format("[phi, rho, z] = [%9.6f, %9.6f, %9.6f]", Math.toDegrees(phi), rho, y[2]));
+
 		System.out.println(String.format("norm (should be 1): %9.7f", norm));
 		System.out.println("--------------------------------------\n");
 	}
@@ -596,8 +584,8 @@ public class SwimTest {
 	 * 
 	 * @param arg command line arguments (ignored)
 	 */
-	public static void main(String arg[]) {
-		
+	public static void Xmain(String arg[]) {
+
 		initMagField();
 
 		System.out.println("Active Field Description: " + MagneticFields.getInstance().getActiveFieldDescription());
@@ -634,23 +622,22 @@ public class SwimTest {
 		});
 
 	}
-	
+
 	private static void runLineTest() {
 		System.out.println("Running line test");
-		
+
 		double px = -7.623109e-02;
 		double py = 6.664333e-09;
 		double pz = 1.998547e+00;
-		
+
 		double x0 = 0.892645;
 		double y0 = 0;
 		double z0 = 5.749990;
-		
+
 		double rMax = 7;
-		
-		double P = Math.sqrt(px*px + py*py + pz*pz);
-		
-		
+
+		double P = Math.sqrt(px * px + py * py + pz * pz);
+
 		// for swimming backwards
 		px = -px;
 		py = -py;
@@ -658,11 +645,10 @@ public class SwimTest {
 		double theta = FastMath.acos2Deg(pz / P);
 		double phi = FastMath.atan2Deg(py, px);
 		System.out.println(String.format("Swim backwards use P: %9.6f  theta: %9.6f  phi: %9.6f", P, theta, phi));
-		
+
 		// create a stopper
 		DefaultSwimStopper stopper = new DefaultSwimStopper(rMax);
 
-		
 //		IStopper stopper = new IStopper() {
 //
 //			@Override
@@ -681,11 +667,186 @@ public class SwimTest {
 //			
 //		};
 //		
-		
+
 		Swimmer swimmer = new Swimmer();
-	// 	swimmer.swim(charge, xo, yo, zo, momentum, theta, phi, rmax, maxPathLength, stepSize, distanceBetweenSaves)
-		
-		
+		// swimmer.swim(charge, xo, yo, zo, momentum, theta, phi, rmax, maxPathLength,
+		// stepSize, distanceBetweenSaves)
 
 	}
+
+	private static void generateTestData(String path, int n, long seed) {
+
+		double rMax = 6;
+		double sMax = 8;
+		double stepSize = 1.0e-3; // m
+		double distanceBetweenSaves = stepSize;
+
+		MagneticFields.getInstance().setActiveField(FieldType.COMPOSITE);
+		SwimTestData td = new SwimTestData(rMax, sMax, stepSize, distanceBetweenSaves, n);
+
+		Swimmer swimmer = new Swimmer();
+
+		System.out.println("TORUS: [" + td.torusFile + "]");
+		System.out.println("SOLENOID: [" + td.solenoidFile + "]");
+
+		Random rand = new Random(seed);
+
+		for (int i = 0; i < n; i++) {
+			td.charge[i] = rand.nextBoolean() ? -1 : 1;
+			td.xo[i] = -.05 + 0.1 * rand.nextDouble();
+			td.yo[i] = -.05 + 0.1 * rand.nextDouble();
+			td.zo[i] = -.05 + 0.1 * rand.nextDouble();
+			td.p[i] = 1. + 6 * rand.nextDouble();
+			td.theta[i] = 10 + 30 * rand.nextDouble();
+			td.phi[i] = 360 * rand.nextDouble();
+
+			td.results[i] = swimmer.swim(td.charge[i], td.xo[i], td.yo[i], td.zo[i], td.p[i], td.theta[i], td.phi[i],
+					rMax, sMax, stepSize, distanceBetweenSaves);
+
+//			double finalStateVector[] = td.results[i].lastElement();
+//
+//			printSummary("\nresult from traditional swimmer", td.results[i].size(),
+//					td.p[i], finalStateVector, null);
+
+		}
+
+		SwimTestData.serialWrite(td, path);
+
+	}
+	
+	private static void testTestData(String path) {
+		
+		File file = new File(path);
+
+		if (!file.exists()) {
+			System.err.println("FATAL ERROR did not find file [" + path + "]");
+			System.exit(1);
+		}
+
+		SwimTestData td = null;
+		try {
+			td = SwimTestData.serialRead(path);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		System.out.println("Successfully deserialized TestData file.");
+		System.out.println("Number of data points: " + td.count());
+		
+		String javaVersion = System.getProperty("java.version");
+
+		boolean sameJava = td.javaVersion.contentEquals(javaVersion);
+
+		System.out.println(String.format("Data java version: [%s] This java version: [%s] same: %s", td.javaVersion,
+				javaVersion, sameJava));
+
+		// using the same fields?
+		MagneticFields.getInstance().setActiveField(FieldType.COMPOSITE);
+		FieldProbe ifield = FieldProbe.factory();
+
+		String torusFile = new String(MagneticFields.getInstance().getTorusBaseName());
+
+		boolean sameTorus = td.torusFile.contentEquals(torusFile);
+		System.out.println(
+				String.format("Data Torus: [%s] This Torus: [%s] same: %s", td.torusFile, torusFile, sameTorus));
+
+		String solenoidFile = new String(MagneticFields.getInstance().getSolenoidBaseName());
+
+		boolean sameSolenoid = td.solenoidFile.contentEquals(solenoidFile);
+		System.out.println(String.format("Data Solenoid: [%s] This Solenoid: [%s] same: %s", td.solenoidFile,
+				solenoidFile, sameSolenoid));
+
+		Swimmer swimmer = new Swimmer();
+		
+		//now generate comparison trajectories
+		td.testResults = new SwimTrajectory[td.count()];
+		
+		for (int i = 0; i < td.count(); i++) {
+			td.testResults[i] = swimmer.swim(td.charge[i], td.xo[i], td.yo[i], td.zo[i], td.p[i], td.theta[i], td.phi[i],
+					td.rMax, td.sMax, td.stepSize, td.distanceBetweenSaves);
+		}
+		
+
+		for (int i = 0; i < td.count(); i++) {
+			double finalStateVector[] = td.results[i].lastElement();
+			double finalTestStateVector[] = td.testResults[i].lastElement();
+			
+			
+			double sum = 0;
+			for (int j = 0; j < finalStateVector.length; j++) {
+				double diff = (finalTestStateVector[j] - finalStateVector[j]);
+				sum = (diff*diff);
+			}
+			sum = Math.sqrt(sum);
+			
+			if (sum > 0) {
+				System.out.println("results differ diff = " + sum);
+				System.exit(1);
+			}
+			
+			if (i == td.count()-1) {
+				printSummary("\nresult from data", td.results[i].size(),
+						td.p[i], finalStateVector, null);
+				printSummary("\nresult from test", td.testResults[i].size(),
+						td.p[i], finalStateVector, null);
+
+
+			}
+			
+		}
+		
+
+		
+		System.out.println("Trajectories are identical.");
+		
+	}
+
+	/**
+	 * main program
+	 * 
+	 * @param arg command line arguments (ignored)
+	 */
+	public static void main(String arg[]) {
+		final MagneticFields mf = MagneticFields.getInstance();
+
+		// test specific load
+		File mfdir = new File(System.getProperty("user.home"), "magfield");
+		System.out.println("mfdir exists: " + (mfdir.exists() && mfdir.isDirectory()));
+		try {
+			mf.initializeMagneticFields(mfdir.getPath(), "Full_torus_r251_phi181_z251_08May2018.dat",
+					"Symm_solenoid_r601_phi1_z1201_13June2018.dat");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(1);
+		} catch (MagneticFieldInitializationException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		// write out data file
+		String path = (new File(_homeDir, "swimTestData")).getPath();
+
+		generateTestData(path, 1000, 19923456L);
+		
+		
+		//look for the file
+		
+		
+		File file = new File(_currentWorkingDirectory, "swimTestData");
+		if (!file.exists()) {
+			file = new File(_homeDir, "swimTestData");
+			if (!file.exists()) {
+				System.err.println("FATAL ERROR Could not find test data file.");
+			}
+		}
+		
+		System.out.println("Will test on data file: [" + file.getPath() + "]");
+
+		testTestData(file.getPath());
+
+
+		System.out.println("done");
+	}
+
 }

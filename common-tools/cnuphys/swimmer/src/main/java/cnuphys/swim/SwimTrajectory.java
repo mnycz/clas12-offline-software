@@ -1,6 +1,7 @@
 package cnuphys.swim;
 
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import cnuphys.adaptiveSwim.AdaptiveSwimUtilities;
@@ -19,8 +20,13 @@ import cnuphys.magfield.RotatedCompositeProbe;
  * @author heddle
  * 
  */
-@SuppressWarnings("serial")
-public class SwimTrajectory extends ArrayList<double[]> {
+
+public class SwimTrajectory extends ArrayList<double[]>  implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3850772573951127304L;
 
 	// the particle that we swam
 	private GeneratedParticleRecord _genPartRec;
