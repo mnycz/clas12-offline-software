@@ -308,7 +308,7 @@ public class Constants {
     public static final String TIMEJITTER = "/calibration/dc/time_jitter";
     public static final String HITBASE = "HitBased";
 
-    private static double T2D = 0; 
+    private static double T2D = 1; 
     public static void  setT2D(int i) {
         Constants.T2D = i;
     }

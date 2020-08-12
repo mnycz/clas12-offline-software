@@ -13,6 +13,7 @@ import org.jlab.analysis.physics.TestEvent;
 import org.jlab.analysis.math.ClasMath;
 
 import org.jlab.clas.swimtools.MagFieldsEngine;
+import org.jlab.geom.prim.Point3D;
 import org.jlab.jnp.hipo4.data.SchemaFactory;
 import org.jlab.utils.CLASResources;
 import org.jlab.utils.system.ClasUtilsFile;
@@ -74,35 +75,35 @@ public class DCReconstructionTest {
     assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").rows(), 1);
     assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getByte("q", 0), -1);
 
-    assertEquals(ClasMath.isWithinXPercent(27.9, testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_x", 0), 0.997), true);
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_y", 0) > -0.0702, true);
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_y", 0) < 0.0438, true);
-    assertEquals(ClasMath.isWithinXPercent(17.5, testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_z", 0), 2.04), true);
+    assertEquals(ClasMath.isWithinXPercent(5, testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_x", 0), 1.05), true);
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_y", 0) > -0.05, true);
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_y", 0) <  0.05, true);
+    assertEquals(ClasMath.isWithinXPercent(5, testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("p0_z", 0), 2.26), true);
 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_x", 0) < 0.2, true);
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_x", 0) > -0.2, true);
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_y", 0) < 0.18, true);  
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_y", 0) > -0.228, true);
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_z", 0) < 0.885, true);
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_z", 0) > -0.0753, true);
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_x", 0) < 0.4, true);
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_x", 0) > -0.4, true);
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_y", 0) < 0.4, true);  
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_y", 0) > -0.4, true);
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_z", 0) < 0.8, true);
+    assertEquals(testEvent.getBank("TimeBasedTrkg::TBTracks").getFloat("Vtx0_z", 0) > -0.8, true);
     
-    
+
+    Point3D cross1 = new Point3D( -3.5, -21.7, 237.7);
+    Point3D cross2 = new Point3D( -8.8, -33.2, 369.0);
+    Point3D cross3 = new Point3D(-27.2, -41.9, 510.6);
+    double crossErr = 0.5;
+
     //Region 1
-    assertEquals(ClasMath.isWithinXPercent(155, testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("x", 0), 4.02), true); 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 0 ) < 9.25, true); 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 0 ) > -11.78, true); 
- 
-    //Region 2 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("x", 1 ) < 14.2, true); 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("x", 1 ) > -5.8, true);
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 1 ) < 13.9, true); 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 1 ) > -17.8, true); 
-    
+    assertEquals(Math.abs(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("x", 0 ) - cross1.x())<crossErr, true); 
+    assertEquals(Math.abs(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 0 ) - cross1.y())<crossErr, true); 
+
+    //Region 2
+    assertEquals(Math.abs(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("x", 1 ) - cross2.x())<crossErr, true); 
+    assertEquals(Math.abs(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 1 ) - cross2.y())<crossErr, true); 
+
     //Region 3
-    assertEquals(ClasMath.isWithinXPercent(127, testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("x", 2), -11.0), true); 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 2 ) < 17.96, true); 
-    assertEquals(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 2 ) > -23.66, true); 
- 
+    assertEquals(Math.abs(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("x", 2 ) - cross3.x())<crossErr, true); 
+    assertEquals(Math.abs(testEvent.getBank("TimeBasedTrkg::TBCrosses").getFloat("y", 2 ) - cross3.y())<crossErr, true); 
     
   }
   

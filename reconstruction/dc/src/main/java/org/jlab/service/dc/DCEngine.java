@@ -138,9 +138,10 @@ public class DCEngine extends ReconstructionEngine {
             }
             }
         }
-        if (T2Dfcn==null) {
+        if (Constants.getT2D()==0) {
              System.out.println("["+this.getName()+"] run with time to distance exponential function in tracking ");
         }
+        else System.out.println("["+this.getName()+"] run with time to distance polynomial function in tracking ");
     }
     public void LoadTables() {
         
