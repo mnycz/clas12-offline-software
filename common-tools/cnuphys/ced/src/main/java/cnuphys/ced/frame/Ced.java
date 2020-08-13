@@ -40,6 +40,7 @@ import cnuphys.ced.cedview.central.CentralXYView;
 import cnuphys.ced.cedview.central.CentralZView;
 import cnuphys.ced.cedview.dcxy.DCXYView;
 import cnuphys.ced.cedview.ft.FTCalXYView;
+import cnuphys.ced.cedview.magfieldview.MagfieldView;
 import cnuphys.ced.cedview.rtpc.RTPCView;
 import cnuphys.ced.cedview.sectorview.DisplaySectors;
 import cnuphys.ced.cedview.sectorview.SectorView;
@@ -125,7 +126,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	private static String _geoVariation = "default";
 	
 	//ced release 
-	private static final String _release = "build 1.4.63";
+	private static final String _release = "build 1.4.65";
 
 	// used for one time inits
 	private int _firstTime = 0;
@@ -185,6 +186,9 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	private CentralView3D _central3DView;
 	private FTCalView3D _ftCal3DView;
 	private TOFView _tofView;
+	
+	//mag fiew testing view
+	private MagfieldView _magfieldView;
 
 	// sector views
 	private SectorView _sectorView14;
@@ -289,6 +293,8 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		_virtualView.moveTo(bstHistoGrid, 15);
 		_virtualView.moveTo(pcalHistoGrid, 16);
 		_virtualView.moveTo(ecHistoGrid, 17);
+		
+		_virtualView.moveTo(_magfieldView, 18, VirtualView.CENTER);
 
 		_virtualView.moveTo(_allDCView, 3);
 		_virtualView.moveTo(_eventView, 6, VirtualView.CENTER);
@@ -401,6 +407,9 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		// add logview
 		ViewManager.getInstance().getViewMenu().addSeparator();
 		// plot view
+		
+		_magfieldView = MagfieldView.createMagfieldView();
+		
 		_plotView = new PlotView();
 
 		_logView = new LogView();

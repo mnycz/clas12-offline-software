@@ -99,6 +99,13 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 	 */
 	public static final String rhoZPhi = UnicodeSupport.SMALL_RHO + UnicodeSupport.THINSPACE + "z"
 			+ UnicodeSupport.THINSPACE + UnicodeSupport.SMALL_PHI;
+	
+	/**
+	 * A string that has xyz with small spaces
+	 */
+	public static final String xyz = "x" + UnicodeSupport.THINSPACE + "y"
+			+ UnicodeSupport.THINSPACE + "z";
+
 
 	/**
 	 * A string that has rho-phi using unicode greek characters for hex views
@@ -138,18 +145,39 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 
 	// the clasIO event manager
 	protected ClasIoEventManager _eventManager = ClasIoEventManager.getInstance();
-
+	
 	/**
 	 * Constructor
 	 * 
 	 * @param keyVals variable length argument list
 	 */
 	public CedView(Object... keyVals) {
+		this(true, keyVals);
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * @param keyVals variable length argument list
+	 */
+	public CedView(boolean fullFeatures, Object... keyVals) {
 		super(keyVals);
+		IContainer container = getContainer();
+		
+		if (!fullFeatures) {
+			container.getFeedbackControl().addFeedbackProvider(this);
+			// add the magnetic field layer--mostly unused.
+			container.addLogicalLayer(_magneticFieldLayerName);
+			MagneticFields.getInstance().addMagneticFieldChangeListener(this);
+			if (_activeProbe == null) {
+				_activeProbe = FieldProbe.factory();
+			}
+
+			return;
+		}
 
 		_eventManager.addClasIoEventListener(this, 2);
 
-		IContainer container = getContainer();
 
 		if (container != null) {
 			container.getFeedbackControl().addFeedbackProvider(this);
