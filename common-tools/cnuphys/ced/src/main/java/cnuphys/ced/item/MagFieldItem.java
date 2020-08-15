@@ -13,7 +13,9 @@ import cnuphys.bCNU.graphics.style.LineStyle;
 import cnuphys.bCNU.item.AItem;
 import cnuphys.bCNU.layer.LogicalLayer;
 import cnuphys.ced.cedview.CedView;
+import cnuphys.ced.cedview.SliceView;
 import cnuphys.ced.cedview.central.CentralZView;
+import cnuphys.ced.cedview.magfieldview.MagfieldView;
 import cnuphys.ced.cedview.sectorview.SectorView;
 import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.ced.component.MagFieldDisplayArray;
@@ -89,6 +91,7 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 	 */
 	@Override
 	public void drawItem(Graphics g, IContainer container) {
+		
 		if (_failedToLoad) {
 			return;
 		}
@@ -117,6 +120,8 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 
 		if (_view instanceof SectorView) {
 			drawItemSectorView(g, container, displayOption, hasTorus, hasSolenoid);
+		} else if (_view instanceof MagfieldView) {
+			drawItemMagfieldView(g, container, displayOption, hasTorus, hasSolenoid);
 		} else if (_view instanceof CentralZView) {
 			drawItemCentralZView(g, container, displayOption, hasTorus, hasSolenoid);
 		}
@@ -162,7 +167,6 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 				float x = (float) coords[0];
 				float y = (float) coords[1];
 				float z = (float) coords[2];
-				double rho = coords[3];
 				double phi = coords[4];
 
 				if (displayOption == MagFieldDisplayArray.BMAGDISPLAY) {
@@ -244,14 +248,19 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 		fieldBoundary.x = zmin;
 		fieldBoundary.width = (zmax - zmin);
 
-		System.out.println(fieldBoundary);
-
 		fieldBoundary.y = -rCoordinate.getMax();
 		fieldBoundary.height = 2 * rCoordinate.getMax();
 
 		Rectangle fieldRect = new Rectangle();
 		container.worldToLocal(fieldRect, fieldBoundary);
 		return fieldRect;
+	}
+	
+	// drawer for sector views
+	private void drawItemMagfieldView(Graphics g, IContainer container, 
+			int displayOption, boolean hasTorus,
+			boolean hasSolenoid) {
+		drawItemSectorView(g, container, displayOption, hasTorus, hasSolenoid);
 	}
 
 	// drawer for sector views
@@ -270,6 +279,7 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 		Rectangle fieldRect;
 
 		fieldRect = getFieldRect(container, hasTorus, hasSolenoid);
+
 
 		Rectangle updateRect = bounds.intersection(fieldRect);
 
@@ -291,12 +301,11 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 				container.localToWorld(pp, wp);
 
 				// get the true Cartesian coordinates
-				((SectorView) (_view)).getCLASCordinates(container, pp, wp, coords);
+				((SliceView) (_view)).getCLASCordinates(container, pp, wp, coords);
 
 				float x = (float) coords[0];
 				float y = (float) coords[1];
 				float z = (float) coords[2];
-				double rho = coords[3];
 				double phi = coords[4];
 
 				// if (_activeProbe.containsCylindrical(phi, rho, z)) {
@@ -442,7 +451,7 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 	 */
 	private static double[] getSolenoidValues() {
 
-		int len = getTorusColors().length + 1;
+		int len = getSolenoidColors().length + 1;
 
 		double values[] = new double[len];
 //		double min = 0.1;
@@ -472,6 +481,7 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 	private static Color[] getGradientColors() {
 		return getTorusColors();
 	}
+	
 
 	/**
 	 * Get the color array for the plot.
@@ -479,13 +489,7 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 	 * @return the color array for the plot.
 	 */
 	private static Color[] getTorusColors() {
-
-		// int r[] = {255, 176, 37, 132, 253, 205, 130, 127};
-		// int g[] = {254, 224, 162, 155, 189, 94, 0, 0};
-		// int b[] = {227, 230, 42, 51, 6, 5, 2, 127};
-		// int r[] = { 176, 255, 176, 37, 132, 255, 255, 255, 127 };
-		// int g[] = { 176, 254, 224, 162, 155, 255, 128, 0, 0 };
-		// int b[] = { 176, 227, 230, 42, 51, 0, 0, 0, 127 };
+		
 		int r[] = { 255, 216, 176, 106, 37, 132, 193, 255, 255, 255, 255, 127 };
 		int g[] = { 255, 239, 224, 193, 162, 155, 205, 255, 191, 128, 0, 0 };
 		int b[] = { 255, 242, 230, 136, 42, 51, 25, 0, 0, 0, 0, 127 };
@@ -506,15 +510,6 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 				int bb = b[i] + (int) (j * f * (b[i + 1] - b[i]));
 
 				colors[k] = new Color(rr, gg, bb);
-
-				//
-				// if (k < 2) {
-				// // colors[k] = Color.cyan;
-				// colors[k] = new Color(rr, gg, bb, 64);
-				// }
-				// else {
-				// colors[k] = new Color(rr, gg, bb);
-				// }
 				k++;
 			}
 		}
@@ -530,16 +525,7 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 	 * @return the color array for the plot.
 	 */
 	private static Color[] getSolenoidColors() {
-
-		// int r[] = {255, 176, 37, 132, 253, 205, 130, 127};
-		// int g[] = {254, 224, 162, 155, 189, 94, 0, 0};
-		// int b[] = {227, 230, 42, 51, 6, 5, 2, 127};
-		// int r[] = { 176, 255, 176, 37, 132, 255, 255, 255, 127 };
-		// int g[] = { 176, 254, 224, 162, 155, 255, 128, 0, 0 };
-		// int b[] = { 176, 227, 230, 42, 51, 0, 0, 0, 127 };
-		// int r[] = { 255, 216, 176, 106, 37, 132, 255, 255, 255, 127 };
-		// int g[] = { 255, 239, 224, 193, 162, 155, 255, 128, 0, 0 };
-		// int b[] = { 255, 242, 230, 136, 42, 51, 0, 0, 0, 127 };
+		
 		int r[] = { 255, 106, 37, 132, 255, 255, 255, 127 };
 		int g[] = { 255, 193, 162, 155, 255, 128, 0, 0 };
 		int b[] = { 255, 136, 42, 51, 0, 0, 0, 127 };
@@ -561,13 +547,6 @@ public class MagFieldItem extends AItem implements MagneticFieldChangeListener {
 
 				colors[k] = new Color(rr, gg, bb);
 
-				// if (k < 2) {
-				// // colors[k] = Color.cyan;
-				// colors[k] = new Color(rr, gg, bb, 64);
-				// }
-				// else {
-				// colors[k] = new Color(rr, gg, bb);
-				// }
 				k++;
 			}
 		}

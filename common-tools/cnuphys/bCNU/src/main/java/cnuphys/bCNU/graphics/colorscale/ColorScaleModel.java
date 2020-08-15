@@ -442,20 +442,6 @@ public class ColorScaleModel {
 			mono[i] = new Color(c, c, c);
 		}
 
-//		System.out.print("vals [" + values.length + "] ");
-//		for (double v : values) {
-//			String s = String.format("%-4.2f ", v);
-//			System.out.print(s);
-//		}
-//		System.out.println();
-//		
-//		System.out.print("colors [" + mono.length + "] ");
-//		for (Color col : mono) {
-//			float[] comp = col.getColorComponents(null);
-//			String s = String.format("[%-4.2f, %-4.2f, %-4.2f] ", comp[0], comp[1], comp[2]);
-//			System.out.print(s);
-//		}
-//		System.out.println();
 
 		ColorScaleModel mcm = new ColorScaleModel(values, mono);
 

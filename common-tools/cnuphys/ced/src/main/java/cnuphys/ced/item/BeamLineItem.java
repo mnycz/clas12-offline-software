@@ -7,6 +7,7 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 import cnuphys.ced.cedview.central.CentralZView;
+import cnuphys.ced.cedview.magfieldview.MagfieldView;
 import cnuphys.ced.cedview.sectorview.SectorView;
 import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.bCNU.graphics.container.IContainer;
@@ -50,6 +51,9 @@ public class BeamLineItem extends BaseBeamLineItem {
 			targetZ = ((SectorView) view).getTargetZ();
 		} else if (view instanceof CentralZView) {
 			targetZ = ((CentralZView) view).getTargetZ();
+		}
+		else if (view instanceof MagfieldView) {
+			targetZ =((MagfieldView) view).getTargetZ();
 		}
 
 		// draw it?

@@ -15,7 +15,6 @@ import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.Timer;
 
 import cnuphys.bCNU.component.InfoWindow;
 import cnuphys.bCNU.component.TranslucentWindow;
@@ -27,6 +26,7 @@ import cnuphys.bCNU.graphics.toolbar.BaseToolBar;
 import cnuphys.bCNU.graphics.toolbar.ToolBarToggleButton;
 import cnuphys.bCNU.graphics.toolbar.UserToolBarComponent;
 import cnuphys.bCNU.layer.LogicalLayer;
+import cnuphys.bCNU.ping.IPing;
 import cnuphys.bCNU.util.UnicodeSupport;
 import cnuphys.bCNU.view.BaseView;
 import cnuphys.bCNU.view.ViewManager;
@@ -37,6 +37,7 @@ import cnuphys.ced.component.ControlPanel;
 import cnuphys.ced.component.MagFieldDisplayArray;
 import cnuphys.ced.event.AccumulationManager;
 import cnuphys.ced.event.IAccumulationListener;
+import cnuphys.ced.frame.Ced;
 import cnuphys.ced.geometry.ECGeometry;
 import cnuphys.ced.geometry.GeometryManager;
 import cnuphys.lund.SwimTrajectoryListener;
@@ -200,8 +201,17 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 			getUserComponent().setUserDraw(_userComponentDrawer);
 		}
 
-		// create a heartbeat
-		createHeartbeat();
+		//use the ping to deal with hover
+		IPing pingListener = new IPing() {
+
+			@Override
+			public void ping() {
+				heartbeat();
+			}
+			
+		};
+		Ced.getCed().getPing().addPingListener(pingListener);
+		
 		// prepare to check for hovering
 		prepareForHovering();
 
@@ -234,27 +244,15 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 	}
 
 	// called when heartbeat goes off.
-	protected void ping() {
-		// check for over
+	protected void heartbeat() {
+		// check for hover
+		
 		if (hoverStartCheck > 0) {
 			if ((System.currentTimeMillis() - hoverStartCheck) > minHoverTrigger) {
 				hovering(hoverMouseEvent);
 				hoverStartCheck = -1;
 			}
 		}
-	}
-
-	// create the heartbeat. Default implementation is 1 second
-	// Can overide to do nothing (so no heartbeat)
-	protected void createHeartbeat() {
-		int delay = 1000;
-		ActionListener taskPerformer = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				ping();
-			}
-		};
-		new Timer(delay, taskPerformer).start();
 	}
 
 	// prepare hovering checker
@@ -733,6 +731,14 @@ public abstract class CedView extends BaseView implements IFeedbackProvider, Swi
 		return _controlPanel.getDisplayArray().showRecCal();
 	}
 
+	/**
+	 * Convenience method to see if we show field map grid
+	 * 
+	 * @return <code>true</code> if we are to show field map grid
+	 */
+	public boolean showMagGrid() {
+		return _controlPanel.getDisplayArray().showMagGrid();
+	}
 	
 	/**
 	 * Convenience method to see it we show the AI dc hit based reconstructed hits.

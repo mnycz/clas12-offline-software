@@ -103,6 +103,7 @@ import cnuphys.bCNU.graphics.ImageManager;
 import cnuphys.bCNU.log.Log;
 import cnuphys.bCNU.magneticfield.swim.ISwimAll;
 import cnuphys.bCNU.menu.MenuManager;
+import cnuphys.bCNU.ping.Ping;
 import cnuphys.bCNU.simanneal.example.ising2D.Ising2DDialog;
 import cnuphys.bCNU.simanneal.example.ts.TSDialog;
 import cnuphys.bCNU.util.Environment;
@@ -118,6 +119,9 @@ import cnuphys.bCNU.view.VirtualView;
 
 @SuppressWarnings("serial")
 public class Ced extends BaseMDIApplication implements PropertyChangeListener, MagneticFieldChangeListener {
+	
+	// a shared ping
+	private Ping _ping;
 
 	// the singleton
 	private static Ced _instance;
@@ -148,9 +152,6 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 
 	// warning label that filtering is active
 	private JLabel _filterLabel;
-
-	// busy panel shows working when reading file
-//	private static BusyPanel _busyPanel;
 
 	// event number label on menu bar
 	private static JLabel _eventNumberLabel;
@@ -187,8 +188,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	private FTCalView3D _ftCal3DView;
 	private TOFView _tofView;
 	
-	//mag fiew testing view
-	private MagfieldView _magfieldView;
+	//magfield testing views
+	private MagfieldView _magfieldView14;
+	private MagfieldView _magfieldView25;
+	private MagfieldView _magfieldView36;
 
 	// sector views
 	private SectorView _sectorView14;
@@ -232,6 +235,9 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	 */
 	private Ced(Object... keyVals) {
 		super(keyVals);
+		
+		//one second maintenance timer
+		_ping = new Ping(1000);
 
 		// histogram filler
 		new CedHistoFiller(this);
@@ -260,6 +266,14 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		};
 
 		addComponentListener(cl);
+	}
+	
+	/**
+	 * Get the common Ping object
+	 * @return the ping object
+	 */
+	public Ping getPing() {
+		return _ping;
 	}
 
 	// arrange the views on the virtual desktop
@@ -294,7 +308,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		_virtualView.moveTo(pcalHistoGrid, 16);
 		_virtualView.moveTo(ecHistoGrid, 17);
 		
-		_virtualView.moveTo(_magfieldView, 18, VirtualView.CENTER);
+		_virtualView.moveToStart(_magfieldView14, 18, VirtualView.UPPERLEFT);
+		_virtualView.moveToStart(_magfieldView25, 18, VirtualView.UPPERLEFT);
+		_virtualView.moveToStart(_magfieldView36, 18, VirtualView.UPPERLEFT);
+
 
 		_virtualView.moveTo(_allDCView, 3);
 		_virtualView.moveTo(_eventView, 6, VirtualView.CENTER);
@@ -408,7 +425,9 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		ViewManager.getInstance().getViewMenu().addSeparator();
 		// plot view
 		
-		_magfieldView = MagfieldView.createMagfieldView();
+		_magfieldView14 = MagfieldView.createMagfieldView(DisplaySectors.SECTORS14);
+		_magfieldView25 = MagfieldView.createMagfieldView(DisplaySectors.SECTORS25);
+		_magfieldView36 = MagfieldView.createMagfieldView(DisplaySectors.SECTORS36);
 		
 		_plotView = new PlotView();
 

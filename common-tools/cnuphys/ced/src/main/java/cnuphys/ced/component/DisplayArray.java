@@ -87,6 +87,9 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	/** Label for dc HB Hits button */
 	private static final String DC_HIT_LABEL = "DC Recon Hits";
 	
+	/** Label for magnetic field grid */
+	private static final String MAGGRID_LABEL = "Fieldmap Grids";
+	
 	/** Label for REC::Calorimeter Hits button */
 	private static final String RECCAL_LABEL = "REC Cal";
 
@@ -149,6 +152,9 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	
 	// controls whether REC::Calorimeter data are displayed
     private AbstractButton _recCalButton;
+    
+    // controls whether field map grids are displayed
+    private AbstractButton _magGridButton;
 
 	// controls whether reconstructed segments are displayed
 	private AbstractButton _segmentButton;
@@ -328,8 +334,12 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 		if (Bits.checkBit(bits, DisplayBits.RECCAL)) {
 			_recCalButton = add(RECCAL_LABEL, true, true, this, _buttonColor).getCheckBox();
 		}
-
-
+		
+		// mag field grid?
+		if (Bits.checkBit(bits, DisplayBits.MAGGRID)) {
+			_magGridButton = add(MAGGRID_LABEL, true, true, this, _buttonColor).getCheckBox();
+		}
+		
 		// reconstructed dc segments?
 		if (Bits.checkBit(bits, DisplayBits.SEGMENTS)) {
 			_segmentButton = add(SEGMENT_LABEL, true, true, this, _buttonColor).getCheckBox();
@@ -618,6 +628,15 @@ public class DisplayArray extends CheckBoxArray implements ItemListener {
 	 */
 	public boolean showRecCal() {
 		return (_recCalButton != null) && _recCalButton.isSelected();
+	}
+	
+	/**
+	 * Convenience method to see if we show field map grid
+	 * 
+	 * @return <code>true</code> if we are to show field map grid
+	 */
+	public boolean showMagGrid() {
+		return (_magGridButton != null) && _magGridButton.isSelected();
 	}
 	
 	/**

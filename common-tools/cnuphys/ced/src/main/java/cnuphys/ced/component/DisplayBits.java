@@ -70,6 +70,9 @@ public class DisplayBits {
     
     /** data from REC::Calorimeter */
     public static final int RECCAL = 020000000;
+    
+    /** mag field grid */
+    public static final int MAGGRID = 040000000;
 
 
 	/** Distance scale */

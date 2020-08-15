@@ -415,8 +415,13 @@ public class ControlPanel extends JPanel implements ChangeListener {
 		_phiSlider.setPreferredSize(d);
 		box.add(_phiSlider);
 
-		box.setBorder(new CommonBorder(
-				UnicodeSupport.CAPITAL_DELTA + UnicodeSupport.SMALL_PHI + " relative to midplane (deg)"));
+		if (isBig) {
+			box.setBorder(new CommonBorder(
+					UnicodeSupport.SMALL_PHI + " (deg)"));
+		} else {
+			box.setBorder(new CommonBorder(
+					UnicodeSupport.CAPITAL_DELTA + UnicodeSupport.SMALL_PHI + " relative to midplane (deg)"));
+		}
 		return box;
 	}
 	

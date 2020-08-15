@@ -5,6 +5,7 @@ import java.awt.geom.Point2D;
 
 import cnuphys.bCNU.graphics.container.IContainer;
 import cnuphys.bCNU.magneticfield.swim.ASwimTrajectoryDrawer;
+import cnuphys.ced.cedview.SliceView;
 import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.ced.geometry.GeometryManager;
 import cnuphys.magfield.FastMath;
@@ -13,9 +14,9 @@ import cnuphys.swim.SwimTrajectory2D;
 
 public class SwimTrajectoryDrawer extends ASwimTrajectoryDrawer {
 
-	private SectorView _view;
+	private SliceView _view;
 
-	public SwimTrajectoryDrawer(SectorView view) {
+	public SwimTrajectoryDrawer(SliceView view) {
 		_view = view;
 	}
 
