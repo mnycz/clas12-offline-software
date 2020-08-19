@@ -5,6 +5,7 @@
  */
 package org.jlab.clas.swimtools;
 
+import cnuphys.adaptiveSwim.AdaptiveSwimException;
 import cnuphys.rk4.IStopper;
 import cnuphys.rk4.RungeKuttaException;
 import cnuphys.swim.SwimTrajectory;
@@ -14,7 +15,9 @@ import cnuphys.swimZ.SwimZResult;
 import cnuphys.swimZ.SwimZStateVector;
 import org.apache.commons.math3.util.FastMath;
 import org.jlab.geom.prim.Vector3D;
-
+import cnuphys.adaptiveSwim.AdaptiveSwimResult;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  *
  * @author ziegler
@@ -28,8 +31,7 @@ public class Swim {
     private double _phi;
     private double _theta;
     private double _pTot;
-    private final double _rMax = 5 + 3; // increase to allow swimming to outer
-    // detectors
+    private final double _rMax = 5 + 3; // increase to allow swimming to outer detectors
     private double _maxPathLength = 9;
     private boolean SwimUnPhys = false; //Flag to indicate if track is swimmable
     private int _charge;
@@ -38,7 +40,9 @@ public class Swim {
     final double MINTRKMOM = 0.05; // GeV/c
     final double accuracy = 20e-6; // 20 microns
     final double stepSize = 5.00 * 1.e-4; // 500 microns
-
+    double stepsizeAdaptive = 0.01; // starting
+    double eps = 1.0e-6;
+    
     private ProbeCollection PC;
     
     /**
@@ -411,31 +415,35 @@ public class Swim {
      * @param Rad
      * @return state  x,y,z,px,py,pz, pathlength, iBdl at the surface 
      */
-    public double[] SwimToCylinder(double Rad) {
-        
+    public double[] SwimToCylinder(double Rad_cm) {
+        AdaptiveSwimResult cResult = new AdaptiveSwimResult(true);
         double[] value = new double[8];
         if(this.SwimUnPhys)
             return null;
-        
-        CylindricalBoundarySwimStopper stopper = new CylindricalBoundarySwimStopper(Rad);
-        
-        SwimTrajectory st = PC.CF.swim(_charge, _x0, _y0, _z0, _pTot, _theta, _phi, stopper, _maxPathLength, stepSize,
-                        0.0005);
-        if(st==null)
-                return null;
-        st.computeBDL(PC.CP);
-        // st.computeBDL(compositeField);
-
-        double[] lastY = st.lastElement();
-
+        double Rad = Rad_cm/100; // in m
+        try {
+            //CylindricalBoundarySwimStopper stopper = new CylindricalBoundarySwimStopper(Rad);
+            
+            //SwimTrajectory st = PC.CF.swim(_charge, _x0, _y0, _z0, _pTot, _theta, _phi, stopper, _maxPathLength, stepSize,
+            //               0.0005);
+            //if(st==null)
+            //        return null;
+            //st.computeBDL(PC.CP);
+            PC.ACF.swimRho(_charge, _x0, _y0, _z0, _pTot, _theta, _phi, Rad, accuracy,
+                    _maxPathLength, stepsizeAdaptive, eps, cResult);
+        } catch (AdaptiveSwimException ex) {
+            Logger.getLogger(Swim.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        double[] lastY = cResult.getUf();
+        double path = cResult.getFinalS();
         value[0] = lastY[0] * 100; // convert back to cm
         value[1] = lastY[1] * 100; // convert back to cm
         value[2] = lastY[2] * 100; // convert back to cm
         value[3] = lastY[3] * _pTot; // normalized values
         value[4] = lastY[4] * _pTot;
         value[5] = lastY[5] * _pTot;
-        value[6] = lastY[6] * 100;
-        value[7] = lastY[7] * 10; // Conversion from kG.m to T.cm
+        value[6] = path * 100;
+        //value[7] = lastY[7] * 10; // Conversion from kG.m to T.cm
 
         return value;
 
