@@ -14,8 +14,6 @@ import org.jlab.clas.tracking.trackrep.Helix;
 
 public class KFitter {
     
-    public static boolean USESWIMMER = false;
-    
     public static int polarity = -1;
     
     public boolean setFitFailed = true;
@@ -88,7 +86,7 @@ public class KFitter {
         sv.init( helix, cov, Xb, Yb, this, swimmer);
     }
 
-    public int totNumIter = 10;
+    public int totNumIter = 5;
     double newChisq = Double.POSITIVE_INFINITY;
 
     public void runFitter(Swim swimmer) {
@@ -117,9 +115,9 @@ public class KFitter {
                     this.filter(k - 1, swimmer, -1);
             }
 
-            //sv.trackCov.get(0).covMat = iCov;
-            this.chi2=this.calc_chi2(swimmer);
-            if(this.chi2<newchisq) {
+            // chi2
+            this.chi2=this.calc_chi2(swimmer); 
+            if(this.chi2<newchisq) { 
                 newchisq=this.chi2;
                 KFHelix = sv.setTrackPars(0);
                 //KFHelix = sv.getHelixAtBeamLine(1, swimmer); 
@@ -261,9 +259,8 @@ public class KFitter {
             fVec.tanL = tanL_filt;
             fVec.alpha = sv.trackTraj.get(k).alpha;
             sv.setStateVecPosAtMeasSite(k, fVec, mv.measurements.get(k), swimmer); 
-
-            double dh_filt = mv.dh(k, fVec);
             
+            double dh_filt = mv.dh(k, fVec); 
             if (Math.abs(dh_filt) < Math.abs(dh)) { 
                 sv.trackTraj.get(k).d_rho = drho_filt;
                 sv.trackTraj.get(k).phi0 = phi0_filt;

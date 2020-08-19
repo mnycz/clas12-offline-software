@@ -38,7 +38,7 @@ public class Helix {
     private double _py;
     private double _pz;
     
-    private Units units = Units.CM; //default
+    public Units units = Units.CM; //default
     
     public Helix(double d0, double phi0, double omega, double z0, double tanL,
             int turningSign, double B, Units unit) {
@@ -70,13 +70,11 @@ public class Helix {
         _omega = (double) -_turningSign/_R;
         double S = Math.sin(_phi0);
         double C = Math.cos(_phi0);
-        
         if(Math.abs(S)>=Math.abs(C)) {
             _d0 = -x0/S;
         } else {
             _d0 = y0/C;
         }
-        
         this.Update();
     }
     
@@ -234,7 +232,7 @@ public class Helix {
         _xd = -getD0()*Math.sin(getPhi0());
         _yd =  getD0()*Math.cos(getPhi0());
         setXc(-(_turningSign*_R + _d0)*Math.sin(getPhi0()));
-        setYc((_turningSign*getR() + _d0)*Math.cos(getPhi0()));
+        setYc((_turningSign*_R + _d0)*Math.cos(getPhi0()));
         setX(getX(tFlightLen));
         setY(getY(tFlightLen));
         setZ(getZ(tFlightLen));

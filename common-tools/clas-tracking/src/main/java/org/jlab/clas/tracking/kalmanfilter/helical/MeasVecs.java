@@ -15,7 +15,6 @@ import org.jlab.clas.tracking.kalmanfilter.helical.StateVecs.StateVec;
 import org.jlab.clas.tracking.objects.Strip;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
-import org.jlab.geom.prim.Vector3D;
 
 /**
  *
@@ -156,8 +155,8 @@ public class MeasVecs {
                 SVplus.tanL = stateVec.tanL + getDelta_d_a()[i] / 2.;
                 SVminus.tanL = stateVec.tanL - getDelta_d_a()[i] / 2.;
             }
-            SVplus = sv.newStateVecAtMeasSite(stateVec.k, SVplus, mv, swimmer);
-            SVminus = sv.newStateVecAtMeasSite(stateVec.k, SVminus, mv, swimmer);
+            SVplus = sv.newStateVecAtMeasSite(stateVec.k, SVplus, mv, swimmer, false);
+            SVminus = sv.newStateVecAtMeasSite(stateVec.k, SVminus, mv, swimmer, false);
             getHval()[i] = (this.h(stateVec.k, SVplus) - this.h(stateVec.k, SVminus)) / getDelta_d_a()[i] ;
         }
        
@@ -173,7 +172,7 @@ public class MeasVecs {
         SVplus.dz = stateVec.dz;
         SVplus.tanL = stateVec.tanL;
         SVplus.alpha = stateVec.alpha;
-
+        
         return SVplus;
     }
     

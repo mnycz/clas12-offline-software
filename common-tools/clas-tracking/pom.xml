@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jlab.clas</groupId>
         <artifactId>common-tools</artifactId>
-        <version>6.5.3-SNAPSHOT</version>
+        <version>6c.5.4-SNAPSHOT</version>
     </parent>
     
     <artifactId>clas-tracking</artifactId>
@@ -18,12 +18,12 @@
     <dependency>
       <groupId>org.jlab.clas</groupId>
       <artifactId>clas-reco</artifactId>
-      <version>6.5.3-SNAPSHOT</version>
+      <version>6c.5.4-SNAPSHOT</version>
     </dependency>
         <dependency>
             <groupId>org.jlab.coat</groupId>
             <artifactId>coat-libs</artifactId>
-            <version>6.5.3-SNAPSHOT</version>
+            <version>6c.5.4-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
     </dependencies>

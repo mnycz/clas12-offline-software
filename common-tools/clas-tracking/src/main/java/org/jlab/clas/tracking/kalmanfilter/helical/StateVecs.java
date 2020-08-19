@@ -16,7 +16,6 @@ import org.jlab.geom.prim.Point3D;
 public class StateVecs {
     
     private Helix util ;
-    public static boolean USESWIMMER = false;
     public double units;
     public double lightVel;
     
@@ -37,92 +36,146 @@ public class StateVecs {
 
     double[] value = new double[4]; // x,y,z,phi
     double[] swimPars = new double[7];
+    B Bf = new B(0);
     
-    public double[] getStateVecPosAtMeasSite(int k, StateVec kVec, MeasVec mv, Swim swim) {
+    public double[] getStateVecPosAtMeasSite(int k, StateVec iVec, MeasVec mv, Swim swim, boolean useSwimmer) {
         this.resetArrays(swimPars);
         this.resetArrays(value);
         
-        Point3D ps ;
-        double x0 = X0.get(k) + kVec.d_rho * Math.cos(kVec.phi0) ;
-        double y0 = Y0.get(k) + kVec.d_rho * Math.sin(kVec.phi0) ;
-        double z0 = Z0.get(k) + kVec.dz ;
-        double invKappa = 1. / Math.abs(kVec.kappa);
-        double px0 = -invKappa * Math.sin(kVec.phi0 );
-        double py0 = invKappa * Math.cos(kVec.phi0 );
-        double pz0 = invKappa * kVec.tanL;
-        int ch = (int) KFitter.polarity*(int) Math.signum(kVec.kappa);
+        Point3D ps = new Point3D(0,0,0) ;
         
-        double B = 1. / (lightVel * kVec.alpha);
-        this.setHelix(util, x0,y0,z0,px0,py0,pz0,ch, B);
+        StateVec kVec = new StateVec(k);
+        kVec.phi0 = iVec.phi0;
+        kVec.d_rho = iVec.d_rho;
+        kVec.kappa = iVec.kappa;
+        kVec.dz = iVec.dz;
+        kVec.tanL = iVec.tanL;
+        kVec.alpha = iVec.alpha;
+
         if(mv.surface!=null) {
+            double x = X0.get(0) + kVec.d_rho * Math.cos(kVec.phi0);
+            double y = Y0.get(0) + kVec.d_rho * Math.sin(kVec.phi0);
+            double z = Z0.get(0) + kVec.dz;
+             
+            Bf.swimmer = swim;
+            Bf.x = x;
+            Bf.y = y;
+            Bf.z = z;
+            Bf.set();
+            kVec.alpha = Bf.alpha;
+            
+            if(k==0) {
+                value[0] = x;
+                value[1] = y;
+                value[2] = z;
+                value[3] = 0.0;
+                return value;
+            }
+            
             if(mv.surface.plane!=null) {
-                if(KFitter.USESWIMMER==false) {
-                    ps = util.getHelixPointAtPlane(mv.surface.finitePlaneCorner1.x(), mv.surface.finitePlaneCorner1.y(), 
-                            mv.surface.finitePlaneCorner2.x(), mv.surface.finitePlaneCorner2.y(), 10);
-                    swimPars[0] = ps.x();
-                    swimPars[1] = ps.y();
-                    swimPars[2] = ps.z(); 
-                } else { 
-                    swim.SetSwimParameters(
-                        x0/units, 
-                        y0/units,
-                        z0/units, 
-                        px0, py0, pz0, ch);
-                    swimPars = swim.SwimToPlaneBoundary(mv.surface.plane.point().toVector3D().dot(mv.surface.plane.normal())/units, 
-                            mv.surface.plane.normal(), 1);
-                    for(int j =0; j < 3; j++) {
-                        swimPars[j]*=units;
-                    }  
+                //Update B
+                double r0 = mv.surface.finitePlaneCorner1.toVector3D().dot(mv.surface.plane.normal());
+                double stepSize = 5; //mm
+                int nSteps = (int) (r0/stepSize);
+
+                double dist = 0;
+
+                for(int i = 1; i<nSteps; i++) {
+                    dist = (double) (i*stepSize);
+                    this.setHelixPars(kVec, swim);
+                    ps = util.getHelixPointAtR(dist);
+                    kVec.x = ps.x();
+                    kVec.y = ps.y();
+                    kVec.z = ps.z();
+                    this.tranState(k, kVec, swim);
                 }
+                this.setHelixPars(kVec, swim);
+                ps = util.getHelixPointAtPlane(mv.surface.finitePlaneCorner1.x(), mv.surface.finitePlaneCorner1.y(), 
+                        mv.surface.finitePlaneCorner2.x(), mv.surface.finitePlaneCorner2.y(), 10);
+                this.tranState(k, kVec, swim);
+                kVec.x = ps.x();
+                kVec.y = ps.y();
+                kVec.z = ps.z();
+                if(swimPars==null)
+                    return null;
+                swimPars[0] = ps.x();
+                swimPars[1] = ps.y();
+                swimPars[2] = ps.z(); 
+                
+//                    x = X0.get(0) + kVec.d_rho * Math.cos(kVec.phi0);
+//                    y = Y0.get(0) + kVec.d_rho * Math.sin(kVec.phi0);
+//                    z = Z0.get(0) + kVec.dz;
+//                    Bf = new B(kVec.k, x, y, z, swim);
+//                    kVec.alpha = Bf.alpha;
+//                    this.setTrackPars(kVec, swim);
+//                    swimPars = swim.SwimToPlaneBoundary(mv.surface.plane.point().toVector3D().dot(mv.surface.plane.normal())/units, 
+//                            mv.surface.plane.normal(), 1);
+//                    if(swimPars==null)
+//                        return null;
+//                    for(int j =0; j < 3; j++) {
+//                        swimPars[j]*=units;
+//                    }  
+//                    kVec.x = swimPars[0];
+//                    kVec.y = swimPars[1];
+//                    kVec.z = swimPars[2];
+                
             }
             if(mv.surface.cylinder!=null) {
                 double r = 0.5*(mv.surface.cylinder.baseArc().radius()+mv.surface.cylinder.highArc().radius());
-                if(KFitter.USESWIMMER==false) {
-                    ps = util.getHelixPointAtR(r);
+                if(useSwimmer==false) {
+                    double stepSize = 5; //mm
+                    int nSteps = (int) (r/stepSize);
+                    
+                    double dist = 0;
+                    
+//                    for(int i = 1; i<nSteps; i++) {
+//                        dist = (double) (i*stepSize);
+//                        this.iterateHelixAtR(2, k, kVec, swim, dist, Bf, ps);
+//                    }
+//                    this.iterateHelixAtR(2, k, kVec, swim, r, Bf, ps);
+                    for(int i = 1; i<nSteps; i++) {
+                        dist = (double) (i*stepSize);
+                        this.setHelixPars(kVec, swim);
+                        ps = util.getHelixPointAtR(dist);
+                        kVec.x = ps.x();
+                        kVec.y = ps.y();
+                        kVec.z = ps.z();
+                        this.tranState(k, kVec, swim);
+                    }
+                    this.setHelixPars(kVec, swim);
+                    ps = new Point3D(kVec.x, kVec.y, kVec.z);
                     swimPars[0] = ps.x();
                     swimPars[1] = ps.y();
-                    swimPars[2] = ps.z(); 
+                    swimPars[2] = ps.z();  
+                    if(swimPars==null)
+                        return null;
                 } else {
-                    swim.SetSwimParameters(
-                    x0/units, 
-                    y0/units,
-                    z0/units, 
-                    px0, py0, pz0, ch);
-            
-                    swimPars = swim.SwimToCylinder(r/units); 
+                     
+                    this.setTrackPars(kVec, swim);
+                    swimPars = swim.SwimToCylinder(r/units);
+                    if(swimPars==null)
+                        return null;
                     for(int j =0; j < 3; j++) {
                         swimPars[j]*=units;
                     } 
-                }
+                    kVec.x = swimPars[0];
+                    kVec.y = swimPars[1];
+                    kVec.z = swimPars[2];
+               }
             }
-            
-            double xc = X0.get(k) + (kVec.d_rho + kVec.alpha / kVec.kappa) * Math.cos(kVec.phi0);
-            double yc = Y0.get(k) + (kVec.d_rho + kVec.alpha / kVec.kappa) * Math.sin(kVec.phi0);
-            double r = Math.abs(kVec.alpha / kVec.kappa);
-            Vector3D ToPoint = new Vector3D();
-            Vector3D ToRef = new Vector3D(X0.get(k) - xc, Y0.get(k) - yc, 0);
-           
-            ToPoint = new Vector3D(swimPars[0] - xc, swimPars[1] - yc, 0);
-            double phi = ToRef.angle(ToPoint);
-            phi *= -Math.signum(kVec.kappa);
             
             value[0] = swimPars[0];
             value[1] = swimPars[1];
             value[2] = swimPars[2];
-            value[3] = -(swimPars[2]-Z0.get(k) - kVec.dz)/(-kVec.alpha / kVec.kappa * kVec.tanL) ;
+            value[3] = this.calcPhi(kVec);
             
-//            phi = value[3];
-//            double x = X0.get(k) + kVec.d_rho * Math.cos(kVec.phi0) + kVec.alpha / kVec.kappa * (Math.cos(kVec.phi0) - Math.cos(kVec.phi0 + phi));
-//            double y = Y0.get(k) + kVec.d_rho * Math.sin(kVec.phi0) + kVec.alpha / kVec.kappa * (Math.sin(kVec.phi0) - Math.sin(kVec.phi0 + phi));
-//            double z = Z0.get(k) + kVec.dz - kVec.alpha / kVec.kappa * kVec.tanL * phi;
-//
         }
         return value;
     }
 
     public void setStateVecPosAtMeasSite(int k, StateVec kVec, MeasVec mv, Swim swimmer) {
         
-        double[] pars = this.getStateVecPosAtMeasSite(k, kVec, mv, swimmer);
+        double[] pars = this.getStateVecPosAtMeasSite(k, kVec, mv, swimmer, true);
         if (pars == null) {
             return;
         }
@@ -135,10 +188,10 @@ public class StateVecs {
         kVec.phi = pars[3];
     }
 
-    public StateVec newStateVecAtMeasSite(int k, StateVec kVec, MeasVec mv, Swim swimmer) {
+    public StateVec newStateVecAtMeasSite(int k, StateVec kVec, MeasVec mv, Swim swimmer, boolean useSwimmer) {
 
         StateVec newVec = kVec;
-        double[] pars = this.getStateVecPosAtMeasSite(k, kVec, mv, swimmer);
+        double[] pars = this.getStateVecPosAtMeasSite(k, kVec, mv, swimmer, useSwimmer);
         if (pars == null) {
             return null;
         }
@@ -153,20 +206,16 @@ public class StateVecs {
         // new state: 
         return newVec;
     }
-
-    public StateVec transported(int i, int f, StateVec iVec, MeasVec mv, 
-            Swim swimmer) { 
-        if (iVec.phi0 < 0) {
-            iVec.phi0 += 2. * Math.PI;
-        }
-
-        B Bf = new B(i, iVec.x, iVec.y, iVec.z, swimmer);
-
-        double Xc = X0.get(i) + (iVec.d_rho + iVec.alpha / iVec.kappa) * Math.cos(iVec.phi0);
-        double Yc = Y0.get(i) + (iVec.d_rho + iVec.alpha / iVec.kappa) * Math.sin(iVec.phi0);
+    private void tranState(int f, StateVec iVec, Swim swimmer) {
+       
+        Bf.swimmer = swimmer;
+        Bf.x = iVec.x;
+        Bf.y = iVec.y;
+        Bf.z = iVec.z;
+        Bf.set();
         
-        // transport stateVec...
-        StateVec fVec = new StateVec(f);
+        double Xc = X0.get(iVec.k) + (iVec.d_rho + Bf.alpha / iVec.kappa) * Math.cos(iVec.phi0);
+        double Yc = Y0.get(iVec.k) + (iVec.d_rho + Bf.alpha / iVec.kappa) * Math.sin(iVec.phi0);
 
         double phi_f = Math.atan2(Yc - Y0.get(f), Xc - X0.get(f));
         if (iVec.kappa < 0) {
@@ -176,31 +225,50 @@ public class StateVecs {
         if (phi_f < 0) {
             phi_f += 2 * Math.PI;
         }
-        fVec.phi0 = phi_f;
+        double fphi0 = phi_f;
+        double fd_rho = (Xc - X0.get(f)) * Math.cos(phi_f) + (Yc - Y0.get(f)) * Math.sin(phi_f) - Bf.alpha / iVec.kappa;
+        //fkappa = iVec.kappa;
+        double fdz = Z0.get(iVec.k) - Z0.get(f) + iVec.dz - (Bf.alpha / iVec.kappa) * (phi_f - iVec.phi0) * iVec.tanL;
+        //ftanL = iVec.tanL;
+        double falpha = Bf.alpha;
 
-        fVec.d_rho = (Xc - X0.get(f)) * Math.cos(phi_f) + (Yc - Y0.get(f)) * Math.sin(phi_f) - Bf.alpha / iVec.kappa;
+        if (fphi0 < 0) {
+            fphi0 += 2. * Math.PI;
+        }
+       
+        iVec.phi0 = fphi0;
+        iVec.d_rho = fd_rho;
+        iVec.dz = fdz;
+        iVec.alpha = falpha;
+        
+    }
+    public StateVec transported(int i, int f, StateVec iVec, MeasVec mv, 
+            Swim swimmer) { 
+        
+        // transport stateVec...
+        StateVec fVec = new StateVec(f);
+        
+        if (iVec.phi0 < 0) {
+            iVec.phi0 += 2. * Math.PI;
+        }
+        double x = X0.get(0) + iVec.d_rho * Math.cos(iVec.phi0);
+        double y = Y0.get(0) + iVec.d_rho * Math.sin(iVec.phi0);
+        double z = Z0.get(0) + iVec.dz;
+        B Bf = new B(i, x, y, z, swimmer);
+
+        fVec.phi0 = iVec.phi0;
+
+        fVec.d_rho = iVec.d_rho;
 
         fVec.kappa = iVec.kappa;
 
-        double[] ElossTot = ELoss_hypo(iVec, f - i);
-        for (int e = 0; e < 3; e++) {
-            ElossTot[e] = iVec.get_ELoss()[e] + ElossTot[e];
-        }
-        fVec.set_ELoss(ElossTot);
-
-        fVec.dz = Z0.get(i) - Z0.get(f) + iVec.dz - (Bf.alpha / iVec.kappa) * (phi_f - iVec.phi0) * iVec.tanL;
+        fVec.dz = iVec.dz;
 
         fVec.tanL = iVec.tanL;
 
         fVec.alpha = Bf.alpha;
 
-        if (fVec.phi0 < 0) {
-            fVec.phi0 += 2. * Math.PI;
-        }
-        this.newStateVecAtMeasSite(f, fVec, mv, swimmer);
-        
-        
-        Bf = new B(f, fVec.x, fVec.y, fVec.z, swimmer); 
+        this.newStateVecAtMeasSite(f, fVec, mv, swimmer, true);
         
         return fVec;
     }
@@ -211,8 +279,7 @@ public class StateVecs {
         //    iVec.phi0 += 2. * Math.PI;
         //}
         StateVec fVec = this.transported(i, f, iVec, mv, swimmer);
-        this.newStateVecAtMeasSite(f, fVec, mv, swimmer);
-
+        
         // now transport covMat...
         double dphi0_prm_del_drho = -1. / (fVec.d_rho + iVec.alpha / iVec.kappa) * Math.sin(fVec.phi0 - iVec.phi0);
         double dphi0_prm_del_phi0 = (iVec.d_rho + iVec.alpha / iVec.kappa) / (fVec.d_rho + iVec.alpha / iVec.kappa) * Math.cos(fVec.phi0 - iVec.phi0);
@@ -274,38 +341,7 @@ public class StateVecs {
         return value;
     }
     
-    private double[] ELoss_hypo(StateVec iVec, int dir) {
-        double[] Eloss = new double[3]; 
-
-        Vector3D trkDir = this.P(iVec.k);
-        trkDir.unit();
-        double cosEntranceAngle = trkDir.z();
-       // System.out.println(" cosTrk "+Math.toDegrees(Math.acos(trkDir.z()))+" at state "+iVec.k+" dir "+dir);
-        double pt = Math.abs(1. / iVec.kappa);
-        double pz = pt * iVec.tanL;
-        double p = Math.sqrt(pt * pt + pz * pz);
-
-        for (int hyp = 2; hyp < 5; hyp++) {
-
-            double mass = MassHypothesis(hyp); // assume given mass hypothesis
-            double beta = p / Math.sqrt(p * p + mass * mass); // use particle momentum
-            double gamma = 1. / Math.sqrt(1 - beta * beta);
-
-            double s = MassHypothesis(1) / mass;
-
-            double Wmax = 2. * mass * beta * beta * gamma * gamma / (1. + 2. * s * gamma + s * s);
-            double I = 0.000000172;
-
-            double logterm = 2. * mass * beta * beta * gamma * gamma * Wmax / (I * I);
-
-            double delta = 0.;
-            double dEdx = 0.00001535 * this.detMat_Z_ov_A_timesThickn(Math.sqrt(iVec.x*iVec.x+iVec.y*iVec.y)) * (Math.log(logterm) - 2 * beta * beta - delta) / (beta * beta); //in GeV/mm
-            //System.out.println(" mass hy "+hyp+" Mat at "+Math.sqrt(iVec.x*iVec.x+iVec.y*iVec.y)+"Z/A*t "+this.detMat_Z_ov_A_timesThickn(Math.sqrt(iVec.x*iVec.x+iVec.y*iVec.y))+" dEdx "+dEdx);
-            Eloss[hyp - 2] = dir * Math.abs(dEdx / cosEntranceAngle);
-        }
-        return Eloss;
-    }
-
+   
     private Matrix Q(StateVec iVec, int dir) {
 
         Matrix Q = new Matrix(new double[][]{
@@ -389,6 +425,73 @@ public class StateVecs {
         
         util.Update();
     }
+
+    private void setHelixPars(StateVec kVec, Swim swim) {
+        double x0 = X0.get(kVec.k) + kVec.d_rho * Math.cos(kVec.phi0) ;
+        double y0 = Y0.get(kVec.k) + kVec.d_rho * Math.sin(kVec.phi0) ;
+        double z0 = Z0.get(kVec.k) + kVec.dz ;
+        double invKappa = 1. / Math.abs(kVec.kappa);
+        double px0 = -invKappa * Math.sin(kVec.phi0 );
+        double py0 = invKappa * Math.cos(kVec.phi0 );
+        double pz0 = invKappa * kVec.tanL;
+        
+        int ch = (int) KFitter.polarity*(int) Math.signum(kVec.kappa);
+        double B = 1. / (lightVel * kVec.alpha); 
+        this.setHelix(util, x0,y0,z0,px0,py0,pz0,ch, B);
+    }
+    
+    private void setTrackPars(StateVec kVec, Swim swim) {
+        
+        double x0 = X0.get(kVec.k) + kVec.d_rho * Math.cos(kVec.phi0) ;
+        double y0 = Y0.get(kVec.k) + kVec.d_rho * Math.sin(kVec.phi0) ;
+        double z0 = Z0.get(kVec.k) + kVec.dz ;
+        double invKappa = 1. / Math.abs(kVec.kappa);
+        double px0 = -invKappa * Math.sin(kVec.phi0 );
+        double py0 = invKappa * Math.cos(kVec.phi0 );
+        double pz0 = invKappa * kVec.tanL;
+        int ch = (int) KFitter.polarity*(int) Math.signum(kVec.kappa);
+        
+        swim.SetSwimParameters(
+                        x0/units, 
+                        y0/units,
+                        z0/units, 
+                        px0, py0, pz0, ch);
+    }
+
+    private double calcPhi(StateVec kVec) {
+        double xc = X0.get(kVec.k) + (kVec.d_rho + kVec.alpha / kVec.kappa) * Math.cos(kVec.phi0);
+        double yc = Y0.get(kVec.k) + (kVec.d_rho + kVec.alpha / kVec.kappa) * Math.sin(kVec.phi0);
+        double r = Math.abs(kVec.alpha / kVec.kappa);
+        Vector3D ToPoint = new Vector3D();
+        Vector3D ToRef = new Vector3D(X0.get(kVec.k) - xc, Y0.get(kVec.k) - yc, 0);
+
+        ToPoint = new Vector3D(kVec.x - xc, kVec.y - yc, 0);
+        double phi = ToRef.angle(ToPoint);
+        phi *= -Math.signum(kVec.kappa);
+            
+        return phi;
+    }
+
+    private void iterateHelixAtR(int it, int k, StateVec kVec, Swim swim, 
+            double r, B Bf, Point3D ps) {
+        for(int i = 0; i < it; i++) {
+            this.setHelixPars(kVec, swim);
+            ps = util.getHelixPointAtR(r);
+            kVec.x = ps.x();
+            kVec.y = ps.y();
+            kVec.z = ps.z();
+            this.tranState(k, kVec, swim);
+            Bf = new B(kVec.k, kVec.x, kVec.y, kVec.z, swim);
+            kVec.alpha = Bf.alpha;
+            this.tranState(k, kVec, swim);
+            this.setHelixPars(kVec, swim);
+            kVec.x = ps.x();
+            kVec.y = ps.y();
+            kVec.z = ps.z();
+            this.tranState(k, kVec, swim);
+        }
+    }
+
     public class StateVec {
 
         final int k;
@@ -433,10 +536,10 @@ public class StateVecs {
     public class B {
 
         final int k;
-        double x;
-        double y;
-        double z;
-        Swim swimmer;
+        public double x;
+        public double y;
+        public double z;
+        public Swim swimmer;
         
         public double Bx;
         public double By;
@@ -445,18 +548,29 @@ public class StateVecs {
         public double alpha;
 
         float b[] = new float[3];
+        B(int k) {
+            this.k = k;
+        }
         B(int k, double x, double y, double z, Swim swimmer) {
             this.k = k;
             this.x = x;
             this.y = y;
             this.z = z;
 
-            swimmer.BfieldLab(x/units, y/units, (z+Z0.get(0))/units, b);
+            swimmer.BfieldLab(x/units, y/units, z/units, b);
             this.Bx = b[0];
             this.By = b[1];
             this.Bz = b[2];
 
-            //this.alpha = 1. / (lightVel * Math.sqrt(b[0]*b[0]+b[1]*b[1]+b[2]*b[2]));
+            this.alpha = 1. / (lightVel * Math.abs(b[2]));
+        }
+        
+        public void set() {
+            swimmer.BfieldLab(x/units, y/units, z/units, b);
+            this.Bx = b[0];
+            this.By = b[1];
+            this.Bz = b[2];
+            
             this.alpha = 1. / (lightVel * Math.abs(b[2]));
         }
     }
@@ -504,6 +618,18 @@ public class StateVecs {
             double x = X0.get(kf) + this.trackTraj.get(kf).d_rho * Math.cos(this.trackTraj.get(kf).phi0) + this.trackTraj.get(kf).alpha / this.trackTraj.get(kf).kappa * (Math.cos(this.trackTraj.get(kf).phi0) - Math.cos(this.trackTraj.get(kf).phi0 + this.trackTraj.get(kf).phi));
             double y = Y0.get(kf) + this.trackTraj.get(kf).d_rho * Math.sin(this.trackTraj.get(kf).phi0) + this.trackTraj.get(kf).alpha / this.trackTraj.get(kf).kappa * (Math.sin(this.trackTraj.get(kf).phi0) - Math.sin(this.trackTraj.get(kf).phi0 + this.trackTraj.get(kf).phi));
             double z = Z0.get(kf) + this.trackTraj.get(kf).dz - this.trackTraj.get(kf).alpha / this.trackTraj.get(kf).kappa * this.trackTraj.get(kf).tanL * this.trackTraj.get(kf).phi;
+            
+            return new Vector3D(x, y, z);
+        } else {
+            return new Vector3D(0, 0, 0);
+        }
+
+    }
+    public Vector3D X(StateVec kVec, double phi) {
+        if (kVec != null) {
+            double x = X0.get(kVec.k) + kVec.d_rho * Math.cos(kVec.phi0) + kVec.alpha / kVec.kappa * (Math.cos(kVec.phi0) - Math.cos(kVec.phi0 + phi));
+            double y = Y0.get(kVec.k) + kVec.d_rho * Math.sin(kVec.phi0) + kVec.alpha / kVec.kappa * (Math.sin(kVec.phi0) - Math.sin(kVec.phi0 + phi));
+            double z = Z0.get(kVec.k) + kVec.dz - kVec.alpha / kVec.kappa * kVec.tanL * phi;
             
             return new Vector3D(x, y, z);
         } else {
@@ -575,9 +701,7 @@ public class StateVecs {
         int q = KFitter.polarity*(int) Math.signum(this.trackTraj.get(kf).kappa);
         double B = 1./Math.abs(this.trackTraj.get(0).alpha)/lightVel ;
         
-        this.setHelix(util, X.x(), X.y(), X.z(), P.x(), P.y(), P.z(), q, B);
-        
-        return util;
+        return new Helix(X.x(), X.y(), X.z(), P.x(), P.y(), P.z(), q, B, util.units);
     }
 
     public void init(Helix trk, Matrix cov, double Xb, double Yb, KFitter kf,
@@ -616,16 +740,10 @@ public class StateVecs {
         
         initSV.phi = 0;
         
-        this.trackTraj.put(0, initSV);
-    // | d_dca*d_dca                   d_dca*d_phi_at_dca            d_dca*d_curvature            0            0         |
-    // | d_phi_at_dca*d_dca     d_phi_at_dca*d_phi_at_dca     d_phi_at_dca*d_curvature            0            0         |
-    // | d_curvature*d_dca	d_curvature*d_phi_at_dca      d_curvature*d_curvature             0            0         |
-    // | 0                              0                             0                    d_Z0*d_Z0                     |
-    // | 0                              0                             0                       0        d_tandip*d_tandip |
+        this.trackTraj.put(0, initSV); 
         CovMat initCM = new CovMat(0);
         Matrix covKF = cov.copy();
-        covKF.set(2, 2, cov.get(2, 2)*Bf.alpha*Bf.alpha );
-        
+        covKF.set(2, 2, cov.get(2, 2)*300 );
         initCM.covMat = covKF;
         this.trackCov.put(0, initCM);
     }
