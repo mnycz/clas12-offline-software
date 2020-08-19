@@ -169,9 +169,8 @@ public class KFitter {
     public Helix KFHelix;
     
     public Track OutputTrack(Seed trk, org.jlab.rec.cvt.svt.Geometry geo, Swim swimmer) {
-   
-        Track cand = new Track(KFHelix, swimmer);
-        
+        KFHelix.B = Math.abs(sv.new B(0, 0, 0, 0, swimmer).Bz);
+        Track cand = new Track(KFHelix);
         if(cand.get_P()<0.05)
             this.setFitFailed = true;
         cand.setNDF(NDF);

@@ -324,12 +324,10 @@ public class RecoBankWriter {
                 bank.setByte("fittingMethod", i, (byte) 0);
             }
             bank.setShort("ID", i, (short) trkcands.get(i).get_Id());
-
             bank.setByte("q", i, (byte)trkcands.get(i).get_Q());
             bank.setFloat("p", i, (float) trkcands.get(i).get_P());
             bank.setFloat("pt", i, (float) trkcands.get(i).get_Pt());
             Helix helix = trkcands.get(i).get_helix();
-
             bank.setFloat("phi0", i, (float) helix.get_phi_at_dca());
             bank.setFloat("tandip", i, (float) helix.get_tandip());
             bank.setFloat("z0", i, (float) (helix.get_Z0()/10.+zShift));

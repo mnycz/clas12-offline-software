@@ -2,6 +2,8 @@ package org.jlab.rec.cvt;
 
 public class Constants {
 
+    public static double PTCUT = 0.075;
+
     /**
      * Constants used in the reconstruction
      */

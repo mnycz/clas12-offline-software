@@ -221,8 +221,8 @@ public class Geometry {
             if ((layer - 1) % 2 == 0) { // for a cross take the bottom layer;
                 int[] rm1 = SVTConstants.convertLayer2RegionModule(layer);
                 int[] rm2 = SVTConstants.convertLayer2RegionModule(layer-1);
-                gap = SVTConstants.LAYERRADIUS[rm1[0]][rm1[1]]
-                    - SVTConstants.LAYERRADIUS[rm2[0]][rm2[1]]; //gap+=0.004;
+                //gap = SVTConstants.LAYERRADIUS[rm1[0]][rm1[1]]
+                //    - SVTConstants.LAYERRADIUS[rm2[0]][rm2[1]]; //gap+=0.004;
             }
         }
         Point3D transf = null;

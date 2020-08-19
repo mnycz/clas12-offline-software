@@ -290,7 +290,7 @@ public class TrackCandListFinder {
 
                 // if the fit is successful
                 if (fitTrk.get_helix() != null && fitTrk.getFit() != null) {
-                    Track cand = new Track(fitTrk.get_helix(), swimmer);
+                    Track cand = new Track(fitTrk.get_helix());
                     cand.addAll(crossList.get(i));
                     //cand.set_HelicalTrack(fitTrk.get_helix());			done in Track constructor			
                     //cand.update_Crosses(svt_geo);

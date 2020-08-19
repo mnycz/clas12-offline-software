@@ -433,7 +433,7 @@ public class TrackSeeder {
             ((ArrayList<Double>) ErrRho).ensureCapacity(svtSz * useSVTdipAngEst + bmtCSz); // Try: don't use svt in dipdangle fit determination
             ((ArrayList<Double>) ErrRt).ensureCapacity(svtSz + bmtZSz);
 
-            cand = new Track(null, swimmer);
+            cand = new Track(null);
             cand.addAll(SVTCrosses);
             for (int j = 0; j < SVTCrosses.size(); j++) {
                 X.add(j, SVTCrosses.get(j).get_Point().x());
@@ -479,11 +479,14 @@ public class TrackSeeder {
                 return null;
             }
 
-            cand = new Track(fitTrk.get_helix(), swimmer);
+            cand = new Track(fitTrk.get_helix());
             //cand.addAll(SVTCrosses);
             cand.addAll(SVTCrosses);
             
-            cand.set_HelicalTrack(fitTrk.get_helix(), swimmer, b);
+            swimmer.BfieldLab(0, 0, 0, b);
+            double Bz = Math.abs(b[2]);
+            fitTrk.get_helix().B = Bz;
+            cand.set_HelicalTrack(fitTrk.get_helix());
             //if(shift==0)
             if (fitTrk.get_chisq()[0] < chisqMax) {
                 chisqMax = fitTrk.get_chisq()[0];
