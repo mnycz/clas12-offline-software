@@ -3,6 +3,9 @@ package org.jlab.clas.tracking.kalmanfilter.helical;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jlab.geom.prim.Point3D;
 import org.jlab.io.base.DataEvent;
 
@@ -95,7 +98,6 @@ public class KFitter {
         
         for (int it = 0; it < totNumIter; it++) {
             this.chi2 = 0;
-            TrjPoints.clear();
             for (int k = 0; k < sv.X0.size() - 1; k++) {
                 if (sv.trackCov.get(k) == null || mv.measurements.get(k + 1) == null) {
                     return;
@@ -119,7 +121,8 @@ public class KFitter {
             this.chi2=this.calc_chi2(swimmer); 
             if(this.chi2<newchisq) { 
                 newchisq=this.chi2;
-                KFHelix = sv.setTrackPars(0);
+                KFHelix = sv.setTrackPars();
+                finalStateVec = sv.trackTraj.get(0);
                 //KFHelix = sv.getHelixAtBeamLine(1, swimmer); 
                 this.setTrajectory();
                 setFitFailed = false;
@@ -130,7 +133,7 @@ public class KFitter {
         }
        
     }
-    public List<HitOnTrack> TrjPoints = new ArrayList<HitOnTrack>();
+    public Map<Integer, HitOnTrack> TrjPoints = new HashMap<Integer, HitOnTrack>();
 
     public void setTrajectory() {
         TrjPoints.clear();
@@ -145,8 +148,8 @@ public class KFitter {
             double px = -invKappa * Math.sin(azi);
             double py = invKappa * Math.cos(azi);
             double pz = invKappa * sv.trackTraj.get(k).tanL;
-            TrjPoints.add(new HitOnTrack(layer, x, y, z, px, py, pz));
-//            System.out.println(" Traj layer "+layer+" x "+x+" y "+y+" z "+z);
+            TrjPoints.put(layer, new HitOnTrack(layer, x, y, z, px, py, pz));
+            //System.out.println(" Traj layer "+layer+" x "+TrjPoints.get(layer).x+" y "+TrjPoints.get(layer).y+" z "+TrjPoints.get(layer).z);
         }
     }
 
@@ -318,13 +321,13 @@ public class KFitter {
 
     public class HitOnTrack {
 
-        int layer;
-        double x;
-        double y;
-        double z;
-        double px;
-        double py;
-        double pz;
+        public int layer;
+        public double x;
+        public double y;
+        public double z;
+        public double px;
+        public double py;
+        public double pz;
 
         HitOnTrack(int layer, double x, double y, double z, double px, double py, double pz) {
             this.layer = layer;

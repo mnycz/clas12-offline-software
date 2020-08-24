@@ -694,11 +694,11 @@ public class StateVecs {
         
         return util;
     }
-    public Helix setTrackPars(int kf) {
-        Vector3D X = this.X0(kf);
-        Vector3D P = this.P0(kf);
+    public Helix setTrackPars() {
+        Vector3D X = this.X0(0);
+        Vector3D P = this.P0(0);
         
-        int q = KFitter.polarity*(int) Math.signum(this.trackTraj.get(kf).kappa);
+        int q = KFitter.polarity*(int) Math.signum(this.trackTraj.get(0).kappa);
         double B = 1./Math.abs(this.trackTraj.get(0).alpha)/lightVel ;
         
         return new Helix(X.x(), X.y(), X.z(), P.x(), P.y(), P.z(), q, B, util.units);

@@ -73,11 +73,9 @@ public class MeasVecs {
             }
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.Z) {
                value = stateVec.z-this.measurements.get(stateVec.k).surface.strip.getZ();
-               //value = 0;
             }
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.PHI) {
                value = Math.atan2(stateVec.y, stateVec.x)-this.measurements.get(stateVec.k).surface.strip.getPhi();
-               //value = 0;
             }
         }
         return value;
