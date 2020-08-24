@@ -164,7 +164,7 @@ public class Strip {
             //max phi err
             double phiErrL = sigma / org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[num_region];
 
-            double phiErr = Math.atan(Constants.getCRZWIDTH()[num_region] / Constants.getCRZRADIUS()[num_region]) / Math.sqrt(12.);
+            double phiErr = org.jlab.rec.cvt.bmt.Constants.getCRZWIDTH()[num_region] / org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[num_region] / Math.sqrt(12.);
             this.set_PhiErr(Math.sqrt(phiErr * phiErr + phiErrL * phiErrL));
             //System.out.println("arcerr "+org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[num_region]+" * "+Math.toDegrees(sigma/org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[num_region]));
             this.set_PhiErr0(phiErr);

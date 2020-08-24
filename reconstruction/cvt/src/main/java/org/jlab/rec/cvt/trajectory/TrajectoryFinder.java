@@ -158,19 +158,19 @@ public class TrajectoryFinder {
                 // set the cross dir
                 c.set_Dir(dir);
 
-                Cluster clsOnTrk = null;
-                if (l % 2 == 0) {
-                    clsOnTrk = c.get_Cluster1();
-                }
-                if (l % 2 == 1) {
-                    clsOnTrk = c.get_Cluster2();
-                }
-
-                if (clsOnTrk != null && clsOnTrk.get_Layer() == layer) {
-                    setHitResolParams("SVT", clsOnTrk.get_Sector(), clsOnTrk.get_Layer(), clsOnTrk,
-                            stVec, svt_geo, bmt_geo, traj.isFinal);
-
-                }
+//                Cluster clsOnTrk = null;
+//                if (l % 2 == 0) {
+//                    clsOnTrk = c.get_Cluster1();
+//                }
+//                if (l % 2 == 1) {
+//                    clsOnTrk = c.get_Cluster2();
+//                }
+//
+//                if (clsOnTrk != null && clsOnTrk.get_Layer() == layer) {
+//                    setHitResolParams("SVT", clsOnTrk.get_Sector(), clsOnTrk.get_Layer(), clsOnTrk,
+//                            stVec, svt_geo, bmt_geo, traj.isFinal);
+//
+//                }
             }
 
         }
@@ -239,8 +239,8 @@ public class TrajectoryFinder {
                             }
 
                             // calculate the hit residuals
-                            this.setHitResolParams("BMT", c.get_Cluster1().get_Sector(), c.get_Cluster1().get_Layer(), c.get_Cluster1(),
-                                    stVec, svt_geo, bmt_geo, traj.isFinal);
+//                            this.setHitResolParams("BMT", c.get_Cluster1().get_Sector(), c.get_Cluster1().get_Layer(), c.get_Cluster1(),
+//                                    stVec, svt_geo, bmt_geo, traj.isFinal);
 
         //                    StateVec stVecC = new StateVec(InterPoint.x(), InterPoint.y(), InterPoint.z(),
         //                    trkDir.x(), trkDir.y(), trkDir.z());
@@ -627,8 +627,9 @@ public class TrajectoryFinder {
                 for (FittedHit h1 : cluster) {
                     // calculate the hit residuals
                     double docaToTrk = stVec.z() - h1.get_Strip().get_Z();
+                    double doca2Cls = stVec.z() -cluster.get_Z();
                     double stripResol = h1.get_Strip().get_ZErr();
-                    h1.set_docaToTrk(docaToTrk);
+                    h1.set_docaToTrk(doca2Cls);
                     h1.set_stripResolutionAtDoca(stripResol);
                     if (trajFinal) {
                         h1.set_TrkgStatus(2);
@@ -642,9 +643,10 @@ public class TrajectoryFinder {
                     double StripY = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] * Math.sin(h1.get_Strip().get_Phi());
 
                     double Sign = Math.signum(Math.atan2(StripY - stVec.y(), StripX - stVec.x()));
-                    double docaToTrk = Sign * Math.sqrt((StripX - stVec.x()) * (StripX - stVec.x()) + (StripY - stVec.y()) * (StripY - stVec.y()));
+                    double docaToTrk = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] *Math.atan2(stVec.y(), stVec.x())- h1.get_Strip().get_Phi();
+                    double doca2Cls =  org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] *Math.atan2(stVec.y(), stVec.x())- cluster.get_Phi();
                     double stripResol = h1.get_Strip().get_PhiErr();
-                    h1.set_docaToTrk(docaToTrk);
+                    h1.set_docaToTrk(doca2Cls);
                     h1.set_stripResolutionAtDoca(stripResol);
                     if (trajFinal) {
                         h1.set_TrkgStatus(2);

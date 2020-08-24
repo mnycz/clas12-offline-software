@@ -110,14 +110,14 @@ public class CVTReconstruction extends ReconstructionEngine {
             if(Math.abs(SolenoidScale)<0.001)
             Constants.setCosmicsData(true);
             
-            System.out.println(" LOADING CVT GEOMETRY...............................variation = "+variationName);
-            CCDBConstantsLoader.Load(new DatabaseConstantProvider(newRun, variationName));
-            System.out.println("SVT LOADING WITH VARIATION "+variationName);
-            DatabaseConstantProvider cp = new DatabaseConstantProvider(newRun, variationName);
-            cp = SVTConstants.connect( cp );
-            cp.disconnect();  
-            SVTStripFactory svtFac = new SVTStripFactory(cp, true);
-            SVTGeom.setSvtStripFactory(svtFac);
+//            System.out.println(" LOADING CVT GEOMETRY...............................variation = "+variationName);
+//            CCDBConstantsLoader.Load(new DatabaseConstantProvider(newRun, variationName));
+//            System.out.println("SVT LOADING WITH VARIATION "+variationName);
+//            DatabaseConstantProvider cp = new DatabaseConstantProvider(newRun, variationName);
+//            cp = SVTConstants.connect( cp );
+//            cp.disconnect();  
+//            SVTStripFactory svtFac = new SVTStripFactory(cp, true);
+//            SVTGeom.setSvtStripFactory(svtFac);
             Constants.Load(isCosmics, isSVTonly);
             this.setRun(newRun);
 
@@ -243,16 +243,16 @@ public class CVTReconstruction extends ReconstructionEngine {
             List<Track> trkcands = new ArrayList<Track>();
             
             for (Seed seed : seeds) { 
-            kf = new KFitter(seed, SVTGeom, swimmer );
-            kf.runFitter(SVTGeom, BMTGeom, swimmer);
-            //System.out.println(" OUTPUT SEED......................");
-            trkcands.add(kf.OutputTrack(seed, SVTGeom, swimmer));
-            if (kf.setFitFailed == false) {
-                trkcands.get(trkcands.size() - 1).set_TrackingStatus(2);
-           } else {
+                kf = new KFitter(seed, SVTGeom, swimmer );
+                kf.runFitter(SVTGeom, BMTGeom, swimmer);
+                //System.out.println(" OUTPUT SEED......................");
+                trkcands.add(kf.OutputTrack(seed, SVTGeom, swimmer));
+                if (kf.setFitFailed == false) {
+                    trkcands.get(trkcands.size() - 1).set_TrackingStatus(2);
+                } else {
                 trkcands.get(trkcands.size() - 1).set_TrackingStatus(1);
-           }
-        }
+                }
+            }
         
         if (trkcands.size() == 0) {
             this.CleanupSpuriousCrosses(crosses, null) ;
@@ -410,7 +410,8 @@ public class CVTReconstruction extends ReconstructionEngine {
         }
     }
 
-        public boolean init() {
+    @Override
+    public boolean init() {
         // Load config
         String rmReg = this.getEngineConfigString("removeRegion");
         
@@ -432,7 +433,7 @@ public class CVTReconstruction extends ReconstructionEngine {
         String svtStAl = this.getEngineConfigString("svtOnly");
         
         if (svtStAl!=null) {
-            System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+"removed config chosen based on yaml");
+            System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+" config chosen based on yaml");
             this.isSVTonly= Boolean.valueOf(svtStAl);
         }
         else {
@@ -446,12 +447,24 @@ public class CVTReconstruction extends ReconstructionEngine {
              System.out.println("["+this.getName()+"] run with both CVT systems (default) ");
         }
         // Load other geometries
+        
         variationName = Optional.ofNullable(this.getEngineConfigString("variation")).orElse("default");
+        System.out.println(" CVT YAML VARIATION NAME + "+variationName);
         ConstantProvider providerCTOF = GeometryFactory.getConstants(DetectorType.CTOF, 11, variationName);
         CTOFGeom = new CTOFGeant4Factory(providerCTOF);        
         CNDGeom =  GeometryFactory.getDetector(DetectorType.CND, 11, variationName);
         //
           
+        
+        System.out.println(" LOADING CVT GEOMETRY...............................variation = "+variationName);
+        CCDBConstantsLoader.Load(new DatabaseConstantProvider(11, variationName));
+        System.out.println("SVT LOADING WITH VARIATION "+variationName);
+        DatabaseConstantProvider cp = new DatabaseConstantProvider(11, variationName);
+        cp = SVTConstants.connect( cp );
+        cp.disconnect();  
+        SVTStripFactory svtFac = new SVTStripFactory(cp, true);
+        SVTGeom.setSvtStripFactory(svtFac);
+
         return true;
     }
   
