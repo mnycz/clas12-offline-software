@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.clas.swimtools.Swim;
 import org.jlab.clas.tracking.kalmanfilter.Surface;
-import org.jlab.clas.tracking.kalmanfilter.helical.KFitter;
 import org.jlab.clas.tracking.objects.Strip;
-import org.jlab.clas.tracking.trackrep.Helix;
-import org.jlab.clas.tracking.trackrep.Helix.Units;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.base.GeometryFactory;
 import org.jlab.detector.calib.utils.DatabaseConstantProvider;
@@ -37,7 +37,6 @@ import org.jlab.rec.cvt.cross.CrossMaker;
 import org.jlab.rec.cvt.hit.ADCConvertor;
 import org.jlab.rec.cvt.hit.FittedHit;
 import org.jlab.rec.cvt.hit.Hit;
-import org.jlab.rec.cvt.svt.Geometry;
 import org.jlab.rec.cvt.track.Seed;
 import org.jlab.rec.cvt.track.Track;
 import org.jlab.rec.cvt.track.TrackListFinder;
@@ -52,9 +51,7 @@ import org.jlab.rec.cvt.track.TrackSeederCA;
  *
  */
 public class CVTRecNewKF extends ReconstructionEngine {
-    
-    boolean MCtruth = false;
-    
+
     org.jlab.rec.cvt.svt.Geometry SVTGeom;
     org.jlab.rec.cvt.bmt.Geometry BMTGeom;
     CTOFGeant4Factory CTOFGeom;
@@ -71,8 +68,8 @@ public class CVTRecNewKF extends ReconstructionEngine {
 
     String FieldsConfig = "";
     int Run = -1;
-    float[]b = new float[3];
     public boolean isSVTonly = false;
+    
     public void setRunConditionsParameters(DataEvent event, String FieldsConfig, int iRun, boolean addMisAlignmts, String misAlgnFile) {
         if (event.hasBank("RUN::config") == false) {
             System.err.println("RUN CONDITIONS NOT READ!");
@@ -117,20 +114,21 @@ public class CVTRecNewKF extends ReconstructionEngine {
             if(Math.abs(SolenoidScale)<0.001)
             Constants.setCosmicsData(true);
             
-            System.out.println(" LOADING CVT GEOMETRY...............................variation = "+variationName);
-            CCDBConstantsLoader.Load(new DatabaseConstantProvider(newRun, variationName));
-            System.out.println("SVT LOADING WITH VARIATION "+variationName);
-            DatabaseConstantProvider cp = new DatabaseConstantProvider(newRun, variationName);
-            cp = SVTConstants.connect( cp );
-            cp.disconnect();  
-            SVTStripFactory svtFac = new SVTStripFactory(cp, true);
-            SVTGeom.setSvtStripFactory(svtFac);
-            Constants.Load(isCosmics, isSVTonly);
+//            System.out.println(" LOADING CVT GEOMETRY...............................variation = "+variationName);
+//            CCDBConstantsLoader.Load(new DatabaseConstantProvider(newRun, variationName));
+//            System.out.println("SVT LOADING WITH VARIATION "+variationName);
+//            DatabaseConstantProvider cp = new DatabaseConstantProvider(newRun, variationName);
+//            cp = SVTConstants.connect( cp );
+//            cp.disconnect();  
+//            SVTStripFactory svtFac = new SVTStripFactory(cp, true);
+//            SVTGeom.setSvtStripFactory(svtFac);
+            float[]b = new float[3];
             Swim swimmer = new Swim();
             swimmer.BfieldLab(0, 0, org.jlab.rec.cvt.Constants.getZoffset()/10, b);
-        
+            Constants.setSolenoidVal(Math.abs(b[2]));
+            Constants.Load(isCosmics, isSVTonly);
             this.setRun(newRun);
-            
+
         }
       
         Run = newRun;
@@ -161,9 +159,8 @@ public class CVTRecNewKF extends ReconstructionEngine {
         this.FieldsConfig = this.getFieldsConfig();
         
         Swim swimmer = new Swim();
-        
         ADCConvertor adcConv = new ADCConvertor();
-        
+
         RecoBankWriter rbc = new RecoBankWriter();
 
         HitReader hitRead = new HitReader();
@@ -250,34 +247,31 @@ public class CVTRecNewKF extends ReconstructionEngine {
                 rbc.appendCVTBanks(event, SVThits, BMThits, SVTclusters, BMTclusters, crosses, null, shift);
                 return true;
             }   
-            KFitter kf;
+            if(seeds ==null) {
+                this.CleanupSpuriousCrosses(crosses, null) ;
+                rbc.appendCVTBanks(event, SVThits, BMThits, SVTclusters, BMTclusters, crosses, null, shift);
+                return true;
+            }   
+            org.jlab.clas.tracking.kalmanfilter.helical.KFitter kf;
             List<Track> trkcands = new ArrayList<Track>();
  
             for (Seed seed : seeds) { 
-                if(Constants.LIGHTVEL * seed.get_Helix().radius() * Math.abs(b[2])<Constants.PTCUT)
+                if(Constants.LIGHTVEL * seed.get_Helix().radius() *Constants.getSolenoidVal()<Constants.PTCUT)
                     continue;
-                Helix hlx = null ;
-                if(MCtruth) {
-                    if (event.hasBank("MC::Particle") == true) {
-                        DataBank bank = event.getBank("MC::Particle");
-                        for (int i = 0; i < bank.rows(); i++) {
-                            hlx = new Helix(bank.getFloat("vx", i), bank.getFloat("vy", i), bank.getFloat("vz", i), 
-                                    bank.getFloat("px", i), bank.getFloat("py", i), bank.getFloat("pz", i), (int) -1, Math.abs(b[2]), Units.MM);
-                        }
-                    }
-                } else {
-                    double xr =  -seed.get_Helix().get_dca()*Math.sin(seed.get_Helix().get_phi_at_dca());
-                    double yr =  seed.get_Helix().get_dca()*Math.cos(seed.get_Helix().get_phi_at_dca());
-                    double zr =  seed.get_Helix().get_Z0();
-                    double pt = Constants.LIGHTVEL * seed.get_Helix().radius() * Math.abs(b[2]);
-                    double pz = pt*seed.get_Helix().get_tandip();
-                    double px = pt*Math.cos(seed.get_Helix().get_phi_at_dca());
-                    double py = pt*Math.sin(seed.get_Helix().get_phi_at_dca());
-                    hlx = new Helix(xr,yr,zr,px,py,pz, 
-                            (int) (Math.signum(Constants.getSolenoidscale())*seed.get_Helix().get_charge()), Math.abs(b[2]), Units.MM);
-                }
+                org.jlab.clas.tracking.trackrep.Helix hlx = null ;
+               
+                double xr =  -seed.get_Helix().get_dca()*Math.sin(seed.get_Helix().get_phi_at_dca());
+                double yr =  seed.get_Helix().get_dca()*Math.cos(seed.get_Helix().get_phi_at_dca());
+                double zr =  seed.get_Helix().get_Z0();
+                double pt = Constants.LIGHTVEL * seed.get_Helix().radius() * Constants.getSolenoidVal();
+                double pz = pt*seed.get_Helix().get_tandip();
+                double px = pt*Math.cos(seed.get_Helix().get_phi_at_dca());
+                double py = pt*Math.sin(seed.get_Helix().get_phi_at_dca());
+                hlx = new org.jlab.clas.tracking.trackrep.Helix(xr,yr,zr,px,py,pz, 
+                        (int) (Math.signum(Constants.getSolenoidscale())*seed.get_Helix().get_charge()), Constants.getSolenoidVal(), org.jlab.clas.tracking.trackrep.Helix.Units.MM);
+                
                 Matrix cov = seed.get_Helix().get_covmatrix();
-                kf = new KFitter( hlx, cov, event,  swimmer, 
+                kf = new org.jlab.clas.tracking.kalmanfilter.helical.KFitter( hlx, cov, event,  swimmer, 
                         org.jlab.rec.cvt.Constants.getXb(), 
                         org.jlab.rec.cvt.Constants.getYb(),
                         org.jlab.rec.cvt.Constants.getZoffset(), 
@@ -308,31 +302,35 @@ public class CVTRecNewKF extends ReconstructionEngine {
             trks.get(i).set_Id(i+1);
         }
         
+        //System.out.println( " *** *** trkcands " + trkcands.size() + " * trks " + trks.size());
         trkFinder.removeOverlappingTracks(trks); //turn off until debugged
+
+        
 //      FIXME: workaround to properly assign the position and direction to the BMT crosses. to be understood where it comes from the not correct one  
-        for( Track t : trks ) { 
-            for( Cross c : t ) {
-                    if (Double.isNaN(c.get_Point0().x())) {
-                            double r = org.jlab.rec.cvt.bmt.Constants.getCRCRADIUS()[c.get_Region()-1]+org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
-                            Point3D p = t.get_helix().getPointAtRadius(r);
-                    c.set_Point(new Point3D(p.x(), p.y(), c.get_Point().z()));
-                    Vector3D v = t.get_helix().getTrackDirectionAtRadius(r);
-                    c.set_Dir(v);
-                }
-                if (Double.isNaN(c.get_Point0().z())) {
-                            double r = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[c.get_Region()-1]+org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
-                            Point3D p = t.get_helix().getPointAtRadius(r);
-                    c.set_Point(new Point3D(c.get_Point().x(), c.get_Point().y(), p.z()));
-                    Vector3D v = t.get_helix().getTrackDirectionAtRadius(r);
-                    c.set_Dir(v);
-                }
-            }
+        for( Track t : trks ) {
+	    	for( Cross c : t ) {
+	        	if (Double.isNaN(c.get_Point0().x())) {
+	        		double r = org.jlab.rec.cvt.bmt.Constants.getCRCRADIUS()[c.get_Region()-1]+org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
+	        		Point3D p = t.get_helix().getPointAtRadius(r);
+	                c.set_Point(new Point3D(p.x(), p.y(), c.get_Point().z()));
+	                Vector3D v = t.get_helix().getTrackDirectionAtRadius(r);
+	                c.set_Dir(v);
+	            }
+	            if (Double.isNaN(c.get_Point0().z())) {
+	        		double r = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[c.get_Region()-1]+org.jlab.rec.cvt.bmt.Constants.hStrip2Det;
+	        		Point3D p = t.get_helix().getPointAtRadius(r);
+	                c.set_Point(new Point3D(c.get_Point().x(), c.get_Point().y(), p.z()));
+	                Vector3D v = t.get_helix().getTrackDirectionAtRadius(r);
+	                c.set_Dir(v);
+	            }
+	    	}
         }
         
         
         for (int c = 0; c < trks.size(); c++) {
             trks.get(c).set_Id(c + 1);
             for (int ci = 0; ci < trks.get(c).size(); ci++) {
+
                 if (crosses.get(0) != null && crosses.get(0).size() > 0) {
 //                    for (Cross crsSVT : crosses.get(0)) {
                 	for (int jj=0 ; jj < crosses.get(0).size(); jj++) {
@@ -447,55 +445,7 @@ public class CVTRecNewKF extends ReconstructionEngine {
             trks.removeAll(rmTrks);
         }
     }
-
-        public boolean init() {
-        // Load config
-        String rmReg = this.getEngineConfigString("removeRegion");
-        
-        if (rmReg!=null) {
-            System.out.println("["+this.getName()+"] run with region "+rmReg+"removed config chosen based on yaml");
-            Constants.setRmReg(Integer.valueOf(rmReg));
-        }
-        else {
-            rmReg = System.getenv("COAT_CVT_REMOVEREGION");
-            if (rmReg!=null) {
-                System.out.println("["+this.getName()+"] run with region "+rmReg+"removed config chosen based on env");
-                Constants.setRmReg(Integer.valueOf(rmReg));
-            }
-        }
-        if (rmReg==null) {
-             System.out.println("["+this.getName()+"] run with all region (default) ");
-        }
-        //svt stand-alone
-        String svtStAl = this.getEngineConfigString("svtOnly");
-        
-        if (svtStAl!=null) {
-            System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+"removed config chosen based on yaml");
-            this.isSVTonly= Boolean.valueOf(svtStAl);
-        }
-        else {
-            svtStAl = System.getenv("COAT_SVT_ONLY");
-            if (svtStAl!=null) {
-                System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+" config chosen based on env");
-                this.isSVTonly= Boolean.valueOf(svtStAl);
-            }
-        }
-        if (svtStAl==null) {
-             System.out.println("["+this.getName()+"] run with both CVT systems (default) ");
-        }
-        // Load other geometries
-        variationName = Optional.ofNullable(this.getEngineConfigString("variation")).orElse("default");
-        ConstantProvider providerCTOF = GeometryFactory.getConstants(DetectorType.CTOF, 11, variationName);
-        CTOFGeom = new CTOFGeant4Factory(providerCTOF);        
-        CNDGeom =  GeometryFactory.getDetector(DetectorType.CND, 11, variationName);
-        //
-          
-        return true;
-    }
-  
-    private String variationName;
     
-   
     private List<Surface> setMeasVecs(Seed trkcand, org.jlab.rec.cvt.svt.Geometry sgeo) {
         List<Surface> KFSites = new ArrayList<Surface>();
         Plane3D pln0 = new Plane3D(new Point3D(Constants.getXb(),Constants.getYb(),Constants.getZoffset()),
@@ -580,7 +530,81 @@ public class CVTRecNewKF extends ReconstructionEngine {
         return KFSites;
     }
 
-    private Track OutputTrack(Seed seed, KFitter kf) {
+    
+    private void MatchTrack2Traj(Seed trkcand, Map<Integer, 
+            org.jlab.clas.tracking.kalmanfilter.helical.KFitter.HitOnTrack> traj, 
+            org.jlab.rec.cvt.svt.Geometry sgeo) {
+        
+        for (int i = 0; i < trkcand.get_Clusters().size(); i++) { //SVT
+            if(trkcand.get_Clusters().get(i).get_Detector()==0) {
+                Cluster cluster = trkcand.get_Clusters().get(i);
+                int layer = trkcand.get_Clusters().get(i).get_Layer();
+                int sector = trkcand.get_Clusters().get(i).get_Sector();
+                Point3D p = new Point3D(traj.get(layer).x, traj.get(layer).y, traj.get(layer).z);
+                double doca2Cls = sgeo.getDOCAToStrip(sector, layer, cluster.get_Centroid(), p);
+                double doca2Seed = sgeo.getDOCAToStrip(sector, layer, (double) cluster.get_SeedStrip(), p);
+                cluster.set_SeedResidual(doca2Seed); 
+                cluster.set_CentroidResidual(doca2Cls);
+            
+                for (FittedHit hit : cluster) {
+                    double doca1 = sgeo.getDOCAToStrip(sector, layer, (double) hit.get_Strip().get_Strip(), p);
+                    double sigma1 = sgeo.getSingleStripResolution(layer, hit.get_Strip().get_Strip(), traj.get(layer).z);
+                    hit.set_stripResolutionAtDoca(sigma1);
+                    hit.set_docaToTrk(doca2Cls);  
+
+                }
+            }
+        }
+
+        // adding the BMT
+        for (int c = 0; c < trkcand.get_Crosses().size(); c++) {
+            if (trkcand.get_Crosses().get(c).get_Detector().equalsIgnoreCase("BMT")) {
+                double ce = trkcand.get_Crosses().get(c).get_Cluster1().get_Centroid();
+                if (trkcand.get_Crosses().get(c).get_DetectorType().equalsIgnoreCase("Z")) {
+                    //double x = trkcand.get_Crosses().get(c).get_Point().x();
+                    //double y = trkcand.get_Crosses().get(c).get_Point().y();
+                    //double phi = Math.atan2(y,x);
+                    //double err = trkcand.get_Crosses().get(c).get_Cluster1().get_PhiErr();
+                    //int sector = trkcand.get_Crosses().get(c).get_Sector();
+                    int layer = trkcand.get_Crosses().get(c).get_Cluster1().get_Layer()+6;
+                    Cluster cluster = trkcand.get_Crosses().get(c).get_Cluster1();
+                    Point3D p = new Point3D(traj.get(layer).x, traj.get(layer).y, traj.get(layer).z);
+                    double doca2Cls = Math.atan2(p.y(), p.x())-cluster.get_Phi()*
+                            (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[cluster.get_Region() - 1] 
+                            + org.jlab.rec.cvt.bmt.Constants.hStrip2Det);
+                    
+                    cluster.set_CentroidResidual(doca2Cls);
+
+                    for (FittedHit hit : cluster) {
+                        double doca1 = Math.atan2(p.y(), p.x())-hit.get_Strip().get_Phi()*
+                            (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[cluster.get_Region() - 1] 
+                            + org.jlab.rec.cvt.bmt.Constants.hStrip2Det);
+                       
+                        hit.set_docaToTrk(doca2Cls);  
+
+                    }
+                }
+                if (trkcand.get_Crosses().get(c).get_DetectorType().equalsIgnoreCase("C")) {
+                    double z = trkcand.get_Crosses().get(c).get_Point().z();
+                    double err = trkcand.get_Crosses().get(c).get_Cluster1().get_ZErr();
+                    int layer = trkcand.get_Crosses().get(c).get_Cluster1().get_Layer()+6;
+                    Cluster cluster = trkcand.get_Crosses().get(c).get_Cluster1();
+                    Point3D p = new Point3D(traj.get(layer).x, traj.get(layer).y, traj.get(layer).z);
+                    double doca2Cls = p.z()-cluster.get_Z();
+                    
+                    cluster.set_CentroidResidual(doca2Cls);
+
+                    for (FittedHit hit : cluster) {
+                        double doca1 = p.z()-hit.get_Strip().get_Z();
+                        hit.set_docaToTrk(doca2Cls);  
+
+                    }
+                }
+            }
+        }
+    }
+    
+    private Track OutputTrack(Seed seed, org.jlab.clas.tracking.kalmanfilter.helical.KFitter kf) {
         org.jlab.rec.cvt.trajectory.Helix helix = new org.jlab.rec.cvt.trajectory.Helix(kf.KFHelix.getD0(), 
                 kf.KFHelix.getPhi0(), kf.KFHelix.getOmega(), 
                 kf.KFHelix.getZ0(), kf.KFHelix.getTanL());
@@ -595,6 +619,7 @@ public class CVTRecNewKF extends ReconstructionEngine {
             }
         }
         cand.addAll(seed.get_Crosses());
+        this.MatchTrack2Traj(seed, kf.TrjPoints, SVTGeom);
         return cand;
         
     }
@@ -611,10 +636,65 @@ public class CVTRecNewKF extends ReconstructionEngine {
         return cand;
         
     }
-    
-    public void printMatrix(Matrix C) {
-        for (int k = 0; k < 5; k++) {
-            System.out.println(C.get(k, 0) + "	" + C.get(k, 1) + "	" + C.get(k, 2) + "	" + C.get(k, 3) + "	" + C.get(k, 4));
+    @Override
+    public boolean init() {
+        // Load config
+        String rmReg = this.getEngineConfigString("removeRegion");
+        
+        if (rmReg!=null) {
+            System.out.println("["+this.getName()+"] run with region "+rmReg+"removed config chosen based on yaml");
+            Constants.setRmReg(Integer.valueOf(rmReg));
         }
+        else {
+            rmReg = System.getenv("COAT_CVT_REMOVEREGION");
+            if (rmReg!=null) {
+                System.out.println("["+this.getName()+"] run with region "+rmReg+"removed config chosen based on env");
+                Constants.setRmReg(Integer.valueOf(rmReg));
+            }
+        }
+        if (rmReg==null) {
+             System.out.println("["+this.getName()+"] run with all region (default) ");
+        }
+        //svt stand-alone
+        String svtStAl = this.getEngineConfigString("svtOnly");
+        
+        if (svtStAl!=null) {
+            System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+" config chosen based on yaml");
+            this.isSVTonly= Boolean.valueOf(svtStAl);
+        }
+        else {
+            svtStAl = System.getenv("COAT_SVT_ONLY");
+            if (svtStAl!=null) {
+                System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+" config chosen based on env");
+                this.isSVTonly= Boolean.valueOf(svtStAl);
+            }
+        }
+        if (svtStAl==null) {
+             System.out.println("["+this.getName()+"] run with both CVT systems (default) ");
+        }
+        // Load other geometries
+        
+        variationName = Optional.ofNullable(this.getEngineConfigString("variation")).orElse("default");
+        System.out.println(" CVT YAML VARIATION NAME + "+variationName);
+        ConstantProvider providerCTOF = GeometryFactory.getConstants(DetectorType.CTOF, 11, variationName);
+        CTOFGeom = new CTOFGeant4Factory(providerCTOF);        
+        CNDGeom =  GeometryFactory.getDetector(DetectorType.CND, 11, variationName);
+        //
+          
+        
+        System.out.println(" LOADING CVT GEOMETRY...............................variation = "+variationName);
+        CCDBConstantsLoader.Load(new DatabaseConstantProvider(11, variationName));
+        System.out.println("SVT LOADING WITH VARIATION "+variationName);
+        DatabaseConstantProvider cp = new DatabaseConstantProvider(11, variationName);
+        cp = SVTConstants.connect( cp );
+        cp.disconnect();  
+        SVTStripFactory svtFac = new SVTStripFactory(cp, true);
+        SVTGeom.setSvtStripFactory(svtFac);
+
+        return true;
     }
+  
+    private String variationName;
+    
+
 }
