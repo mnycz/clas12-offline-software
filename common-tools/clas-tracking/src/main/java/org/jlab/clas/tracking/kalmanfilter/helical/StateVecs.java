@@ -436,6 +436,7 @@ public class StateVecs {
         double pz0 = invKappa * kVec.tanL;
         
         int ch = (int) KFitter.polarity*(int) Math.signum(kVec.kappa);
+        
         double B = 1. / (lightVel * kVec.alpha); 
         this.setHelix(util, x0,y0,z0,px0,py0,pz0,ch, B);
     }

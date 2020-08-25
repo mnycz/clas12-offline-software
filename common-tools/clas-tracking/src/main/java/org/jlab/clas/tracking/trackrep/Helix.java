@@ -92,7 +92,7 @@ public class Helix {
         return getYc() - getTurningSign()*getR()*Math.cos(getPhi(l));
     }
     public double getZ(double l){
-        return getZ0() + getTurningSign()*l*getTanL();
+        return getZ0() -l*getTanL();
     }
     public double getPx(double B, double l) {
         return getPt(B) * Math.cos(getPhi(l));
