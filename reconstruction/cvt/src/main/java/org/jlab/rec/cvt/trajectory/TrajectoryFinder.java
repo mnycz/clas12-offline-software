@@ -225,7 +225,7 @@ public class TrajectoryFinder {
                     //stateVecs.add(stVec);
                     // calculate crosses on BMT layers using track information.  These are used in the event display
                     for (Cross c : BMTCrossList) {
-                        if (matchCrossToStateVec(c, stVec, l + 1, 0) == false) {
+                       if (matchCrossToStateVec(c, stVec, l + 1, 0) == false) {
                             continue;
                         }
 
@@ -574,7 +574,7 @@ public class TrajectoryFinder {
                 value = false;	// reauire same region
             }
             if (c.get_DetectorType().equalsIgnoreCase("C")) { //C-detector measuring Z
-                if (org.jlab.rec.cvt.bmt.Geometry.getZorC(layer) == 1) { //Z-detector measuring phi
+                if (org.jlab.rec.cvt.bmt.Geometry.getZorC(l+1) == 1) { //Z-detector measuring phi
                     value = false;
                 }
             	
@@ -583,7 +583,7 @@ public class TrajectoryFinder {
                 }
             }
             if (c.get_DetectorType().equalsIgnoreCase("Z")) { //Z-detector measuring phi
-                if (org.jlab.rec.cvt.bmt.Geometry.getZorC(layer) == 0) { //C-detector 
+                if (org.jlab.rec.cvt.bmt.Geometry.getZorC(l+1) == 0) { //C-detector 
                     value = false;
                 }
                 double deltaXt = Math.sqrt((stVec.x() - c.get_Point().x()) * (stVec.x() - c.get_Point().x()) + (stVec.y() - c.get_Point().y()) * (stVec.y() - c.get_Point().y()));
@@ -624,18 +624,28 @@ public class TrajectoryFinder {
         }
         if (detector.equalsIgnoreCase("BMT")) {
             if (org.jlab.rec.cvt.bmt.Geometry.getZorC(layer) == 0) { //C-detector measuring z
+                double doca2Cls = stVec.z()-cluster.get_Z();
+                cluster.set_CentroidResidual(doca2Cls);
+
                 for (FittedHit h1 : cluster) {
                     // calculate the hit residuals
                     double docaToTrk = stVec.z() - h1.get_Strip().get_Z();
                     double stripResol = h1.get_Strip().get_ZErr();
                     h1.set_docaToTrk(docaToTrk);
                     h1.set_stripResolutionAtDoca(stripResol);
+                    if(h1.get_Strip().get_Strip()==cluster.get_SeedStrip()) cluster.set_SeedResidual(docaToTrk); 
                     if (trajFinal) {
                         h1.set_TrkgStatus(2);
                     }
                 }
             }
             if (org.jlab.rec.cvt.bmt.Geometry.getZorC(layer) == 1) { //Z-detector measuring phi
+                double ClusterX = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] * Math.cos(cluster.get_Phi());
+                double ClusterY = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] * Math.sin(cluster.get_Phi());
+                double ClusterSign = Math.signum(Math.atan2(ClusterY - stVec.y(), ClusterX - stVec.x()));
+                double doca2Cls = ClusterSign * Math.sqrt((ClusterX - stVec.x()) * (ClusterX - stVec.x()) + (ClusterY - stVec.y()) * (ClusterY - stVec.y()));                    
+                cluster.set_CentroidResidual(doca2Cls);
+                
                 // calculate the hit residuals
                 for (FittedHit h1 : cluster) {
                     double StripX = org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] * Math.cos(h1.get_Strip().get_Phi());
@@ -646,6 +656,7 @@ public class TrajectoryFinder {
                     double stripResol = h1.get_Strip().get_PhiErr();
                     h1.set_docaToTrk(docaToTrk);
                     h1.set_stripResolutionAtDoca(stripResol);
+                    if(h1.get_Strip().get_Strip()==cluster.get_SeedStrip()) cluster.set_SeedResidual(docaToTrk); 
                     if (trajFinal) {
                         h1.set_TrkgStatus(2);
                     }
