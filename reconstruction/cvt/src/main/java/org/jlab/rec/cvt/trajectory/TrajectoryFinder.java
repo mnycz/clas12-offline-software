@@ -642,20 +642,25 @@ public class TrajectoryFinder {
             if (org.jlab.rec.cvt.bmt.Geometry.getZorC(layer) == 1) { //Z-detector measuring phi
                 double ClusterX = (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det) * Math.cos(cluster.get_Phi());
                 double ClusterY = (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det) * Math.sin(cluster.get_Phi());
-                double ClusterSign = Math.signum(Math.atan2(ClusterY - stVec.y(), ClusterX - stVec.x()));
-                double doca2Cls = ClusterSign * Math.sqrt((ClusterX - stVec.x()) * (ClusterX - stVec.x()) + (ClusterY - stVec.y()) * (ClusterY - stVec.y()));                    
+//                double ClusterSign = Math.signum(Math.atan2(ClusterY - stVec.y(), ClusterX - stVec.x()));
+//                double doca2Cls = ClusterSign * Math.sqrt((ClusterX - stVec.x()) * (ClusterX - stVec.x()) + (ClusterY - stVec.y()) * (ClusterY - stVec.y()));                    
+                double deltaCls = Math.atan2(ClusterX*stVec.y()-ClusterY*stVec.x(), ClusterX*stVec.x()+ClusterY*stVec.y());
+                double doca2Cls = (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det) * deltaCls;
                 cluster.set_CentroidResidual(doca2Cls);
                 
                 // calculate the hit residuals
                 for (FittedHit h1 : cluster) {
                     double StripX = (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det) * Math.cos(h1.get_Strip().get_Phi());
                     double StripY = (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det) * Math.sin(h1.get_Strip().get_Phi());
-                    double Sign = Math.signum(Math.atan2(StripY - stVec.y(), StripX - stVec.x()));
-                    double docaToTrk = Sign * Math.sqrt((StripX - stVec.x()) * (StripX - stVec.x()) + (StripY - stVec.y()) * (StripY - stVec.y()));
+//                    double Sign = Math.signum(Math.atan2(StripY - stVec.y(), StripX - stVec.x()));
+//                    double docaToTrk = Sign * Math.sqrt((StripX - stVec.x()) * (StripX - stVec.x()) + (StripY - stVec.y()) * (StripY - stVec.y()));
+                    double deltaPhi = Math.atan2(StripX*stVec.y()-StripY*stVec.x(), StripX*stVec.x()+StripY*stVec.y());
+                    double docaPhi = (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(cluster.get_Layer() + 1) / 2 - 1] + org.jlab.rec.cvt.bmt.Constants.hStrip2Det) * deltaPhi;
+//                    System.out.println(docaToTrk + " " + docaPhi + " " + Math.toDegrees(h1.get_Strip().get_Phi()) + " " + Math.toDegrees(Math.atan2(stVec.y(),stVec.x())));
                     double stripResol = h1.get_Strip().get_PhiErr();
-                    h1.set_docaToTrk(docaToTrk);
+                    h1.set_docaToTrk(docaPhi);
                     h1.set_stripResolutionAtDoca(stripResol);
-                    if(h1.get_Strip().get_Strip()==cluster.get_SeedStrip()) cluster.set_SeedResidual(docaToTrk); 
+                    if(h1.get_Strip().get_Strip()==cluster.get_SeedStrip()) cluster.set_SeedResidual(docaPhi); 
                     if (trajFinal) {
                         h1.set_TrkgStatus(2);
                     }
