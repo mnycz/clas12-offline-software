@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.xml.validation.Schema;
+
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.clas.swimtools.Swim;
 import org.jlab.detector.base.DetectorType;
@@ -19,8 +21,8 @@ import org.jlab.geom.prim.Vector3D;
 import org.jlab.geometry.prim.Line3d;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
+import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.rec.cvt.Constants;
-import org.jlab.rec.cvt.align.AlignmentMatrixBuilder;
 import org.jlab.rec.cvt.align.AlignmentMatrixIndices;
 
 import static org.jlab.rec.cvt.Constants.setSolenoidscale;
@@ -158,6 +160,7 @@ public class CVTAlignment extends ReconstructionEngine {
 	public boolean processDataEvent(DataEvent event) {
 
 		this.setRunConditionsParameters(event, FieldsConfig, Run, false, "");
+		
 		double shift = 0;
 
 		this.FieldsConfig = this.getFieldsConfig();
