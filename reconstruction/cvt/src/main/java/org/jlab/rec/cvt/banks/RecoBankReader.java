@@ -9,12 +9,9 @@ import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.cvt.cluster.Cluster;
 import org.jlab.rec.cvt.cross.Cross;
-import org.jlab.rec.cvt.hit.ADCConvertor;
 import org.jlab.rec.cvt.hit.FittedHit;
 import org.jlab.rec.cvt.hit.Hit;
 import org.jlab.rec.cvt.hit.Strip;
-import org.jlab.rec.cvt.svt.Constants;
-import org.jlab.rec.cvt.svt.Geometry;
 import org.jlab.rec.cvt.track.StraightTrack;
 import org.jlab.rec.cvt.trajectory.Ray;
 
@@ -26,63 +23,7 @@ public class RecoBankReader {
 
 
 
-	/**
-	 *
-	 * @param event the event
-	 * @param trkcands the list of reconstructed straight tracks
-	 * @return cosmic bank
-	 */
-	public DataBank fillStraightTracksBank(DataEvent event,
-			List<StraightTrack> cosmics, double zShift) {
-		if (cosmics == null) {
-			return null;
-		}
-		if (cosmics.size() == 0) {
-			return null;
-		}
-
-		DataBank bank = event.createBank("CVTRec::Cosmics", cosmics.size());
-		// an array representing the ids of the crosses that belong to the track: for a helical track with the current
-		// 4 regions of SVT + 1 region of BMT there can be up to 4*2 (*2: for each hemisphere) crosses of type SVT and 2*2 of type PSEUDOBMT (1 for the C detector and 1 for the Z detector)
-
-		for (int i = 0; i < cosmics.size(); i++) {
-			List<Integer> crossIdxArray = new ArrayList<Integer>();
-
-
-			bank.setShort("ID", i, (short) cosmics.get(i).get_Id());
-			bank.setFloat("chi2", i, (float) cosmics.get(i).get_chi2());
-			bank.setShort("ndf", i, (short) cosmics.get(i).get_ndf());
-			bank.setFloat("trkline_yx_slope", i, (float) cosmics.get(i).get_ray().get_yxslope());
-			bank.setFloat("trkline_yx_interc", i, (float) (cosmics.get(i).get_ray().get_yxinterc()/10.));
-			bank.setFloat("trkline_yz_slope", i, (float) cosmics.get(i).get_ray().get_yzslope());
-			bank.setFloat("trkline_yz_interc", i, (float) (cosmics.get(i).get_ray().get_yzinterc()/10.+zShift));
-
-			// get the cosmics ray unit direction vector
-			Vector3D u = new Vector3D(cosmics.get(i).get_ray().get_yxslope(), 1, cosmics.get(i).get_ray().get_yzslope()).asUnit();
-			// calculate the theta and phi components of the ray direction vector in degrees
-			bank.setFloat("theta", i, (float) Math.toDegrees(u.theta()));
-			bank.setFloat("phi", i, (float) Math.toDegrees(u.phi()));
-
-			// the array of cross ids is filled in order of the SVT cosmic region 1 to 8 starting from the bottom-most double layer
-			for (int j = 0; j < cosmics.get(i).size(); j++) {
-				crossIdxArray.add(cosmics.get(i).get(j).get_Id());
-
-			}
-
-
-			for (int j = 0; j < crossIdxArray.size(); j++) { 
-				if(j<18) {
-					//only 18 entries in bank
-					String hitStrg = "Cross";
-					hitStrg += (j + 1);
-					hitStrg += "_ID";
-					bank.setShort(hitStrg, i, (short) crossIdxArray.get(j).shortValue());
-				}
-			}
-		}
-		//bank.show();
-		return bank;
-	}
+	
 
 
 	public void fetch_SVTCrosses(DataEvent event, double zShift) {
@@ -95,9 +36,9 @@ public class RecoBankReader {
 
 			return;
 		}
+		_crosses = new ArrayList<Cross>();
 		DataBank bank = event.getBank("BSTRec::Crosses");
 
-		int index = 0;
 		for (int j = 0; j < bank.rows(); j++) {
 			int region = bank.getByte("region", j);
 			int sector = bank.getByte("sector", j);
@@ -202,7 +143,7 @@ public class RecoBankReader {
 		for (int i = 0; i < bank.rows(); i++) {
 
 
-			int id = bank.getByte("ID", i);
+			int id = bank.getShort("ID", i);
 			int layer = bank.getByte("layer", i);
 			int sector = bank.getByte("sector", i);
 			Cluster cluster = new Cluster(0, 0, sector, layer, id);

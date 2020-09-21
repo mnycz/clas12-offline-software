@@ -11,7 +11,7 @@ public class AlignmentBankWriter {
 	
 	public void write_Matrix(DataEvent event, String matrixName, List<Matrix> matrices) {
 
-		System.out.println("attempting to write matrices");
+		//System.out.println("attempting to write matrices");
 		if(event == null)
 			System.out.println("event is null");
 		if(matrixName == null)
@@ -23,5 +23,6 @@ public class AlignmentBankWriter {
 			for(int j = 0; j<matrices.get(i).getRowDimension(); j++)
 				for(int k = 0; k<matrices.get(i).getColumnDimension(); k++)
 					bank.setFloat("element_"+j+"_"+k, i, (short) matrices.get(i).get(j,k));
+		event.appendBank(bank);
 	}
 }

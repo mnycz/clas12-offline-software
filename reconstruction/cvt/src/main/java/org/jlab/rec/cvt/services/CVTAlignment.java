@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.xml.validation.Schema;
-
 import org.jlab.clas.reco.ReconstructionEngine;
-import org.jlab.clas.swimtools.Swim;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.base.GeometryFactory;
 import org.jlab.detector.calib.utils.DatabaseConstantProvider;
@@ -16,41 +13,20 @@ import org.jlab.detector.geant4.v2.SVT.SVTConstants;
 import org.jlab.detector.geant4.v2.SVT.SVTStripFactory;
 import org.jlab.geom.base.ConstantProvider;
 import org.jlab.geom.base.Detector;
-import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.geometry.prim.Line3d;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.io.hipo.HipoDataEvent;
 import org.jlab.rec.cvt.Constants;
 import org.jlab.rec.cvt.align.AlignmentMatrixIndices;
 
-import static org.jlab.rec.cvt.Constants.setSolenoidscale;
-
 import org.jlab.rec.cvt.banks.AlignmentBankWriter;
-import org.jlab.rec.cvt.banks.HitReader;
 import org.jlab.rec.cvt.banks.RecoBankReader;
 import org.jlab.rec.cvt.bmt.CCDBConstantsLoader;
 import org.jlab.rec.cvt.cluster.Cluster;
-import org.jlab.rec.cvt.cluster.ClusterFinder;
 import org.jlab.rec.cvt.cross.Cross;
-import org.jlab.rec.cvt.cross.CrossMaker;
-import org.jlab.rec.cvt.hit.ADCConvertor;
-import org.jlab.rec.cvt.hit.FittedHit;
-import org.jlab.rec.cvt.hit.Hit;
-import org.jlab.rec.cvt.svt.Geometry;
-import org.jlab.rec.cvt.track.Seed;
 import org.jlab.rec.cvt.track.StraightTrack;
-import org.jlab.rec.cvt.track.Track;
-import org.jlab.rec.cvt.track.TrackListFinder;
-import org.jlab.rec.cvt.track.TrackSeeder;
-import org.jlab.rec.cvt.track.TrackSeederCA;
-import org.jlab.rec.cvt.track.fit.KFitter;
-import org.jlab.rec.cvt.trajectory.Helix;
 import org.jlab.rec.cvt.trajectory.Ray;
-import org.jlab.rec.cvt.trajectory.Trajectory;
-import org.jlab.rec.cvt.trajectory.TrajectoryFinder;
-
 import Jama.Matrix;
 import eu.mihosoft.vrl.v3d.Vector3d;
 
