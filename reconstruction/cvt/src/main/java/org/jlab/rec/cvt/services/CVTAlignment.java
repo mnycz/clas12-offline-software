@@ -153,6 +153,13 @@ public class CVTAlignment extends ReconstructionEngine {
 		List<Matrix> Vs = new ArrayList<Matrix>();
 		List<Matrix> dms = new ArrayList<Matrix>();
 		for (StraightTrack track : straightTracks) {
+			/*System.out.println("track read: ");
+			System.out.println("track chi2: "+ track.get_chi2());
+			System.out.println("ndf: "+ track.get_ndf());
+			System.out.println("ncrosses: "+ track.size());
+			System.out.println("ray: "+ track.get_ray().get_refPoint() + 
+					" + lambda*" + track.get_ray().get_dirVec());
+			System.out.println();*/
 			int nCross = 0;
 			for(Cross c : track) {
 				if(c.get_Detector().equalsIgnoreCase("SVT"))
@@ -163,6 +170,7 @@ public class CVTAlignment extends ReconstructionEngine {
 			Matrix B = new Matrix(2*nCross, 4);
 			Matrix V = new Matrix(2*nCross,2*nCross);
 			Matrix dm = new Matrix(2*nCross,1);
+			
 			int i = 0;
 			for(Cross cross : track) {
 				if(!cross.get_Detector().equalsIgnoreCase("SVT"))
@@ -174,6 +182,17 @@ public class CVTAlignment extends ReconstructionEngine {
 				fillMatrices(i,ray,c2,A,B,V,dm);
 				i++;
 			}
+
+			/*System.out.println("dm: ");
+			dm.print(6, 2);
+			System.out.println("V:  ");
+			V.print(7, 4);
+			System.out.println("B:  ");
+			B.print(7, 4);
+			System.out.println("A:  ");
+			A.print(7, 4);
+			System.out.println("track chi2: " + dm.transpose().times(V.inverse()).times(dm).get(0, 0));
+			System.out.println();*/
 			As.add(A);
 			Bs.add(B);
 			Vs.add(V);
@@ -201,28 +220,56 @@ public class CVTAlignment extends ReconstructionEngine {
 		int region = c.get_Region();
 		int layer = c.get_Layer();
 		int sector = c.get_Sector();
+		//System.out.println("RLS " + region + " " + layer + " " + sector);
+		//System.out.println("th" + c.get_Phi());
 		double centroid = c.get_Centroid();
-		Line3d line1 = SVTGeom.getStrip(layer, sector, (int)centroid);
-		Line3d line2 = SVTGeom.getStrip(layer, sector, (int)centroid+1); 
+		
+		// this avoids a certain bug that only occurs if
+		// there is a single-hit cluster on the last strip,
+		// in which obtaining the next strip (line2) gives 
+		// an IllegalArgumentException
+		if(centroid == SVTConstants.NSTRIPS)
+			centroid = SVTConstants.NSTRIPS-.001;
+		Line3d line1 = SVTGeom.getStrip(layer-1, sector-1, (int)centroid-1);
+		Line3d line2 = SVTGeom.getStrip(layer-1, sector-1, (int)centroid); 
 		//take the weighted average of the directions of the two lines.
-		Vector3d l = line1.diff().normalized().times(centroid%1).add(line2.diff().normalized().times(1-centroid%1)).normalized();
-		Vector3d e = line1.end().times(centroid%1).add(line2.end().times(1-centroid%1));
-		Vector3d s = line2.end().minus(line2.end());
+		Vector3d l = line1.diff().normalized().times(centroid%1).add(line2.diff().normalized().times(1-(centroid%1))).normalized();
+		
+		Vector3d e1 = line1.origin();
+		Vector3d e2 = line2.origin();
+		Vector3d e = e1.times(centroid%1).add(e2.times(1-(centroid%1)));
+		Vector3d s = e2.minus(e1);
 		Vector3d xref = convertVector(ray.get_refPoint().toVector3D());
 		Vector3d u = convertVector(ray.get_dirVec()); 
 		s = s.minus(l.times(s.dot(l))).normalized();
 		Vector3d n = l.cross(s);
 		double udotn = u.dot(n);
 		double sdotu = s.dot(u);
-
 		Vector3d extrap = xref.plus(u.times(n.dot(e.minus(xref))/udotn));
+		double resolution = c.get_ResolutionAlongZ(extrap.z, SVTGeom);
+		/*System.out.println("sector: " + sector + " of " + SVTConstants.NSECTORS[region-1]);
+		System.out.println("xref: " + xref.toStlString());
+		System.out.println("e: " + e.toStlString());
+		
+		System.out.println("u: " + u.magnitude() + " " + u.toStlString());
+		System.out.println("l: " + l.magnitude() + " " + l.toStlString());
+		System.out.println("n: " + n.magnitude() + " " + n.toStlString());
+		System.out.println("s: " + s.magnitude() + " " + s.toStlString());
+		System.out.println("extrap: " + extrap.toStlString());
+		System.out.println("resolution: " + resolution);
 
-		V.set(i, i, Math.pow(c.get_ResolutionAlongZ(extrap.z, SVTGeom),2));
+		
+		//extrap should be on ths same plane as e., 
+		//basis vectors must be perp to one another.
+		System.out.println("these should be zero:  " + extrap.minus(e).dot(n)+" " + n.dot(s) 
+				+ " " + s.dot(l) + " "+ l.dot(n) + " " + extrap.minus(xref).cross(u).magnitude());
+		*/
+		V.set(i, i, Math.pow(resolution,2));
 
 
 		Vector3d sp = s.minus(n.times(sdotu/udotn));
 
-		int offset = AlignmentMatrixIndices.getIndexSVT(region, sector);
+		int offset = AlignmentMatrixIndices.getIndexSVT(region-1, sector-1)*AlignmentMatrixIndices.ALIGNMENT_PARAMS_PER_MODULE;
 		Vector3d cref = convertVector(SVTGeom.getPlaneModuleOrigin(sector, layer).toVector3D());
 		Vector3d dmdr =sp.cross(extrap).plus(n.cross(cref).times(sdotu/udotn));
 		A.set(i, offset + 0, -sp.x);

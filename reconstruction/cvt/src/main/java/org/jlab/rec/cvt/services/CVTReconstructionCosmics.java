@@ -18,9 +18,7 @@ import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.rec.cvt.Constants;
-import static org.jlab.rec.cvt.Constants.setSolenoidscale;
-import org.jlab.rec.cvt.banks.HitReader;
+import org.jlab.rec.cvt.Constants;import org.jlab.rec.cvt.banks.HitReader;
 import org.jlab.rec.cvt.banks.RecoBankWriter;
 import org.jlab.rec.cvt.bmt.CCDBConstantsLoader;
 import org.jlab.rec.cvt.cluster.Cluster;
@@ -32,17 +30,8 @@ import org.jlab.rec.cvt.cross.StraightTrackCrossListFinder;
 import org.jlab.rec.cvt.hit.ADCConvertor;
 import org.jlab.rec.cvt.hit.FittedHit;
 import org.jlab.rec.cvt.hit.Hit;
-import org.jlab.rec.cvt.track.Seed;
 import org.jlab.rec.cvt.track.StraightTrack;
-import org.jlab.rec.cvt.track.Track;
 import org.jlab.rec.cvt.track.TrackCandListFinder;
-import org.jlab.rec.cvt.track.TrackListFinder;
-import org.jlab.rec.cvt.track.TrackSeeder;
-import org.jlab.rec.cvt.track.TrackSeederCA;
-import org.jlab.rec.cvt.track.fit.KFitter;
-import org.jlab.rec.cvt.trajectory.Helix;
-import org.jlab.rec.cvt.trajectory.Trajectory;
-import org.jlab.rec.cvt.trajectory.TrajectoryFinder;
 
 /**
  * Service to return reconstructed TRACKS
@@ -350,7 +339,15 @@ public class CVTReconstructionCosmics extends ReconstructionEngine {
 			}
 		}
 
-
+		/*for(StraightTrack track : tracks) {
+			System.out.println("track written: ");
+			System.out.println("track chi2: "+ track.get_chi2());
+			System.out.println("ndf: "+ track.get_ndf());
+			System.out.println("ncrosses: "+ track.size());
+			System.out.println("ray: "+ track.get_ray().get_refPoint() + 
+					" + lambda*" + track.get_ray().get_dirVec());
+			System.out.println();
+		}*/
 		//------------------------
 		// set index associations
 		if (tracks.size() > 0) {

@@ -23,7 +23,7 @@ public class RecoBankReader {
 
 
 
-	
+
 
 
 	public void fetch_SVTCrosses(DataEvent event, double zShift) {
@@ -44,6 +44,7 @@ public class RecoBankReader {
 			int sector = bank.getByte("sector", j);
 			int id = bank.getShort("ID",j);
 			Cross cross = new Cross("SVT", "", sector, region, j);
+			cross.set_Id(id);
 			cross.set_Point(new Point3D(10.*bank.getFloat("x", j), 10.*bank.getFloat("y", j),10.*(bank.getFloat("z", j)-zShift)));
 			cross.set_PointErr(new Point3D(10.*bank.getFloat("err_x", j), 10.*bank.getFloat("err_y", j),10.*bank.getFloat("err_z", j)));
 			cross.set_AssociatedTrackID(bank.getShort("trkID",j));
@@ -52,13 +53,12 @@ public class RecoBankReader {
 			int cluster1id = bank.getShort("Cluster1_ID", j);
 			for (Cluster cluster: _clusters)
 				if (cluster.get_Id() == cluster1id)
-					cross.set_Cluster2(cluster);
+					cross.set_Cluster1(cluster);
 			int cluster2id = bank.getShort("Cluster2_ID", j);
 			for (Cluster cluster: _clusters)
 				if (cluster.get_Id() == cluster2id)
 					cross.set_Cluster2(cluster);
 
-			index++;
 			_crosses.add(cross);
 		}
 
@@ -105,20 +105,18 @@ public class RecoBankReader {
 			track.set_chi2(chi2s[i]);
 			track.set_ndf(ndfs[i]);
 
-			List<Integer> crossIdxArray = new ArrayList<Integer>();
 
-			for (int j = 0; j < crossIdxArray.size(); j++) { 
-				if(j<18) {
-					//only 18 entries in bank
-					String hitStrg = "Cross";
-					hitStrg += (j + 1);
-					hitStrg += "_ID";
-					if(!hasColumn(bank,hitStrg))
-						continue;
-					int crossid = bank.getShort(hitStrg, i);
-					for(Cross cross : _crosses)
-						if(cross.get_Id() == crossid)
-							track.add(cross);
+			for (int j = 0; j < 18; j++) { 
+
+				String hitStrg = "Cross";
+				hitStrg += (j + 1);
+				hitStrg += "_ID";
+				if(!hasColumn(bank,hitStrg))
+					continue;
+				int crossid = bank.getShort(hitStrg, i);
+				for(Cross cross : _crosses) {
+					if(cross.get_Id() == crossid)
+						track.add(cross);
 				}
 			}
 			_cosmics.add(track);
@@ -189,11 +187,8 @@ public class RecoBankReader {
 			int strip = bank.getInt("strip", i);
 			int id = bank.getShort("ID", i);
 			FittedHit hit = new FittedHit(0, 0, sector, layer, new Strip(strip, 0));
-			
-			hit.set_Id(id);
-			
-			
 
+			hit.set_Id(id);
 			hit.set_docaToTrk(bank.getFloat("fitResidual", i));
 			hit.set_TrkgStatus(bank.getInt("trkingStat", i));
 
@@ -206,7 +201,6 @@ public class RecoBankReader {
 
 
 	public List<StraightTrack> get_Cosmics() {
-		
 		return _cosmics;
 	}
 
