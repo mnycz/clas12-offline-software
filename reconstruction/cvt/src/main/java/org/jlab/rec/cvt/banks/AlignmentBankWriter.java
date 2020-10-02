@@ -18,11 +18,16 @@ public class AlignmentBankWriter {
 			System.out.println("matrixName is null");
 		if(matrices == null)
 			System.out.println("matrix list is null");
-		DataBank bank = event.createBank("CVTAlign::" + matrixName, matrices.size());
-		for(int i = 0; i< matrices.size(); i++)
-			for(int j = 0; j<matrices.get(i).getRowDimension(); j++)
-				for(int k = 0; k<matrices.get(i).getColumnDimension(); k++)
-					bank.setFloat("element_"+j+"_"+k, i, (short) matrices.get(i).get(j,k));
+		DataBank bank = event.createBank("Align::" + matrixName, matrices.size());
+		for(int i = 0; i< matrices.size(); i++) {
+			bank.setShort("rows",i,(short) matrices.get(i).getRowDimension());
+			bank.setShort("columns",i,(short) matrices.get(i).getColumnDimension());
+			for(int j = 0; j<matrices.get(i).getRowDimension(); j++) {
+				for(int k = 0; k<matrices.get(i).getColumnDimension(); k++) {
+					bank.setFloat("element_"+j+"_"+k, i, (float) matrices.get(i).get(j,k));
+				}
+			}
+		}
 		event.appendBank(bank);
-	}
+	}	
 }

@@ -134,7 +134,8 @@ public class CVTAlignment extends ReconstructionEngine {
 	}
 	@Override
 	public boolean processDataEvent(DataEvent event) {
-
+		int runNum = event.getBank("RUN::config").getInt("run", 0);
+		int eventNum = event.getBank("RUN::config").getInt("event", 0);
 		this.setRunConditionsParameters(event, FieldsConfig, Run, false, "");
 		
 		double shift = 0;
@@ -148,10 +149,13 @@ public class CVTAlignment extends ReconstructionEngine {
 		List<StraightTrack> straightTracks = reader.get_Cosmics();
 
 		//System.out.println("H");
+		List<Matrix> Is = new ArrayList<Matrix>();
 		List<Matrix> As = new ArrayList<Matrix>();
 		List<Matrix> Bs = new ArrayList<Matrix>();
 		List<Matrix> Vs = new ArrayList<Matrix>();
-		List<Matrix> dms = new ArrayList<Matrix>();
+		List<Matrix> ms = new ArrayList<Matrix>();
+		List<Matrix> cs = new ArrayList<Matrix>();
+		List<Integer> trackIDs = new ArrayList<Integer>();
 		for (StraightTrack track : straightTracks) {
 			/*System.out.println("track read: ");
 			System.out.println("track chi2: "+ track.get_chi2());
@@ -166,20 +170,22 @@ public class CVTAlignment extends ReconstructionEngine {
 					nCross++;
 			}
 			Ray ray = track.get_ray();
-			Matrix A = new Matrix(2*nCross, AlignmentMatrixIndices.getParameterCount());
+			Matrix A = new Matrix(2*nCross, 6*nCross);//not sure why there aren't 6 columns
 			Matrix B = new Matrix(2*nCross, 4);
 			Matrix V = new Matrix(2*nCross,2*nCross);
-			Matrix dm = new Matrix(2*nCross,1);
+			Matrix m = new Matrix(2*nCross,1);
+			Matrix c = new Matrix(2*nCross,1);
+			Matrix I = new Matrix(2*nCross,1);
 			
 			int i = 0;
 			for(Cross cross : track) {
 				if(!cross.get_Detector().equalsIgnoreCase("SVT"))
 					continue;
-				Cluster c1 = cross.get_Cluster1();
-				fillMatrices(i,ray,c1,A,B,V,dm);
+				Cluster cl1 = cross.get_Cluster1();
+				fillMatrices(i,ray,cl1,A,B,V,m,c,I);
 				i++;
-				Cluster c2 = cross.get_Cluster2();
-				fillMatrices(i,ray,c2,A,B,V,dm);
+				Cluster cl2 = cross.get_Cluster2();
+				fillMatrices(i,ray,cl2,A,B,V,m,c,I);
 				i++;
 			}
 
@@ -196,18 +202,42 @@ public class CVTAlignment extends ReconstructionEngine {
 			As.add(A);
 			Bs.add(B);
 			Vs.add(V);
-			dms.add(dm);
+			ms.add(m);
+			cs.add(c);
+			Is.add(I);
+			trackIDs.add(track.get_Id());
 		}
 		AlignmentBankWriter writer = new AlignmentBankWriter();
+		writer.write_Matrix(event, "I", Is);
 		writer.write_Matrix(event, "A", As);
 		writer.write_Matrix(event, "B", Bs);
 		writer.write_Matrix(event, "V", Vs);
-		writer.write_Matrix(event, "dm", dms);
+		writer.write_Matrix(event, "m", ms);
+		writer.write_Matrix(event, "c", cs);
+		fillMisc(event,runNum,eventNum,trackIDs,As,Bs,Vs,ms,cs,Is);
 		
 		//event.show();
 		return true;
 
 	}
+	
+	private void fillMisc(DataEvent event, int runNum, int eventNum, List<Integer> trackIDs, 
+			List<Matrix> As, List<Matrix> Bs, List<Matrix> Vs, List<Matrix> ms, List<Matrix> cs,
+			List<Matrix> is) {
+		DataBank bank = event.createBank("Align::misc", trackIDs.size());
+		for(int i = 0; i<trackIDs.size(); i++) {
+			bank.setInt("run", i, runNum);
+			bank.setInt("event", i, eventNum);
+			Matrix c = cs.get(i), m = ms.get(i), V = Vs.get(i);
+			bank.setFloat("chi2", i, (float)(m.minus(c)).transpose().times(V.inverse()).times(m.minus(c)).get(0, 0));
+			
+			bank.setShort("ndof", i, (short)(Vs.get(i).getRowDimension()-4));
+			bank.setShort("track", i, (short)(int)trackIDs.get(i));
+		}
+
+		event.appendBank(bank);
+	}
+
 	/*
 	 * converts a Vector3D to a Vector3d.  
 	 * These objects are from two different packages.
@@ -216,13 +246,13 @@ public class CVTAlignment extends ReconstructionEngine {
 		return new Vector3d(v.x(),v.y(),v.z());
 	}
 
-	private void fillMatrices(int i, Ray ray, Cluster c, Matrix A, Matrix B, Matrix V, Matrix dm) {
-		int region = c.get_Region();
-		int layer = c.get_Layer();
-		int sector = c.get_Sector();
+	private void fillMatrices(int i, Ray ray, Cluster cl, Matrix A, Matrix B, Matrix V, Matrix m, Matrix c, Matrix I) {
+		int region = cl.get_Region();
+		int layer = cl.get_Layer();
+		int sector = cl.get_Sector();
 		//System.out.println("RLS " + region + " " + layer + " " + sector);
 		//System.out.println("th" + c.get_Phi());
-		double centroid = c.get_Centroid();
+		double centroid = cl.get_Centroid();
 		
 		// this avoids a certain bug that only occurs if
 		// there is a single-hit cluster on the last strip,
@@ -246,7 +276,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		double udotn = u.dot(n);
 		double sdotu = s.dot(u);
 		Vector3d extrap = xref.plus(u.times(n.dot(e.minus(xref))/udotn));
-		double resolution = c.get_ResolutionAlongZ(extrap.z, SVTGeom);
+		double resolution = cl.get_ResolutionAlongZ(extrap.z, SVTGeom);
 		/*System.out.println("sector: " + sector + " of " + SVTConstants.NSECTORS[region-1]);
 		System.out.println("xref: " + xref.toStlString());
 		System.out.println("e: " + e.toStlString());
@@ -269,22 +299,26 @@ public class CVTAlignment extends ReconstructionEngine {
 
 		Vector3d sp = s.minus(n.times(sdotu/udotn));
 
-		int offset = AlignmentMatrixIndices.getIndexSVT(region-1, sector-1)*AlignmentMatrixIndices.ALIGNMENT_PARAMS_PER_MODULE;
+		int index = AlignmentMatrixIndices.getIndexSVT(region-1, sector-1);
 		Vector3d cref = convertVector(SVTGeom.getPlaneModuleOrigin(sector, layer).toVector3D());
 		Vector3d dmdr =sp.cross(extrap).plus(n.cross(cref).times(sdotu/udotn));
-		A.set(i, offset + 0, -sp.x);
-		A.set(i, offset + 1, -sp.y);
-		A.set(i, offset + 2, -sp.z);
-		A.set(i, offset + 3, dmdr.x);
-		A.set(i, offset + 4, dmdr.y);
-		A.set(i, offset + 5, dmdr.z);
+		A.set(i, (i/2)*6 + 0, -sp.x);
+		A.set(i, (i/2)*6 + 1, -sp.y);
+		A.set(i, (i/2)*6 + 2, -sp.z);
+		A.set(i, (i/2)*6 + 3, dmdr.x);
+		A.set(i, (i/2)*6 + 4, dmdr.y);
+		A.set(i, (i/2)*6 + 5, dmdr.z);
 
+		I.set(i, 0, index);
+		
 		Vector3d dmdu = sp.times(e.minus(xref).dot(n)/udotn);
 		B.set(i,0, sp.x);
 		B.set(i,1, sp.z);
 		B.set(i,2, dmdu.x);
 		B.set(i,3, dmdu.z);
-		dm.set(i,0, s.dot(e.minus(extrap)));
+		//dm.set(i,0, s.dot(e.minus(extrap)));
+		c.set(i,0,s.dot(extrap));
+		m.set(i,0,s.dot(e));
 	}
 
 
