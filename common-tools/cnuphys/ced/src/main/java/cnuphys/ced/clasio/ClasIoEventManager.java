@@ -39,6 +39,8 @@ import cnuphys.ced.alldata.DataManager;
 import cnuphys.ced.alldata.graphics.DefinitionManager;
 import cnuphys.ced.alldata.graphics.PlotDialog;
 import cnuphys.ced.cedview.CedView;
+import cnuphys.ced.clasio.filter.FilterManager;
+import cnuphys.ced.clasio.filter.IEventFilter;
 import cnuphys.ced.event.AccumulationManager;
 import cnuphys.ced.event.data.ECAL;
 import cnuphys.ced.event.data.PCAL;
@@ -89,8 +91,6 @@ public class ClasIoEventManager {
 	private long[] _numberMap;
 	private int _numberMapCount = 0;
 
-	// all the filters
-	private ArrayList<IEventFilter> _eventFilters = new ArrayList<>();
 
 	// sources of events (the type, not the actual source)
 	public enum EventSourceType {
@@ -733,7 +733,7 @@ public class ClasIoEventManager {
 					_currentEvent = decodeEvioToHipo((EvioDataEvent) _currentEvent);
 				}
 
-				done = (_currentEvent == null) || passFilters(_currentEvent);
+				done = (_currentEvent == null) || FilterManager.getInstance().pass(_currentEvent);
 			}
 			if (_currentEvent != null) {
 				_currentEventIndex++;
@@ -766,7 +766,7 @@ public class ClasIoEventManager {
 					_currentEvent = decodeEvioToHipo((EvioDataEvent) _currentEvent);
 				}
 
-				if (passFilters(_currentEvent)) {
+				if (FilterManager.getInstance().pass(_currentEvent)) {
 					_currentEventIndex++;
 				} else {
 					_currentEvent = null;
@@ -852,7 +852,7 @@ public class ClasIoEventManager {
 			while (!done && (_currentEventIndex < stopIndex)) {
 				if (_dataSource.hasEvent()) {
 					DataEvent event = _dataSource.getNextEvent();
-					if (passFilters(event)) {
+					if (FilterManager.getInstance().pass(event)) {
 						_currentEventIndex++;
 					}
 				}
@@ -1029,21 +1029,6 @@ public class ClasIoEventManager {
 
 	}
 
-	/**
-	 * Check if there are any active filters
-	 * 
-	 * @return <code>true</code> if there are any active filters
-	 */
-	public boolean isFilteringOn() {
-		if (_eventFilters != null) {
-			for (IEventFilter filter : _eventFilters) {
-				if (filter.isActive()) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
 
 	/**
 	 * Notify listeners we have a new event ready for display. All they may want is
@@ -1058,7 +1043,7 @@ public class ClasIoEventManager {
 
 		_uniqueLundIds = null;
 
-		Ced.getCed().setEventFilteringLabel(isFilteringOn());
+		Ced.getCed().setEventFilteringLabel(FilterManager.getInstance().isFilteringOn());
 						
 		_currentBanks = (_currentEvent == null) ? null : _currentEvent.getBankList();
 		
@@ -1244,47 +1229,6 @@ public class ClasIoEventManager {
 		return index >= 0;
 	}
 
-	// does the event pass all the active filters?
-	private boolean passFilters(DataEvent event) {
-
-		if ((event != null) && !_eventFilters.isEmpty()) {
-			for (IEventFilter filter : _eventFilters) {
-				if (filter.isActive()) {
-					boolean pass = filter.pass(event);
-					
-					if (!pass) {
-						return false;
-					}
-				}
-			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * Add an event filter
-	 * 
-	 * @param filter the filter to add
-	 */
-	public void addEventFilter(IEventFilter filter) {
-		if (filter != null) {
-			if (!_eventFilters.contains(filter)) {
-				_eventFilters.add(filter);
-			}
-		}
-	}
-
-	/**
-	 * Do this late in ced initialization
-	 */
-	public void setUpFilterMenu() {
-		if (_eventFilters != null) {
-			for (IEventFilter filter : _eventFilters) {
-				Ced.getCed().getEventFilterMenu().add(filter.getMenuComponent());
-			}
-		}
-	}
 
 	/**
 	 * Add a special listener that gets events even if we are accumulating. Example:
@@ -1329,7 +1273,7 @@ public class ClasIoEventManager {
 					_currentEvent = null;
 				}
 
-				done = (_currentEvent == null) || passFilters(_currentEvent);
+				done = (_currentEvent == null) || FilterManager.getInstance().pass(_currentEvent);
 
 				if ((_currentEvent != null) && (_currentEvent instanceof EvioDataEvent)) {
 					_currentEvent = decodeEvioToHipo((EvioDataEvent) _currentEvent);
@@ -1413,7 +1357,7 @@ public class ClasIoEventManager {
 
 			@Override
 			public void nextRunthroughEvent(DataEvent event) {
-				if ((event != null) && passFilters(event)) {
+				if ((event != null) && FilterManager.getInstance().pass(event)) {
 					try {
 						int trueNum = getTrueEventNumber();
 						_numberMap[index] = ((long)trueNum << 32) + index + 1;

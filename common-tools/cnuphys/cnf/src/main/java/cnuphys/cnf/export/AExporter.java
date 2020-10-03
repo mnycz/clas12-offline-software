@@ -26,7 +26,7 @@ public abstract class AExporter {
 	 * from the beginning to the end
 	 * @return <code>true</code> if export should proceed
 	 */
-	public abstract boolean prepareToExport();
+	public abstract boolean prepareToExport(IExportFilter filter);
 	
 	/** 
 	 * The next hipo event to export

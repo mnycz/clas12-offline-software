@@ -1,4 +1,4 @@
-package cnuphys.ced.clasio;
+package cnuphys.ced.clasio.filter;
 
 import javax.swing.JComponent;
 
@@ -48,4 +48,9 @@ public interface IEventFilter {
 	 * @return the component for the event filter menu
 	 */
 	public JComponent getMenuComponent();
+	
+	/**
+	 * Edit the filter
+	 */
+	public void edit();
 }

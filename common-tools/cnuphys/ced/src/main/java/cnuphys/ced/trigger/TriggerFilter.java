@@ -4,8 +4,8 @@ import org.jlab.io.base.DataEvent;
 
 import cnuphys.ced.alldata.ColumnData;
 import cnuphys.ced.alldata.DataManager;
-import cnuphys.ced.clasio.AEventFilter;
 import cnuphys.ced.clasio.ClasIoEventManager;
+import cnuphys.ced.clasio.filter.AEventFilter;
 
 public class TriggerFilter extends AEventFilter {
 
@@ -18,6 +18,9 @@ public class TriggerFilter extends AEventFilter {
 	// the type
 	private TriggerMatch _type = TriggerMatch.ANY;
 
+	/**
+	 * Create a trigger filter
+	 */
 	public TriggerFilter() {
 		super();
 		setActive(false);
@@ -40,10 +43,6 @@ public class TriggerFilter extends AEventFilter {
 		}
 
 		int triggerData[] = DataManager.getInstance().getIntArray(event, _columnName);
-
-//		if ((_columnName != null) && (triggerData.length > 0)) {
-//			System.err.println("TRIG FILTER CHECKING BITS: " + triggerData[0]);
-//		}
 
 		int triggerWord = triggerData[0];
 
@@ -69,11 +68,17 @@ public class TriggerFilter extends AEventFilter {
 		TriggerDialog.getInstance().getTriggerActiveCheckBox().setSelected(isActive());
 	}
 
+	/**
+	 * Set the trigger bits of the flter
+	 */
 	public void setBits(int bits) {
-//		System.err.println("Trigger Filter Bits Have Changed");
 		_bits = bits;
 	}
 
+	/**
+	 * Get the trigger bits of the filter
+	 * @return the trigger bits of the filter
+	 */
 	public int getBits() {
 		return _bits;
 	}
@@ -97,7 +102,7 @@ public class TriggerFilter extends AEventFilter {
 	}
 
 	/**
-	 * A builder for a PluginMessage
+	 * A builder for a Trigger Filter
 	 */
 	public static class Builder {
 

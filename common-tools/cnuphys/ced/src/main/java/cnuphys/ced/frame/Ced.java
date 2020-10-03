@@ -50,6 +50,7 @@ import cnuphys.ced.clasio.ClasIoMonteCarloView;
 import cnuphys.ced.clasio.CNFManager;
 import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.ced.clasio.ClasIoReconEventView;
+import cnuphys.ced.clasio.filter.FilterManager;
 import cnuphys.ced.dcnoise.edit.NoiseParameterDialog;
 import cnuphys.ced.event.AccumulationManager;
 import cnuphys.ced.event.data.AIDC;
@@ -130,7 +131,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	private static String _geoVariation = "default";
 	
 	//ced release 
-	private static final String _release = "build 1.4.65";
+	private static final String _release = "build 1.4.70";
 
 	// used for one time inits
 	private int _firstTime = 0;
@@ -868,7 +869,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 	 * @param filtering if <code>true</code> we are filtering
 	 */
 	public void fixEventFilteringLabel() {
-		_filterLabel.setVisible(ClasIoEventManager.getInstance().isFilteringOn());
+		_filterLabel.setVisible(FilterManager.getInstance().isFilteringOn());
 	}
 
 	/**
@@ -1252,6 +1253,9 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 		// initialize the trigger manager
 		TriggerManager.getInstance();
 		
+		//initialize the filter manager
+		FilterManager.getInstance();
+		
 		//initialize CNF (Nuc Femtog) Manager
 		CNFManager.getInstance();
 
@@ -1330,7 +1334,7 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 				getCed().setVisible(true);
 				getCed().fixTitle();
 
-				ClasIoEventManager.getInstance().setUpFilterMenu();
+				FilterManager.getInstance().setUpFilterMenu();
 				// initialize data columns
 //				DataManager.getInstance();
 				System.out.println("ced  " + _release + " is ready. Using geometry variation: [" + _geoVariation + "]");

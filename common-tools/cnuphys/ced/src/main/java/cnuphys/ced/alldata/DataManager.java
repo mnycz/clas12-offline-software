@@ -176,6 +176,32 @@ public class DataManager {
 	}
 
 	/**
+	 * Get the number of rows (length) of a given bank
+	 * @param event the event
+	 * @param bankName the bank name
+	 * @return the number of rows
+	 */
+	public int getRowCount(DataEvent event, String bankName) {
+		if (bankName == null) {
+			return 0;
+		}
+		String colNames[] = getColumnNames(bankName);
+		
+		if ((colNames == null) || (colNames.length < 1)) {
+			return 0;
+		}
+		
+		//uses the 1st column, assumes all columns have the same length
+		ColumnData cd = getColumnData(bankName, colNames[0]);
+		
+		if (cd == null) {
+			return 0;
+		}
+		
+		return cd.getLength(event);
+	}
+	
+	/**
 	 * Get the list of column names for a bank name
 	 * 
 	 * @param bankName the bank name

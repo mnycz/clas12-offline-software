@@ -1,5 +1,6 @@
 package cnuphys.bCNU.component;
 
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -9,6 +10,7 @@ import javax.swing.JTextField;
 public class LabeledTextField extends JPanel {
 
 	private JTextField _textField;
+	private JLabel _jLabel;
 
 	/**
 	 * Create a labeled text field.
@@ -19,10 +21,18 @@ public class LabeledTextField extends JPanel {
 	public LabeledTextField(String label, int numcol) {
 
 		setLayout(new FlowLayout(FlowLayout.LEFT, 4, 0));
-		JLabel jlabel = new JLabel(label);
-		add(jlabel);
+		_jLabel = new JLabel(label);
+		add(_jLabel);
 		_textField = new JTextField(numcol);
 		add(_textField);
+	}
+	
+	public LabeledTextField(String label, int labelWidth, int numcol) {
+		this(label, numcol);
+		
+		Dimension d = _jLabel.getPreferredSize();
+		d.width = labelWidth;
+		_jLabel.setPreferredSize(d);
 	}
 
 	/**

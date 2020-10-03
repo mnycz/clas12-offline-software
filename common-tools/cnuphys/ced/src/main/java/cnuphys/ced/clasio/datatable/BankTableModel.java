@@ -152,7 +152,7 @@ public class BankTableModel extends DefaultTableModel {
 	// add an extra column name for index
 	private static String[] getColumnNames(String bankName) {
 		String cnames[] = DataManager.getInstance().getColumnNames(bankName);
-		;
+
 		String expNames[] = new String[cnames.length + 1];
 		expNames[0] = "";
 		for (int i = 0; i < cnames.length; i++) {

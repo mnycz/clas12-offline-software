@@ -23,6 +23,9 @@ public class AllBanksList extends JList<String> {
 	// the scroll pane
 	private JScrollPane _scrollPane;
 
+	/**
+	 * Create a list that has all the known banks
+	 */
 	public AllBanksList() {
 		super(sorted(DataManager.getInstance().getKnownBanks()));
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

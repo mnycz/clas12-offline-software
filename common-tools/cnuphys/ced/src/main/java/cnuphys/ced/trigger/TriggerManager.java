@@ -5,6 +5,7 @@ import org.jlab.io.base.DataEvent;
 import cnuphys.ced.alldata.ColumnData;
 import cnuphys.ced.clasio.ClasIoEventManager;
 import cnuphys.ced.clasio.IClasIoEventListener;
+import cnuphys.ced.clasio.filter.FilterManager;
 import cnuphys.ced.clasio.ClasIoEventManager.EventSourceType;
 
 public class TriggerManager implements IClasIoEventListener {
@@ -40,7 +41,7 @@ public class TriggerManager implements IClasIoEventListener {
 					.setType(TriggerMatch.ANY).setName("Trigger Filter").build();
 		}
 
-		ClasIoEventManager.getInstance().addEventFilter(_filter);
+		FilterManager.getInstance().add(_filter);
 		return _instance;
 	}
 

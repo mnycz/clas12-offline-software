@@ -1,4 +1,4 @@
-package cnuphys.ced.clasio;
+package cnuphys.ced.clasio.filter;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -10,6 +10,12 @@ import javax.swing.JMenuItem;
 import cnuphys.bCNU.util.X11Colors;
 import cnuphys.ced.frame.Ced;
 
+/**
+ * An abstract class for an event filter
+ * 
+ * @author heddle
+ *
+ */
 public abstract class AEventFilter implements IEventFilter {
 
 	// a name for the filter
@@ -20,25 +26,41 @@ public abstract class AEventFilter implements IEventFilter {
 
 	// used primarily for event filter menu
 	protected JMenuItem _menuComponent;
+	
+	//optional editor
+	protected AFilterDialog _editor;
 
+	/**
+	 * Created a filter that can not be edited,only activated and deactivated
+	 */
 	public AEventFilter() {
+		this(false);
+	}
 
-		ActionListener al = new ActionListener() {
+	public AEventFilter(boolean editable) {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				toggleActiveState();
-			}
+		if (editable) { //get a submenu
+			_menuComponent = new FilterMenu(this);
+		} else {
+			ActionListener al = new ActionListener() {
 
-		};
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					toggleActiveState();
+				}
 
-		_menuComponent = new JMenuItem();
-		_menuComponent.addActionListener(al);
+			};
 
-//		_menuLabel.setFont(Fonts.defaultBoldFont);
+			_menuComponent = new JMenuItem();
+			_menuComponent.addActionListener(al);
+		}
+
 		_menuComponent.setOpaque(true);
 	}
 
+	/**
+	 * Toggle the active state of the filter
+	 */
 	protected void toggleActiveState() {
 		_isActive = !_isActive;
 		fixMenuComponent();
@@ -65,6 +87,21 @@ public abstract class AEventFilter implements IEventFilter {
 	@Override
 	public String getName() {
 		return _name;
+	}
+	
+	/**
+	 * Edit the filter
+	 */
+	@Override
+	public void edit() {
+	}
+	
+	/**
+	 * Create the filter editor (optional)
+	 * @return the filter editor
+	 */
+	public AFilterDialog createEditor() {
+		return null;
 	}
 
 	/**
