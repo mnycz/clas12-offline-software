@@ -53,4 +53,15 @@ public interface IEventFilter {
 	 * Edit the filter
 	 */
 	public void edit();
+	
+	/**
+	 * Save the preferences to user pref
+	 */
+	public void savePreferences();
+	
+	/**
+	 * Read the preferences from the user pref
+	 */
+	public void readPreferences();
+
 }

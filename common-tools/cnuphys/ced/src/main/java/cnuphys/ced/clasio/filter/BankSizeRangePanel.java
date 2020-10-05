@@ -41,6 +41,10 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 	//the filter
 	private BankSizeFilter _filter;
 
+	/**
+	 * Pane for editing the bank filter
+	 * @param filter the filter
+	 */
 	public BankSizeRangePanel(BankSizeFilter filter) {
 		_filter = filter;
 		setLayout(new BorderLayout(6, 6));
@@ -64,6 +68,10 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 	private void fixState() {
 		_minValue.getTextField().setEnabled(_settingRange);
 		_maxValue.getTextField().setEnabled(_settingRange);
+		
+		_noRestrictions.setEnabled(_hotBank != null);
+		_yesRestrictions.setEnabled(_hotBank != null);
+
 	}
 	
 	private JPanel createMainPanel() {
@@ -75,7 +83,7 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 		
 		ButtonGroup bg = new ButtonGroup();
 		
-		_noRestrictions = new JRadioButton("No Restrictions", !_settingRange);
+		_noRestrictions = new JRadioButton("No Restrictions (inactive)", !_settingRange);
 		_yesRestrictions = new JRadioButton("Size (row count) Limits:  ", _settingRange);
 		
 		bg.add(_noRestrictions);
@@ -83,6 +91,9 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 		
 		_noRestrictions.addActionListener(this);
 		_yesRestrictions.addActionListener(this);
+		
+		_noRestrictions.setEnabled(false);
+		_yesRestrictions.setEnabled(false);
 		
 		np.add(_noRestrictions);
 		np.add(_yesRestrictions);
@@ -173,7 +184,7 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 				_minValue.setText(""+newRec.minCount);
 				
 				if (newRec.maxCount == Integer.MAX_VALUE) {
-					_maxValue.setText("INF");
+					_maxValue.setText(INF);
 				}
 				else {
 					_maxValue.setText(""+newRec.maxCount);

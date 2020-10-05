@@ -74,6 +74,10 @@ public class AFilterDialog extends SimpleDialog {
 		return null;
 	}
 
+	/**
+	 * Create a button panel.
+	 * @return
+	 */
 	public JPanel createButtonPanel() {
 		JPanel bp = new JPanel();
 
@@ -125,7 +129,7 @@ public class AFilterDialog extends SimpleDialog {
 				return new Dimension(300, 200);
 			}
 		};
-		_commentArea.setFont(Fonts.mediumFont);
+		_commentArea.setFont(Fonts.defaultMono);
 		_commentArea.setEditable(false);
 
 		JScrollPane scrollPane = new JScrollPane() {

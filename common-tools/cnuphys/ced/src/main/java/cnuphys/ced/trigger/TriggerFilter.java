@@ -100,6 +100,20 @@ public class TriggerFilter extends AEventFilter {
 	public TriggerMatch getType() {
 		return _type;
 	}
+	
+	/**
+	 * Save the preferences to user pref
+	 */
+	@Override
+	public void savePreferences() {	
+	}
+	
+	/**
+	 * Read the preferences from the user pref
+	 */
+	@Override
+	public void readPreferences() {
+	}
 
 	/**
 	 * A builder for a Trigger Filter

@@ -1,8 +1,10 @@
 package cnuphys.ced.clasio.filter;
 
 import java.awt.BorderLayout;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
+
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -57,6 +59,11 @@ public class BankSizeFilter extends AEventFilter {
 	}
 
 
+	/**
+	 * Get a record from the hash
+	 * @param bname the name of the record
+	 * @return the record, or null
+	 */
 	public BankRangeRecord getRecord(String bname) {
 		if (bname == null) {
 			return null;
@@ -65,6 +72,14 @@ public class BankSizeFilter extends AEventFilter {
 		return _records.get(bname);
 	}
 	
+	/**
+	 * Add a record to the hash
+	 * @param bname the name of the record
+	 * @param minCount the min count
+	 * @param maxCount the max count
+	 * @param active whether the record is active
+	 * @return the record
+	 */
 	public BankRangeRecord addRecord(String bname, int minCount, int maxCount, boolean active) {
 		
 		if (bname == null) {
@@ -76,7 +91,26 @@ public class BankSizeFilter extends AEventFilter {
 		
 		BankRangeRecord rec = new BankRangeRecord(bname, minCount, maxCount, active);
 		_records.put(bname, rec);
+		
+		report();
 		return rec;
+	}
+	
+	private void report() {
+		if (_editor != null) {
+			_editor.setCommentText("");
+			if (!_records.isEmpty()) {
+				Collection<BankRangeRecord> recs = _records.values();
+				
+				StringBuffer sb = new StringBuffer(1024);
+				
+				for (BankRangeRecord rec : recs) {
+					sb.append(rec.toString() + System.lineSeparator());
+				}
+				
+				_editor.setCommentText(sb.toString());
+			}
+		}
 	}
 	
 	/**
@@ -89,13 +123,6 @@ public class BankSizeFilter extends AEventFilter {
 		final BankSizeFilter ffilter = this;
 		
 		AFilterDialog editor = new AFilterDialog("Bank Size Filter Settings", this) {
-			/**
-			 * Save the preferences to user pref
-			 */
-			@Override
-			protected void savePreferences() {
-				
-			}
 			
 			@Override
 			protected void handleCommand(String command) {
@@ -125,6 +152,7 @@ public class BankSizeFilter extends AEventFilter {
 						}
 						String bname = _blist.getSelectedValue();
 						selectedBank(bname);
+						report();
 					}
 					
 				};
@@ -164,6 +192,38 @@ public class BankSizeFilter extends AEventFilter {
 			_editor.setVisible(true);
 		}
 	}
+	
+	/**
+	 * Save the preferences to user pref
+	 */
+	@Override
+	public void savePreferences() {	
+	}
+	
+	/**
+	 * Read the preferences from the user pref
+	 */
+	@Override
+	public void readPreferences() {
+	}
+	
+	//remove records that are inactive and a 0 to inf range
+	private void cull() {
+		
+		ArrayList<String> badKeys = new ArrayList<String>();
+		
+		for (String key : _records.keySet()) {
+			BankRangeRecord brec = _records.get(key);
+			
+			if ((brec.minCount == 0) && (brec.maxCount == Integer.MAX_VALUE)) {
+				badKeys.add(key);
+			}
+		}
+		
+		for (String badkey : badKeys) {
+			_records.remove(badkey);
+		}
+	}
 
 	
 	/**
@@ -182,6 +242,13 @@ public class BankSizeFilter extends AEventFilter {
 			this.maxCount = maxCount;
 			this.active = active;
 		}
+		
+		@Override
+		public String toString() {
+			String maxStr = (maxCount == Integer.MAX_VALUE ? "Inf" : "" + String.format("%-4d", maxCount));
+			return String.format("%-20s min: %-3d max: %-4s %s", bankName, minCount, maxStr, (active ? "active" : "not active"));
+		}
+
 	}
 	
 
