@@ -10,12 +10,9 @@ import org.jlab.geom.prim.Vector3D;
 import org.jlab.rec.cvt.trajectory.Helix;
 
 import org.jlab.detector.geant4.v2.SVT.*;
-import org.jlab.geometry.prim.Line3d;
 import org.jlab.detector.geant4.v2.SVT.SVTConstants;
 import org.jlab.detector.geant4.v2.SVT.SVTStripFactory;
 import org.jlab.detector.geant4.v2.SVT.AlignmentFactory;
-import org.jlab.rec.cvt.Constants;
-import org.jlab.geometry.prim.*;
 import org.jlab.geometry.prim.Line3d;
 
 public class Geometry {
@@ -118,6 +115,8 @@ public class Geometry {
 
     //*** 
     public int findSectorFromAngle(int layer, Point3D trkPoint) {
+        if(trkPoint==null)
+            return 0;
         int[] rm = SVTConstants.convertLayer2RegionModule(layer-1);
         int Sect = SVTConstants.NSECTORS[rm[0]];
         for (int s = 0; s < SVTConstants.NSECTORS[rm[0]] - 1; s++) {
@@ -277,7 +276,6 @@ public class Geometry {
         double z = getLocCoord(s1, s2corr)[1];
         //update using the corrected z
         s2corr = this.getCorrectedStrip(sector, upperlayer, s2, trkDir, z);
-
         double zf = getLocCoord(s1, s2corr)[1];
 
         if (upperlayer % 2 != 0) // should not happen as is upper layer...but just in case
@@ -294,7 +292,6 @@ public class Geometry {
         vals[0] = crPoint.x();
         vals[1] = crPoint.y();
         vals[2] = crPoint.z();
-
         double[] LCErr = getLocCoordErrs(upperlayer - 1, upperlayer, s1, s2corr, zf);
         double LCErr_x = LCErr[0];
         double LCErr_z = LCErr[1];

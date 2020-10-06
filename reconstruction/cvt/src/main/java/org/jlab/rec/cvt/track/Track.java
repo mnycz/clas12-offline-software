@@ -112,7 +112,13 @@ public class Track extends Trajectory implements Comparable<Track> {
     public void set_HelicalTrack(Helix Helix) {
         if (Helix != null) {
             set_Q(((int) Math.signum(Constants.getSolenoidscale()) * Helix.get_charge()));
-            double calcPt = Constants.LIGHTVEL * Helix.radius() * Helix.B;
+            double calcPt = 10;
+            if(Math.abs(Helix.B)>0.0001) {
+                calcPt = Constants.LIGHTVEL * Helix.radius() * Helix.B;
+            } else {
+                calcPt = 100;
+                set_Q(1);
+            }
             double calcPz = 0;
             calcPz = calcPt * Helix.get_tandip();
             double calcP = Math.sqrt(calcPt * calcPt + calcPz * calcPz);

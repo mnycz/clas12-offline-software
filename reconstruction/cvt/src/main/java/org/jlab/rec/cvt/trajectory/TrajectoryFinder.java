@@ -3,7 +3,6 @@ package org.jlab.rec.cvt.trajectory;
 
 import eu.mihosoft.vrl.v3d.Vector3d;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.jlab.clas.swimtools.Swim;
@@ -12,9 +11,6 @@ import org.jlab.detector.geant4.v2.CTOFGeant4Factory;
 import org.jlab.detector.hits.CTOFDetHit;
 import org.jlab.detector.hits.DetHit;
 import org.jlab.geom.base.Detector;
-import org.jlab.geom.prim.Line3D;
-import org.jlab.geom.prim.Path3D;
-
 import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.geometry.prim.Line3d;

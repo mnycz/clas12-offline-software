@@ -19,7 +19,6 @@ import org.jlab.geom.prim.Vector3D;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.cvt.Constants;
-import static org.jlab.rec.cvt.Constants.setSolenoidscale;
 import org.jlab.rec.cvt.banks.HitReader;
 import org.jlab.rec.cvt.banks.RecoBankWriter;
 import org.jlab.rec.cvt.bmt.CCDBConstantsLoader;
@@ -36,9 +35,6 @@ import org.jlab.rec.cvt.track.TrackListFinder;
 import org.jlab.rec.cvt.track.TrackSeeder;
 import org.jlab.rec.cvt.track.TrackSeederCA;
 import org.jlab.rec.cvt.track.fit.KFitter;
-import org.jlab.rec.cvt.trajectory.Helix;
-import org.jlab.rec.cvt.trajectory.Trajectory;
-import org.jlab.rec.cvt.trajectory.TrajectoryFinder;
 
 /**
  * Service to return reconstructed TRACKS
@@ -106,10 +102,11 @@ public class CVTReconstruction extends ReconstructionEngine {
             boolean align=false;
             //Load field scale
             double SolenoidScale =(double) bank.getFloat("solenoid", 0);
-            Constants.setSolenoidscale(SolenoidScale);
             if(Math.abs(SolenoidScale)<0.001)
-            Constants.setCosmicsData(true);
-            
+                Constants.setCosmicsData(true);
+            if(SolenoidScale==0)
+                SolenoidScale=0.000001;
+            Constants.setSolenoidscale(SolenoidScale);
 //            System.out.println(" LOADING CVT GEOMETRY...............................variation = "+variationName);
 //            CCDBConstantsLoader.Load(new DatabaseConstantProvider(newRun, variationName));
 //            System.out.println("SVT LOADING WITH VARIATION "+variationName);
@@ -216,7 +213,7 @@ public class CVTReconstruction extends ReconstructionEngine {
 
         List<ArrayList<Cross>> crosses = new ArrayList<ArrayList<Cross>>();
         CrossMaker crossMake = new CrossMaker();
-        crosses = crossMake.findCrosses(clusters, SVTGeom);
+        crosses = crossMake.findCrosses(clusters, SVTGeom, BMTGeom);
          if(crosses.get(0).size() > org.jlab.rec.cvt.svt.Constants.MAXSVTCROSSES ) {
             rbc.appendCVTBanks(event, SVThits, BMThits, SVTclusters, BMTclusters, null, null, shift);
             return true; 
@@ -245,12 +242,16 @@ public class CVTReconstruction extends ReconstructionEngine {
             for (Seed seed : seeds) { 
                 kf = new KFitter(seed, SVTGeom, swimmer );
                 kf.runFitter(SVTGeom, BMTGeom, swimmer);
+                
                 //System.out.println(" OUTPUT SEED......................");
-                trkcands.add(kf.OutputTrack(seed, SVTGeom, swimmer));
-                if (kf.setFitFailed == false) {
-                    trkcands.get(trkcands.size() - 1).set_TrackingStatus(2);
-                } else {
-                trkcands.get(trkcands.size() - 1).set_TrackingStatus(1);
+                Track track = kf.OutputTrack(seed, SVTGeom, swimmer);
+                if(track != null) {
+                    trkcands.add(track);
+                    if (kf.setFitFailed == false) {
+                        trkcands.get(trkcands.size() - 1).set_TrackingStatus(2);
+                    } else {
+                    trkcands.get(trkcands.size() - 1).set_TrackingStatus(1);
+                    }
                 }
             }
         

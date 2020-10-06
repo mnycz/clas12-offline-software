@@ -111,7 +111,7 @@ public class Constants {
     }
 
     public static synchronized void setThetaL(int layer, int sector) {
-        if (org.jlab.rec.cvt.Constants.isCosmicsData() == true) {
+        if(Math.abs(org.jlab.rec.cvt.Constants.getSolenoidscale())<0.001) {
             ThetaL = 0;
         }
         else {
