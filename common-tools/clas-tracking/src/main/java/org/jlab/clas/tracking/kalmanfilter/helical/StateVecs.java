@@ -6,19 +6,21 @@ import java.util.List;
 import java.util.Map;
 
 import org.jlab.geom.prim.Vector3D;
-
+import org.jlab.geom.prim.Point3D;
+import org.jlab.geom.prim.Line3D;
 import Jama.Matrix;
 import org.jlab.clas.swimtools.Swim;
 import org.jlab.clas.tracking.kalmanfilter.helical.MeasVecs.MeasVec;
 import org.jlab.clas.tracking.trackrep.Helix;
-import org.jlab.geom.prim.Point3D;
+
 
 public class StateVecs {
-    
+
     private Helix util ;
     public double units;
     public double lightVel;
     
+    public boolean straight;
     public List<B> bfieldPoints = new ArrayList<B>();
     public Map<Integer, StateVec> trackTraj = new HashMap<Integer, StateVec>();
     public Map<Integer, CovMat> trackCov = new HashMap<Integer, CovMat>();
@@ -26,6 +28,7 @@ public class StateVecs {
     public StateVec StateVec;
     public CovMat CovMat;
     public Matrix F;
+    MeasVecs mv = new MeasVecs();
 
     public List<Double> X0;
     public List<Double> Y0;
@@ -37,13 +40,14 @@ public class StateVecs {
     double[] value = new double[4]; // x,y,z,phi
     double[] swimPars = new double[7];
     B Bf = new B(0);
-    
-    public double[] getStateVecPosAtMeasSite(int k, StateVec iVec, MeasVec mv, Swim swim, boolean useSwimmer) {
+
+    public double[] getStateVecPosAtMeasSite(int k, StateVec iVec, MeasVec mv, Swim swim, 
+            boolean useSwimmer) {
         this.resetArrays(swimPars);
         this.resetArrays(value);
-        
+
         Point3D ps = new Point3D(0,0,0) ;
-        
+
         StateVec kVec = new StateVec(k);
         kVec.phi0 = iVec.phi0;
         kVec.d_rho = iVec.d_rho;
@@ -56,7 +60,7 @@ public class StateVecs {
             double x = X0.get(0) + kVec.d_rho * Math.cos(kVec.phi0);
             double y = Y0.get(0) + kVec.d_rho * Math.sin(kVec.phi0);
             double z = Z0.get(0) + kVec.dz;
-             
+
             Bf.swimmer = swim;
             Bf.x = x;
             Bf.y = y;
@@ -72,6 +76,53 @@ public class StateVecs {
                 return value;
             }
             
+            if(this.straight) {
+                double ux = -(Math.signum(kVec.kappa)) * Math.sin(kVec.phi0);
+                double uy = (Math.signum(kVec.kappa)) * Math.cos(kVec.phi0);
+                double uz = (Math.signum(kVec.kappa)) * kVec.tanL;
+                double xf = 0;
+                double yf = 0;
+                double zf = 0;
+                
+                if(mv.surface.plane!=null) {
+                    double alpha = (mv.surface.finitePlaneCorner2.y() - mv.surface.finitePlaneCorner1.y()) /
+                            (mv.surface.finitePlaneCorner2.x() - mv.surface.finitePlaneCorner1.x());
+                    double beta = mv.surface.finitePlaneCorner1.y() - alpha*mv.surface.finitePlaneCorner2.x();
+                    
+                    double l = (alpha*x -y + beta)/(uy - alpha*ux);
+                    xf = x+l*ux;
+                    yf = y+l*uy;
+                    zf = z+l*uz;
+                    
+                    kVec.x = xf;
+                    kVec.y = yf;
+                    kVec.z = zf;
+                    
+                }
+                if(mv.surface.cylinder!=null) {
+                    double r = 0.5*(mv.surface.cylinder.baseArc().radius()+mv.surface.cylinder.highArc().radius());
+                    double delta = Math.sqrt((ux+uy)*(ux+uy) - (ux*ux+uy*uy)*(x*x+y*y-r*r));
+                    double l = (-(ux+uy)+delta)/(ux*ux+uy*uy);
+                    double phi = Math.atan2(trackTraj.get(k-1).y,trackTraj.get(k-1).x);
+                    double phiref = Math.atan2(y+l*uy, x+l*ux);
+                    
+                    if(Math.abs(phiref-phi)>Math.PI/2) {
+                        l = (-(ux+uy)-delta)/(ux*ux+uy*uy); 
+                    } 
+                    xf = x+l*ux;
+                    yf = y+l*uy;
+                    zf = z+l*uz;
+                    kVec.x = xf;
+                    kVec.y = yf;
+                    kVec.z = zf;
+                }
+                value[0] = xf;
+                value[1] = yf;
+                value[2] = zf;
+                value[3] = this.calcPhi(kVec);
+                
+                return value;
+            }
             if(mv.surface.plane!=null) {
                 //Update B
                 double r0 = mv.surface.finitePlaneCorner1.toVector3D().dot(mv.surface.plane.normal());
@@ -90,7 +141,7 @@ public class StateVecs {
                     this.tranState(k, kVec, swim);
                 }
                 this.setHelixPars(kVec, swim);
-                ps = util.getHelixPointAtPlane(mv.surface.finitePlaneCorner1.x(), mv.surface.finitePlaneCorner1.y(), 
+                ps = util.getHelixPointAtPlane(mv.surface.finitePlaneCorner1.x(), mv.surface.finitePlaneCorner1.y(),
                         mv.surface.finitePlaneCorner2.x(), mv.surface.finitePlaneCorner2.y(), 10);
                 this.tranState(k, kVec, swim);
                 kVec.x = ps.x();
@@ -100,34 +151,34 @@ public class StateVecs {
                     return null;
                 swimPars[0] = ps.x();
                 swimPars[1] = ps.y();
-                swimPars[2] = ps.z(); 
-                
+                swimPars[2] = ps.z();
+
 //                    x = X0.get(0) + kVec.d_rho * Math.cos(kVec.phi0);
 //                    y = Y0.get(0) + kVec.d_rho * Math.sin(kVec.phi0);
 //                    z = Z0.get(0) + kVec.dz;
 //                    Bf = new B(kVec.k, x, y, z, swim);
 //                    kVec.alpha = Bf.alpha;
 //                    this.setTrackPars(kVec, swim);
-//                    swimPars = swim.SwimToPlaneBoundary(mv.surface.plane.point().toVector3D().dot(mv.surface.plane.normal())/units, 
+//                    swimPars = swim.SwimToPlaneBoundary(mv.surface.plane.point().toVector3D().dot(mv.surface.plane.normal())/units,
 //                            mv.surface.plane.normal(), 1);
 //                    if(swimPars==null)
 //                        return null;
 //                    for(int j =0; j < 3; j++) {
 //                        swimPars[j]*=units;
-//                    }  
+//                    }
 //                    kVec.x = swimPars[0];
 //                    kVec.y = swimPars[1];
 //                    kVec.z = swimPars[2];
-                
+
             }
             if(mv.surface.cylinder!=null) {
                 double r = 0.5*(mv.surface.cylinder.baseArc().radius()+mv.surface.cylinder.highArc().radius());
                 if(useSwimmer==false) {
                     double stepSize = 5; //mm
                     int nSteps = (int) (r/stepSize);
-                    
+
                     double dist = 0;
-                    
+
 //                    for(int i = 1; i<nSteps; i++) {
 //                        dist = (double) (i*stepSize);
 //                        this.iterateHelixAtR(2, k, kVec, swim, dist, Bf, ps);
@@ -146,35 +197,35 @@ public class StateVecs {
                     ps = new Point3D(kVec.x, kVec.y, kVec.z);
                     swimPars[0] = ps.x();
                     swimPars[1] = ps.y();
-                    swimPars[2] = ps.z();  
+                    swimPars[2] = ps.z();
                     if(swimPars==null)
                         return null;
                 } else {
-                     
+
                     this.setTrackPars(kVec, swim);
                     swimPars = swim.SwimToCylinder(r/units);
                     if(swimPars==null)
                         return null;
                     for(int j =0; j < 3; j++) {
                         swimPars[j]*=units;
-                    } 
+                    }
                     kVec.x = swimPars[0];
                     kVec.y = swimPars[1];
                     kVec.z = swimPars[2];
                }
             }
-            
+
             value[0] = swimPars[0];
             value[1] = swimPars[1];
             value[2] = swimPars[2];
             value[3] = this.calcPhi(kVec);
-            
+
         }
         return value;
     }
 
     public void setStateVecPosAtMeasSite(int k, StateVec kVec, MeasVec mv, Swim swimmer) {
-        
+
         double[] pars = this.getStateVecPosAtMeasSite(k, kVec, mv, swimmer, true);
         if (pars == null) {
             return;
@@ -203,17 +254,17 @@ public class StateVecs {
         newVec.alpha = new B(k, newVec.x, newVec.y, newVec.z, swimmer).alpha;
         newVec.phi = pars[3];
 
-        // new state: 
+        // new state:
         return newVec;
     }
     private void tranState(int f, StateVec iVec, Swim swimmer) {
-       
+
         Bf.swimmer = swimmer;
         Bf.x = iVec.x;
         Bf.y = iVec.y;
         Bf.z = iVec.z;
         Bf.set();
-        
+
         double Xc = X0.get(iVec.k) + (iVec.d_rho + Bf.alpha / iVec.kappa) * Math.cos(iVec.phi0);
         double Yc = Y0.get(iVec.k) + (iVec.d_rho + Bf.alpha / iVec.kappa) * Math.sin(iVec.phi0);
 
@@ -235,19 +286,20 @@ public class StateVecs {
         if (fphi0 < 0) {
             fphi0 += 2. * Math.PI;
         }
-       
+
         iVec.phi0 = fphi0;
         iVec.d_rho = fd_rho;
         iVec.dz = fdz;
         iVec.alpha = falpha;
-        
+
     }
-    public StateVec transported(int i, int f, StateVec iVec, MeasVec mv, 
-            Swim swimmer) { 
-        
+
+    public StateVec transported(int i, int f, StateVec iVec, MeasVec mv,
+            Swim swimmer) {
+
         // transport stateVec...
         StateVec fVec = new StateVec(f);
-        
+
         if (iVec.phi0 < 0) {
             iVec.phi0 += 2. * Math.PI;
         }
@@ -269,17 +321,17 @@ public class StateVecs {
         fVec.alpha = Bf.alpha;
 
         this.newStateVecAtMeasSite(f, fVec, mv, swimmer, true);
-        
+
         return fVec;
     }
-    
-    public void transport(int i, int f, StateVec iVec, CovMat icovMat, MeasVec mv, 
-            Swim swimmer) { 
+
+    public void transport(int i, int f, StateVec iVec, CovMat icovMat, MeasVec mv,
+            Swim swimmer) {
         //if (iVec.phi0 < 0) {
         //    iVec.phi0 += 2. * Math.PI;
         //}
         StateVec fVec = this.transported(i, f, iVec, mv, swimmer);
-        
+
         // now transport covMat...
         double dphi0_prm_del_drho = -1. / (fVec.d_rho + iVec.alpha / iVec.kappa) * Math.sin(fVec.phi0 - iVec.phi0);
         double dphi0_prm_del_phi0 = (iVec.d_rho + iVec.alpha / iVec.kappa) / (fVec.d_rho + iVec.alpha / iVec.kappa) * Math.cos(fVec.phi0 - iVec.phi0);
@@ -335,13 +387,13 @@ public class StateVecs {
         double value = 0;
         return value;
     }
-    
-    private double detMat_Z_ov_A_timesThickn(double radius) {    
+
+    private double detMat_Z_ov_A_timesThickn(double radius) {
         double value = 0;
         return value;
     }
-    
-   
+
+
     private Matrix Q(StateVec iVec, int dir) {
 
         Matrix Q = new Matrix(new double[][]{
@@ -355,8 +407,15 @@ public class StateVecs {
         // if (iVec.k % 2 == 1 && dir > 0) {
         if (dir >99999990 ) {
             Vector3D trkDir = this.P(iVec.k).asUnit();
-            
-            double cosEntranceAngle = Math.abs(this.P(iVec.k).z());
+            Vector3D trkPos = this.X(iVec.k);
+            double x = trkPos.x();
+            double y = trkPos.y();
+            double z = trkPos.z();
+            double ux = trkDir.x();
+            double uy = trkDir.y();
+            double uz = trkDir.z();
+
+            double cosEntranceAngle = Math.abs((x * ux + y * uy + z * uz) / Math.sqrt(x * x + y * y + z * z));
 
             double pt = Math.abs(1. / iVec.kappa);
             double pz = pt * iVec.tanL;
@@ -368,7 +427,7 @@ public class StateVecs {
             double beta = p / Math.sqrt(p * p + mass * mass); // use particle momentum
             double pathLength = t_ov_X0 / cosEntranceAngle;
             double sctRMS = (0.00141 / (beta * p)) * Math.sqrt(pathLength) * (1 + Math.log10(pathLength)/9.); // Highland-Lynch-Dahl formula
-            
+
             Q = new Matrix(new double[][]{
                 {0, 0, 0, 0, 0},
                 {0, sctRMS*sctRMS * (1 + iVec.tanL * iVec.tanL), 0, 0, 0},
@@ -380,7 +439,7 @@ public class StateVecs {
 
         return Q;
     }
-    
+
     private StateVec reset(StateVec SV, StateVec stateVec) {
         SV = new StateVec(stateVec.k);
         SV.x = stateVec.x;
@@ -396,7 +455,7 @@ public class StateVecs {
 
         return SV;
     }
-    
+
     private void resetArrays(double[] swimPars) {
         for(int i = 0; i<swimPars.length; i++) {
             swimPars[i] = 0;
@@ -405,7 +464,7 @@ public class StateVecs {
 
     private void setHelix(Helix util, double x0, double y0, double z0, double px0, double py0, double pz0,
             int q, double B) {
-        util.setTurningSign(q); 
+        util.setTurningSign(q);
         util.setB(B);
         double pt = Math.sqrt(px0*px0 + py0*py0);
         util.setR(pt/(B*util.getLIGHTVEL())) ;
@@ -413,16 +472,16 @@ public class StateVecs {
         util.setTanL(pz0/pt);
         util.setZ0(z0);
         util.setOmega((double) -q/util.getR());
-        
+
         double S = Math.sin(util.getPhi0());
         double C = Math.cos(util.getPhi0());
-        
+
         if(Math.abs(S)>=Math.abs(C)) {
             util.setD0(-x0/S) ;
         } else {
             util.setD0(y0/C) ;
         }
-        
+
         util.Update();
     }
 
@@ -434,15 +493,15 @@ public class StateVecs {
         double px0 = -invKappa * Math.sin(kVec.phi0 );
         double py0 = invKappa * Math.cos(kVec.phi0 );
         double pz0 = invKappa * kVec.tanL;
-        
+
         int ch = (int) KFitter.polarity*(int) Math.signum(kVec.kappa);
-        
-        double B = 1. / (lightVel * kVec.alpha); 
+
+        double B = 1. / (lightVel * kVec.alpha);
         this.setHelix(util, x0,y0,z0,px0,py0,pz0,ch, B);
     }
-    
+
     private void setTrackPars(StateVec kVec, Swim swim) {
-        
+
         double x0 = X0.get(kVec.k) + kVec.d_rho * Math.cos(kVec.phi0) ;
         double y0 = Y0.get(kVec.k) + kVec.d_rho * Math.sin(kVec.phi0) ;
         double z0 = Z0.get(kVec.k) + kVec.dz ;
@@ -451,11 +510,11 @@ public class StateVecs {
         double py0 = invKappa * Math.cos(kVec.phi0 );
         double pz0 = invKappa * kVec.tanL;
         int ch = (int) KFitter.polarity*(int) Math.signum(kVec.kappa);
-        
+
         swim.SetSwimParameters(
-                        x0/units, 
+                        x0/units,
                         y0/units,
-                        z0/units, 
+                        z0/units,
                         px0, py0, pz0, ch);
     }
 
@@ -469,11 +528,11 @@ public class StateVecs {
         ToPoint = new Vector3D(kVec.x - xc, kVec.y - yc, 0);
         double phi = ToRef.angle(ToPoint);
         phi *= -Math.signum(kVec.kappa);
-            
+
         return phi;
     }
 
-    private void iterateHelixAtR(int it, int k, StateVec kVec, Swim swim, 
+    private void iterateHelixAtR(int it, int k, StateVec kVec, Swim swim,
             double r, B Bf, Point3D ps) {
         for(int i = 0; i < it; i++) {
             this.setHelixPars(kVec, swim);
@@ -541,7 +600,7 @@ public class StateVecs {
         public double y;
         public double z;
         public Swim swimmer;
-        
+
         public double Bx;
         public double By;
         public double Bz;
@@ -562,16 +621,16 @@ public class StateVecs {
             this.Bx = b[0];
             this.By = b[1];
             this.Bz = b[2];
-
+            
             this.alpha = 1. / (lightVel * Math.abs(b[2]));
         }
-        
+
         public void set() {
             swimmer.BfieldLab(x/units, y/units, z/units, b);
             this.Bx = b[0];
             this.By = b[1];
             this.Bz = b[2];
-            
+
             this.alpha = 1. / (lightVel * Math.abs(b[2]));
         }
     }
@@ -607,7 +666,7 @@ public class StateVecs {
             double px = -(Math.signum(this.trackTraj.get(kf).kappa) / this.trackTraj.get(kf).kappa) * Math.sin(this.trackTraj.get(kf).phi0 + this.trackTraj.get(kf).phi);
             double py = (Math.signum(this.trackTraj.get(kf).kappa) / this.trackTraj.get(kf).kappa) * Math.cos(this.trackTraj.get(kf).phi0 + this.trackTraj.get(kf).phi);
             double pz = (Math.signum(this.trackTraj.get(kf).kappa) / this.trackTraj.get(kf).kappa) * this.trackTraj.get(kf).tanL;
-           
+
             return new Vector3D(px, py, pz);
         } else {
             return new Vector3D(0, 0, 0);
@@ -619,7 +678,7 @@ public class StateVecs {
             double x = X0.get(kf) + this.trackTraj.get(kf).d_rho * Math.cos(this.trackTraj.get(kf).phi0) + this.trackTraj.get(kf).alpha / this.trackTraj.get(kf).kappa * (Math.cos(this.trackTraj.get(kf).phi0) - Math.cos(this.trackTraj.get(kf).phi0 + this.trackTraj.get(kf).phi));
             double y = Y0.get(kf) + this.trackTraj.get(kf).d_rho * Math.sin(this.trackTraj.get(kf).phi0) + this.trackTraj.get(kf).alpha / this.trackTraj.get(kf).kappa * (Math.sin(this.trackTraj.get(kf).phi0) - Math.sin(this.trackTraj.get(kf).phi0 + this.trackTraj.get(kf).phi));
             double z = Z0.get(kf) + this.trackTraj.get(kf).dz - this.trackTraj.get(kf).alpha / this.trackTraj.get(kf).kappa * this.trackTraj.get(kf).tanL * this.trackTraj.get(kf).phi;
-            
+
             return new Vector3D(x, y, z);
         } else {
             return new Vector3D(0, 0, 0);
@@ -631,7 +690,7 @@ public class StateVecs {
             double x = X0.get(kVec.k) + kVec.d_rho * Math.cos(kVec.phi0) + kVec.alpha / kVec.kappa * (Math.cos(kVec.phi0) - Math.cos(kVec.phi0 + phi));
             double y = Y0.get(kVec.k) + kVec.d_rho * Math.sin(kVec.phi0) + kVec.alpha / kVec.kappa * (Math.sin(kVec.phi0) - Math.sin(kVec.phi0 + phi));
             double z = Z0.get(kVec.k) + kVec.dz - kVec.alpha / kVec.kappa * kVec.tanL * phi;
-            
+
             return new Vector3D(x, y, z);
         } else {
             return new Vector3D(0, 0, 0);
@@ -643,7 +702,7 @@ public class StateVecs {
             double px = -(Math.signum(this.trackTraj.get(kf).kappa) / this.trackTraj.get(kf).kappa) * Math.sin(this.trackTraj.get(kf).phi0);
             double py = (Math.signum(this.trackTraj.get(kf).kappa) / this.trackTraj.get(kf).kappa) * Math.cos(this.trackTraj.get(kf).phi0);
             double pz = (Math.signum(this.trackTraj.get(kf).kappa) / this.trackTraj.get(kf).kappa) * this.trackTraj.get(kf).tanL;
-           
+
             return new Vector3D(px, py, pz);
         } else {
             return new Vector3D(0, 0, 0);
@@ -655,7 +714,7 @@ public class StateVecs {
             double x = X0.get(kf) + this.trackTraj.get(kf).d_rho * Math.cos(this.trackTraj.get(kf).phi0);
             double y = Y0.get(kf) + this.trackTraj.get(kf).d_rho * Math.sin(this.trackTraj.get(kf).phi0);
             double z = Z0.get(kf) + this.trackTraj.get(kf).dz;
-            
+
             return new Vector3D(x, y, z);
         } else {
             return new Vector3D(0, 0, 0);
@@ -668,69 +727,73 @@ public class StateVecs {
         StateVec kVec = this.trackTraj.get(k);
         double x0 = kVec.x ;
         double y0 = kVec.y ;
-        double z0 = kVec.z ; 
-        
+        double z0 = kVec.z ;
+
         Vector3D p = this.P(k);
         double px0 = p.x();
         double py0 = p.y();
         double pz0 = p.z();
         int ch = (int) KFitter.polarity*(int) Math.signum(kVec.kappa);
-        
+
         swim.SetSwimParameters(
-            x0/units, 
+            x0/units,
             y0/units,
-            z0/units, 
+            z0/units,
             -px0, -py0, -pz0, -ch);
 
         swimPars = swim.SwimToBeamLine(X0.get(0), Y0.get(0));
-            
+
         for(int j =0; j < 3; j++) {
             swimPars[j]*=units;
         }
-        
+
         int q = KFitter.polarity*(int) Math.signum(this.trackTraj.get(k).kappa);
-        double B = 1./Math.abs(this.trackTraj.get(0).alpha)/lightVel; 
-        
+        double B = 1./Math.abs(this.trackTraj.get(0).alpha)/lightVel;
+
         this.setHelix(util, swimPars[0], swimPars[1], swimPars[2], -swimPars[3], -swimPars[4], -swimPars[5], q, B);
-        
+
         return util;
     }
     public Helix setTrackPars() {
         Vector3D X = this.X0(0);
         Vector3D P = this.P0(0);
-        
+
         int q = KFitter.polarity*(int) Math.signum(this.trackTraj.get(0).kappa);
         double B = 1./Math.abs(this.trackTraj.get(0).alpha)/lightVel ;
-        
+
         return new Helix(X.x(), X.y(), X.z(), P.x(), P.y(), P.z(), q, B, util.units);
     }
-
-    public void init(Helix trk, Matrix cov, double Xb, double Yb, KFitter kf,
+    public StateVec initSV = new StateVec(0);
+    public void init(Helix trk, Matrix cov, KFitter kf,
             Swim swimmer) {
         this.units = trk.getUnitScale();
         this.lightVel = trk.getLIGHTVEL();
         this.util = trk;
         //init stateVec
-        StateVec initSV = new StateVec(0);
+        //StateVec initSV = new StateVec(0);
         initSV.x = - trk.getD0() * Math.sin(trk.getPhi0());
         initSV.y = trk.getD0() * Math.cos(trk.getPhi0());
         initSV.z = trk.getZ0();
-        
+
         double xcen = (1. / trk.getOmega() - trk.getD0()) * Math.sin(trk.getPhi0());
         double ycen = (-1. / trk.getOmega() + trk.getD0()) * Math.cos(trk.getPhi0());
-       
+
         B Bf = new B(0, (float)initSV.x, (float)initSV.x, (float)initSV.z, swimmer);
+        
+        if(Math.abs(Bf.Bz)<0.001)
+           this.straight = true;
+        
         initSV.alpha = Bf.alpha;
         initSV.kappa = Bf.alpha * trk.getOmega();
         initSV.phi0 = Math.atan2(ycen, xcen);
         if (initSV.kappa < 0) {
             initSV.phi0 = Math.atan2(-ycen, -xcen);
         }
-        
+
         initSV.dz    = trk.getZ();
         initSV.tanL  = trk.getTanL();
         initSV.d_rho = trk.getD0()*(Math.cos(trk.getPhi0())*Math.sin(initSV.phi0) -Math.sin(trk.getPhi0())*Math.cos(initSV.phi0));
-        
+
         double x0 = X0.get(0) + initSV.d_rho * Math.cos(initSV.phi0) ;
         double y0 = Y0.get(0) + initSV.d_rho * Math.sin(initSV.phi0) ;
         double z0 = Z0.get(0) + initSV.dz ;
@@ -738,13 +801,24 @@ public class StateVecs {
         double px0 = -invKappa * Math.sin(initSV.phi0 );
         double py0 = invKappa * Math.cos(initSV.phi0 );
         double pz0 = invKappa * initSV.tanL;
-        
+
         initSV.phi = 0;
-        
-        this.trackTraj.put(0, initSV); 
+
+        this.trackTraj.put(0, initSV);
         CovMat initCM = new CovMat(0);
-        Matrix covKF = cov.copy();
-        covKF.set(2, 2, cov.get(2, 2)*300 );
+        Matrix covKF = cov.copy(); 
+    /*    
+        System.out.println("----------------");
+        for(int ic = 0; ic<5; ic++) {
+            for(int ir = 0; ir<5; ir++) {
+                if(ic==ir) {
+                    System.out.println(Math.sqrt(covKF.get(ic, ir)));
+                }
+            }
+        }
+    */
+        covKF.set(2, 2, cov.get(2, 2)*600 );
+
         initCM.covMat = covKF;
         this.trackCov.put(0, initCM);
     }

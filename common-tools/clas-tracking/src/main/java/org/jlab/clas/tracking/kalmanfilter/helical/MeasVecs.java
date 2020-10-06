@@ -123,11 +123,18 @@ public class MeasVecs {
         return value;
     }
 
-    private double[] delta_d_a = new double[] {1, Math.toRadians(0.25),  0.05, 1, 0.01};
+    private double[] delta_d_a = new double[5];//{1, Math.toRadians(0.25),  0.05, 1, 0.01};
+    double sqrt_epsilon = Math.sqrt(2.2*1.e-16);
     private double[] Hval = new double[5];
     public double[] H(StateVecs.StateVec stateVec, StateVecs sv, MeasVec mv, Swim swimmer, int dir) {
         StateVecs.StateVec SVplus = null;// = new StateVec(stateVec.k);
         StateVecs.StateVec SVminus = null;// = new StateVec(stateVec.k);
+        delta_d_a[0]=2*sqrt_epsilon*stateVec.d_rho;
+        delta_d_a[1]=2*sqrt_epsilon*stateVec.phi0;
+        delta_d_a[2]=2*sqrt_epsilon*stateVec.kappa;
+        delta_d_a[3]=2*sqrt_epsilon*stateVec.dz;
+        delta_d_a[4]=2*sqrt_epsilon*stateVec.tanL;
+        
         for(int i = 0; i < getHval().length; i++)
             getHval()[i] = 0;
         for(int i = 0; i < getDelta_d_a().length; i++) {
@@ -155,7 +162,7 @@ public class MeasVecs {
             }
             SVplus = sv.newStateVecAtMeasSite(stateVec.k, SVplus, mv, swimmer, false);
             SVminus = sv.newStateVecAtMeasSite(stateVec.k, SVminus, mv, swimmer, false);
-            getHval()[i] = (this.h(stateVec.k, SVplus) - this.h(stateVec.k, SVminus)) / getDelta_d_a()[i] ;
+            Hval[i] = (this.h(stateVec.k, SVplus) - this.h(stateVec.k, SVminus)) / getDelta_d_a()[i] ;
         }
        
         return getHval();

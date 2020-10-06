@@ -38,14 +38,14 @@ public class KFitter {
             double Zref, List<Surface> measSurfaces) {
         _Xb = Xb;
         _Yb = Yb;
-        
         this.init(helix, cov, event, swimmer, Xb, Yb, 
              Zref, mv, measSurfaces);
     }
-    private Matrix iCov;
+    //private Matrix iCov;
     public void init(Helix helix, Matrix cov, DataEvent event, Swim swimmer, double Xb, double Yb, 
             double Zref, MeasVecs mv, List<Surface> measSurfaces) {
-        iCov = cov;
+        
+        //iCov = cov;
         mv.setMeasVecs(measSurfaces);
         if (sv.Layer != null) {
             sv.Layer.clear();
@@ -86,12 +86,12 @@ public class KFitter {
             sv.Y0.add(ref.y());
             sv.Z0.add(ref.z());
         }
-        sv.init( helix, cov, Xb, Yb, this, swimmer);
+        sv.init( helix, cov, this, swimmer);
     }
 
     public int totNumIter = 5;
     double newChisq = Double.POSITIVE_INFINITY;
-
+                            
     public void runFitter(Swim swimmer) {
         double newchisq = Double.POSITIVE_INFINITY;
         this.NDF = sv.X0.size()-5; 
@@ -104,7 +104,7 @@ public class KFitter {
                 }
                 sv.transport(k, k + 1, sv.trackTraj.get(k), sv.trackCov.get(k), mv.measurements.get(k+1), 
                         swimmer); 
-                this.filter(k + 1, swimmer, 1);
+                this.filter(k + 1, swimmer, 1); 
             }
             
             for (int k =  sv.X0.size() - 1; k>0 ;k--) {
@@ -176,7 +176,8 @@ public class KFitter {
             dh = mv.dh(k+1, stv);
             chi2 += dh*dh / mv.measurements.get(k+1).error;
         }  
-       return chi2;
+       
+        return chi2;
 
     }
     private void filter(int k, Swim swimmer, int dir) {
@@ -202,7 +203,6 @@ public class KFitter {
             Matrix Ci = null;
             if (this.isNonsingular(sv.trackCov.get(k).covMat) == false) {
                 //System.err.println("Covariance Matrix is non-invertible - quit filter!");
-                //this.printMatrix(sv.trackCov.get(k).covMat);
                 return;
             }
             try {
@@ -210,7 +210,6 @@ public class KFitter {
             } catch (Exception e) {
                 return;
             }
-
             Matrix Ca = null;
             try {
                 Ca = Ci.plus(new Matrix(HTGH));
@@ -221,6 +220,7 @@ public class KFitter {
                 //System.err.println("Covariance Matrix Ca is non-invertible - quit filter!");
                 return;
             }
+            
             if (Ca != null && this.isNonsingular(Ca) == true) {
                 if (Ca.inverse() != null) {
                     Matrix CaInv = Ca.inverse();
@@ -240,6 +240,11 @@ public class KFitter {
                     K[j] += H[i] * sv.trackCov.get(k).covMat.get(j, i) / V;
                 } 
             }
+//            if(sv.straight == true) {
+//                for (int i = 0; i < 5; i++) {
+//                    K[i] = 0;
+//                }
+//            }
             double drho_filt = sv.trackTraj.get(k).d_rho;
             double phi0_filt = sv.trackTraj.get(k).phi0;
             double kappa_filt = sv.trackTraj.get(k).kappa;
@@ -263,7 +268,7 @@ public class KFitter {
             fVec.alpha = sv.trackTraj.get(k).alpha;
             sv.setStateVecPosAtMeasSite(k, fVec, mv.measurements.get(k), swimmer); 
             
-            double dh_filt = mv.dh(k, fVec); 
+            double dh_filt = mv.dh(k, fVec);  
             if (Math.abs(dh_filt) < Math.abs(dh)) { 
                 sv.trackTraj.get(k).d_rho = drho_filt;
                 sv.trackTraj.get(k).phi0 = phi0_filt;
@@ -315,7 +320,7 @@ public class KFitter {
             (float)sv.phi0+", "+
             (float)sv.kappa+", "+
             (float)sv.dz+", "+
-            (float)sv.tanL+" xyz "+new Point3D(sv.x,sv.y,sv.z));
+            (float)sv.tanL+" xyz "+new Point3D(sv.x,sv.y,sv.z)+" phi "+Math.atan2(sv.y,sv.x));
         System.out.println("  ");
     }
 
