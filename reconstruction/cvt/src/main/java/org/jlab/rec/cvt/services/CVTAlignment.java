@@ -9,6 +9,7 @@ import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.base.GeometryFactory;
 import org.jlab.detector.calib.utils.DatabaseConstantProvider;
 import org.jlab.detector.geant4.v2.CTOFGeant4Factory;
+import org.jlab.detector.geant4.v2.SVT.SVTAlignmentFactory;
 import org.jlab.detector.geant4.v2.SVT.SVTConstants;
 import org.jlab.detector.geant4.v2.SVT.SVTStripFactory;
 import org.jlab.geom.base.ConstantProvider;
@@ -300,8 +301,25 @@ public class CVTAlignment extends ReconstructionEngine {
 		Vector3d sp = s.minus(n.times(sdotu/udotn));
 
 		int index = AlignmentMatrixIndices.getIndexSVT(region-1, sector-1);
-		Vector3d cref = convertVector(SVTGeom.getPlaneModuleOrigin(sector, layer).toVector3D());
+		
+		//Use the same reference point for both inner and outer layer of region
+		Vector3d cref = getModuleReferencePoint(sector,layer);
+		
+		
+		
+		//for debugging
+		/*
+		double phi1 = Math.atan2(n.y, n.x), phi2 = Math.atan2(cref.y, cref.x);
+		double dphi = phi1-phi2;
+		while (dphi < -Math.PI)
+			dphi += 2*Math.PI;
+		while (dphi > Math.PI)
+			dphi -= 2*Math.PI;
+		System.out.println(layer + " "+phi1 + " " + phi2 + " " + dphi);
+		*/
+		
 		Vector3d dmdr =sp.cross(extrap).plus(n.cross(cref).times(sdotu/udotn));
+		dmdr = dmdr.minus(n.cross(u).times(n.dot(e.minus(extrap))*sdotu/(udotn*udotn)));
 		A.set(i, (i/2)*6 + 0, -sp.x);
 		A.set(i, (i/2)*6 + 1, -sp.y);
 		A.set(i, (i/2)*6 + 2, -sp.z);
@@ -322,6 +340,10 @@ public class CVTAlignment extends ReconstructionEngine {
 	}
 
 
+
+	private Vector3d getModuleReferencePoint(int sector, int layer) {
+		return SVTAlignmentFactory.getIdealFiducialCenter((layer-1)/2, sector-1);
+	}
 
 	@Override
 	public boolean init() {
