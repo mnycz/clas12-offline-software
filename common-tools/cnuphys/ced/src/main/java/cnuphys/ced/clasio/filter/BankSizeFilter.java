@@ -13,8 +13,10 @@ import javax.swing.event.ListSelectionListener;
 
 import org.jlab.io.base.DataEvent;
 
+import cnuphys.bCNU.util.FileUtilities;
 import cnuphys.ced.alldata.DataManager;
 import cnuphys.ced.alldata.graphics.AllBanksList;
+import cnuphys.ced.properties.PropertiesManager;
 
 /**
  * This class is to filter on the number of rows in a set banks
@@ -23,6 +25,14 @@ import cnuphys.ced.alldata.graphics.AllBanksList;
  *
  */
 public class BankSizeFilter extends AEventFilter {
+	
+	//the key for the preferences file
+	private static final String PREFKEY = "BANKSIZEFILTER";
+	
+	//for writing out preferences
+	protected static final String SEP = "|";
+	protected static final String RECSEP = "&";
+
 	
 	// list for all known banks
 	private AllBanksList _blist;
@@ -38,6 +48,8 @@ public class BankSizeFilter extends AEventFilter {
 		setName("Bank Size Filter");
 		setActive(false);
 		_records = new Hashtable<String, BankRangeRecord>();
+		readPreferences();
+		report();
 	}
 
 	@Override
@@ -96,6 +108,7 @@ public class BankSizeFilter extends AEventFilter {
 		return rec;
 	}
 	
+	//set the text in the comment area
 	private void report() {
 		if (_editor != null) {
 			_editor.setCommentText("");
@@ -127,7 +140,7 @@ public class BankSizeFilter extends AEventFilter {
 			@Override
 			protected void handleCommand(String command) {
 				_bsPanel.setName(null);
-				setVisible(false);
+				super.handleCommand(command);
 			}
 
 			
@@ -170,6 +183,7 @@ public class BankSizeFilter extends AEventFilter {
 
 			
 		};
+		
 		return editor;
 	}
 	
@@ -189,6 +203,8 @@ public class BankSizeFilter extends AEventFilter {
 		}
 		
 		if (_editor != null) {
+			report();
+
 			_editor.setVisible(true);
 		}
 	}
@@ -198,6 +214,23 @@ public class BankSizeFilter extends AEventFilter {
 	 */
 	@Override
 	public void savePreferences() {	
+		_bsPanel.setName(null);
+
+		cull();
+		
+		Collection<BankRangeRecord> recs = _records.values();
+		if (recs.isEmpty()) {
+			PropertiesManager.getInstance().putAndWrite(PREFKEY, "NO");
+			return;
+		}
+		
+		StringBuffer sb = new StringBuffer(1024);
+		
+		for (BankRangeRecord rec : recs) {
+			sb.append(rec.hash() + RECSEP);
+		}
+		
+		PropertiesManager.getInstance().putAndWrite(PREFKEY, sb.toString());
 	}
 	
 	/**
@@ -205,6 +238,41 @@ public class BankSizeFilter extends AEventFilter {
 	 */
 	@Override
 	public void readPreferences() {
+		String val = PropertiesManager.getInstance().get(PREFKEY);
+		if ((val == null) || (val.length() < 5)) {
+			return;
+		}
+		
+		String[] recTokens = FileUtilities.tokens(val, RECSEP);
+		
+		if ((recTokens != null) && (recTokens.length > 0)) {
+			for (String recTok : recTokens) {
+
+				String[] valToks = FileUtilities.tokens(recTok, SEP);
+				if ((valToks != null) && (valToks.length == 4)) {
+					try {
+						String bname = valToks[0];
+						int minCount = Integer.parseInt(valToks[1]);
+						
+						String maxStr = valToks[2];
+						int maxCount;
+						if (maxStr.toLowerCase().contains("inf")) {
+							maxCount = Integer.MAX_VALUE;
+						}
+						else {
+							maxCount = Integer.parseInt(valToks[2]);
+						}
+						
+						boolean active = valToks[3].toLowerCase().contains("t");
+						
+						addRecord(bname, minCount, maxCount, active);
+					}
+					catch (Exception e) {
+						
+					}
+				}
+			}
+		}
 	}
 	
 	//remove records that are inactive and a 0 to inf range
@@ -247,6 +315,11 @@ public class BankSizeFilter extends AEventFilter {
 		public String toString() {
 			String maxStr = (maxCount == Integer.MAX_VALUE ? "Inf" : "" + String.format("%-4d", maxCount));
 			return String.format("%-20s min: %-3d max: %-4s %s", bankName, minCount, maxStr, (active ? "active" : "not active"));
+		}
+		
+		public String hash() {
+			String maxStr = (maxCount == Integer.MAX_VALUE ? "Inf" : "" + String.format("%d", maxCount));
+			return bankName + SEP + minCount + SEP + maxStr + SEP + (active ? "true" : "false");
 		}
 
 	}

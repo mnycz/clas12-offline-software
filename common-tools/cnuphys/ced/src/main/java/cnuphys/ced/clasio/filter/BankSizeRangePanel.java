@@ -123,15 +123,12 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 
 		// handle the old hot bank
 
-		System.err.println("\nUnstuffing for bank [" + ((_hotBank == null) ? NONE : _hotBank) + "]");
-
 		if (_hotBank != null) {
 
 			BankSizeFilter.BankRangeRecord oldRec = _filter.getRecord(_hotBank);
 
 			// do we have to create one?
 			if (_settingRange) {
-				System.err.println("Adding for bank [" + _hotBank + "]");
 				oldRec = _filter.addRecord(_hotBank, 0, Integer.MAX_VALUE, true);
 			}
 
@@ -147,7 +144,7 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 
 						String maxStr = _maxValue.getText();
 						int maxCount;
-						if (maxStr.toLowerCase().contains("infin")) {
+						if (maxStr.toLowerCase().contains("inf")) {
 							maxCount = Integer.MAX_VALUE;
 						} else {
 							maxCount = Integer.parseInt(_maxValue.getText());
@@ -167,12 +164,9 @@ public class BankSizeRangePanel extends JPanel implements ActionListener {
 		//handle the new hot bank
 		
 		_hotBank = bname;
-		
-		System.err.println("\nStuffing for bank [" + ((_hotBank == null) ? NONE : _hotBank) + "]");
-		
+				
 		if (_hotBank != null) {
 			BankSizeFilter.BankRangeRecord newRec = _filter.getRecord(_hotBank);
-			System.err.println("Found rec for bank [" + _hotBank + "]: " + (newRec != null));
 			if (newRec == null) {
 				_minValue.setText("0");
 				_maxValue.setText(INF);

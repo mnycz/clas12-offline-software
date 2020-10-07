@@ -92,7 +92,7 @@ public class AFilterDialog extends SimpleDialog {
 
 		};
 
-		_saveButton = new JButton("Save Settings to User Preferences");
+		_saveButton = new JButton("Save Settings");
 		_saveButton.addActionListener(al);
 		bp.add(_saveButton);
 
@@ -102,8 +102,8 @@ public class AFilterDialog extends SimpleDialog {
 	/**
 	 * Save the preferences to user pref
 	 */
-	protected void savePreferences() {
-
+	private void savePreferences() {
+		_filter.savePreferences();
 	}
 	
 	/**
