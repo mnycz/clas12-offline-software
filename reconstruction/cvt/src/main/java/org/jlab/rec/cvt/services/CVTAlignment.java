@@ -57,6 +57,7 @@ public class CVTAlignment extends ReconstructionEngine {
 	String FieldsConfig = "";
 	int Run = -1;
 	public boolean isSVTonly = false;
+	private Boolean svtTopBottomSep;
 	public void setRunConditionsParameters(DataEvent event, String FieldsConfig, int iRun, boolean addMisAlignmts, String misAlgnFile) {
 		if (event.hasBank("RUN::config") == false) {
 			System.err.println("RUN CONDITIONS NOT READ!");
@@ -133,6 +134,15 @@ public class CVTAlignment extends ReconstructionEngine {
 	public void setFieldsConfig(String fieldsConfig) {
 		FieldsConfig = fieldsConfig;
 	}
+	
+	/**
+	 * Type of alignment:
+	 * @author spaul
+	 *
+	 */
+	
+	
+	
 	@Override
 	public boolean processDataEvent(DataEvent event) {
 		int runNum = event.getBank("RUN::config").getInt("run", 0);
@@ -171,7 +181,7 @@ public class CVTAlignment extends ReconstructionEngine {
 					nCross++;
 			}
 			Ray ray = track.get_ray();
-			Matrix A = new Matrix(2*nCross, 6*nCross);//not sure why there aren't 6 columns
+			Matrix A = new Matrix(2*nCross, svtTopBottomSep ? 2*nAlignVars*nCross : nAlignVars*nCross);//not sure why there aren't 6 columns
 			Matrix B = new Matrix(2*nCross, 4);
 			Matrix V = new Matrix(2*nCross,2*nCross);
 			Matrix m = new Matrix(2*nCross,1);
@@ -234,6 +244,8 @@ public class CVTAlignment extends ReconstructionEngine {
 			
 			bank.setShort("ndof", i, (short)(Vs.get(i).getRowDimension()-4));
 			bank.setShort("track", i, (short)(int)trackIDs.get(i));
+			bank.setShort("nalignables", i, (short)(this.svtTopBottomSep ? 2*42 : 42));
+			bank.setShort("nparameters", i, (short)this.nAlignVars);
 		}
 
 		event.appendBank(bank);
@@ -300,7 +312,10 @@ public class CVTAlignment extends ReconstructionEngine {
 
 		Vector3d sp = s.minus(n.times(sdotu/udotn));
 
-		int index = AlignmentMatrixIndices.getIndexSVT(region-1, sector-1);
+		int index = getIndexSVT(region-1, sector-1);
+		if(svtTopBottomSep && (layer-1)%2==1) {
+			index += 42;
+		}
 		
 		//Use the same reference point for both inner and outer layer of region
 		Vector3d cref = getModuleReferencePoint(sector,layer);
@@ -320,12 +335,26 @@ public class CVTAlignment extends ReconstructionEngine {
 		
 		Vector3d dmdr =sp.cross(extrap).plus(n.cross(cref).times(sdotu/udotn));
 		dmdr = dmdr.minus(n.cross(u).times(n.dot(e.minus(extrap))*sdotu/(udotn*udotn)));
-		A.set(i, (i/2)*6 + 0, -sp.x);
-		A.set(i, (i/2)*6 + 1, -sp.y);
-		A.set(i, (i/2)*6 + 2, -sp.z);
-		A.set(i, (i/2)*6 + 3, dmdr.x);
-		A.set(i, (i/2)*6 + 4, dmdr.y);
-		A.set(i, (i/2)*6 + 5, dmdr.z);
+		/*A.set(i, (svtTopBottomSep? i : i/2)*6 + 0, -sp.x);
+		A.set(i, (svtTopBottomSep? i : i/2)*6 + 1, -sp.y);
+		A.set(i, (svtTopBottomSep? i : i/2)*6 + 2, -sp.z);
+		A.set(i, (svtTopBottomSep? i : i/2)*6 + 3, dmdr.x);
+		A.set(i, (svtTopBottomSep? i : i/2)*6 + 4, dmdr.y);
+		A.set(i, (svtTopBottomSep? i : i/2)*6 + 5, dmdr.z);*/
+		if(orderTx >= 0)
+			A.set(i, (svtTopBottomSep? i : i/2)*nAlignVars + orderTx, -sp.x);
+		if(orderTy >= 0)
+			A.set(i, (svtTopBottomSep? i : i/2)*nAlignVars + orderTy, -sp.y);
+		if(orderTz >= 0)
+			A.set(i, (svtTopBottomSep? i : i/2)*nAlignVars + orderTz, -sp.z);
+		if(orderRx >= 0)
+			A.set(i, (svtTopBottomSep? i : i/2)*nAlignVars + orderRx, dmdr.x);
+		if(orderRy >= 0)
+			A.set(i, (svtTopBottomSep? i : i/2)*nAlignVars + orderRy, dmdr.y);
+		if(orderRz >= 0)
+			A.set(i, (svtTopBottomSep? i : i/2)*nAlignVars + orderRz, dmdr.z);
+		
+		
 
 		I.set(i, 0, index);
 		
@@ -340,6 +369,17 @@ public class CVTAlignment extends ReconstructionEngine {
 	}
 
 
+
+	int getIndexSVT(int region, int sect){
+		if (region == 0)
+			return sect;
+		if (region == 1)
+			return org.jlab.rec.cvt.svt.Constants.NSECT[0] + sect;
+		if (region == 2)
+			return org.jlab.rec.cvt.svt.Constants.NSECT[0] +
+					org.jlab.rec.cvt.svt.Constants.NSECT[2] + sect;
+		return -1;
+	}
 
 	private Vector3d getModuleReferencePoint(int sector, int layer) {
 		return SVTAlignmentFactory.getIdealFiducialCenter((layer-1)/2, sector-1);
@@ -368,28 +408,25 @@ public class CVTAlignment extends ReconstructionEngine {
 		String svtStAl = this.getEngineConfigString("svtOnly");
 
 		if (svtStAl!=null) {
-			System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+" config chosen based on yaml");
+			System.out.println("["+this.getName()+"] align SVT only "+svtStAl+" config chosen based on yaml");
 			this.isSVTonly= Boolean.valueOf(svtStAl);
 		}
 		else {
-			svtStAl = System.getenv("COAT_SVT_ONLY");
+			svtStAl = System.getenv("COAT_ALIGN_SVT_ONLY");
 			if (svtStAl!=null) {
-				System.out.println("["+this.getName()+"] run with SVT only "+svtStAl+" config chosen based on env");
+				System.out.println("["+this.getName()+"] align SVT only "+svtStAl+" config chosen based on env");
 				this.isSVTonly= Boolean.valueOf(svtStAl);
 			}
 		}
 		if (svtStAl==null) {
-			System.out.println("["+this.getName()+"] run with both CVT systems (default) ");
+			System.out.println("["+this.getName()+"] align SVT only (default) ");
+			this.isSVTonly = true;
 		}
 		// Load other geometries
 
 		variationName = Optional.ofNullable(this.getEngineConfigString("variation")).orElse("default");
 		System.out.println(" CVT YAML VARIATION NAME + "+variationName);
-		ConstantProvider providerCTOF = GeometryFactory.getConstants(DetectorType.CTOF, 11, variationName);
-		CTOFGeom = new CTOFGeant4Factory(providerCTOF);        
-		CNDGeom =  GeometryFactory.getDetector(DetectorType.CND, 11, variationName);
-		//
-
+		
 		System.out.println("SVT LOADING WITH VARIATION "+variationName);
 		DatabaseConstantProvider cp = new DatabaseConstantProvider(11, variationName);
 		cp = SVTConstants.connect( cp );
@@ -397,11 +434,78 @@ public class CVTAlignment extends ReconstructionEngine {
 		SVTStripFactory svtFac = new SVTStripFactory(cp, false);
 		SVTGeom.setSvtStripFactory(svtFac);
 
-
-
+		String svtTopBottomSep = this.getEngineConfigString("svtAlignTopBottomSeparately");
+		if (svtTopBottomSep!=null) {
+			System.out.println("["+this.getName()+"] run with SVT alignment for top and bottom as separate modules "+svtTopBottomSep+" config chosen based on yaml");
+			this.svtTopBottomSep= Boolean.valueOf(svtTopBottomSep);
+		}
+		else {
+			svtTopBottomSep = System.getenv("COAT_SVT_TOP_BOTTOM");
+			if (svtTopBottomSep!=null) {
+				System.out.println("["+this.getName()+"] run with SVT alignment for top and bottom as separate modules "+svtTopBottomSep+" config chosen based on env");
+				this.svtTopBottomSep= Boolean.valueOf(svtTopBottomSep);
+			}
+		}
+		if (svtTopBottomSep==null) {
+			System.out.println("["+this.getName()+"] run with SVT top and bottom as a single module (default) ");
+			this.svtTopBottomSep = false;
+		}
+		
+		String alignVars = this.getEngineConfigString("alignVariables");
+		if (alignVars!=null) {
+			System.out.println("["+this.getName()+"] obtain alignment derivatives for the following variables "+svtTopBottomSep+" config chosen based on yaml");
+			this.setAlignVars(alignVars);
+		}
+		else {
+			alignVars = System.getenv("COAT_ALIGN_VARS");
+			if (alignVars!=null) {
+				System.out.println("["+this.getName()+"] obtain alignment derivatives for the following variables "+svtTopBottomSep+" config chosen based on env");
+				this.setAlignVars(alignVars);
+			}
+		}
+		if (alignVars==null) {
+			System.out.println("["+this.getName()+"] obtain alignment derivatives for all 6 variables (default) ");
+			this.setAlignVars("Tx Ty Tz Rx Ry Rz");
+		}
 		return true;
 	}
+	
 
+
+	private void setAlignVars(String alignVars) {
+		String split[] = alignVars.split("[ \t]+");
+		int i = 0;
+		orderTx = -1;
+		orderTy = -1;
+		orderTz = -1;
+		orderRx = -1;
+		orderRy = -1;
+		orderRz = -1;
+		for(String s : split) {
+			if(s.equals("Tx")) {
+				orderTx = i; i++;
+			} else if(s.equals("Ty")) {
+				orderTy = i; i++;
+			} else if(s.equals("Tz")) {
+				orderTz = i; i++;
+			} else if(s.equals("Rx")) {
+				orderRx = i; i++;
+			} else if(s.equals("Ry")) {
+				orderRy = i; i++;
+			} else if(s.equals("Rz")) {
+				orderRz = i; i++;
+			}
+		}
+		nAlignVars = i;
+		System.out.println(nAlignVars + " alignment variables requested");
+	}
+	private int nAlignVars;
+	private int orderTx;
+	private int orderTy;
+	private int orderTz;
+	private int orderRx;
+	private int orderRy;
+	private int orderRz; 
 
 	private String variationName;
 
