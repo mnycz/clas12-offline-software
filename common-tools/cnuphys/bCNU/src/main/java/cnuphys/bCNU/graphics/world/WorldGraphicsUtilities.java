@@ -3,7 +3,6 @@ package cnuphys.bCNU.graphics.world;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -17,7 +16,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.Vector;
 
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 
 import cnuphys.bCNU.graphics.GraphicsUtilities;
 import cnuphys.bCNU.graphics.container.IContainer;
@@ -751,32 +749,6 @@ public class WorldGraphicsUtilities {
 		// }
 		//
 
-	}
-
-	/**
-	 * Get a color legend for all the lundIds of interest
-	 * 
-	 * @return a panel that holds the legend.
-	 */
-	public static JPanel getLundColorLegend() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(2, 7));
-		panel.add(getLegendComponent(22)); // photon
-		panel.add(getLegendComponent(11)); // e-
-		panel.add(getLegendComponent(-11)); // e+
-		panel.add(getLegendComponent(13)); // mu-
-		panel.add(getLegendComponent(-13)); // mu+
-		panel.add(getLegendComponent(-211)); // pi-
-		panel.add(getLegendComponent(111)); // pi0
-		panel.add(getLegendComponent(211)); // pi+
-		panel.add(getLegendComponent(-213)); // rho-
-		panel.add(getLegendComponent(213)); // rho+
-		panel.add(getLegendComponent(-321)); // K-
-		panel.add(getLegendComponent(321)); // K+
-		panel.add(getLegendComponent(2212)); // p
-		panel.add(getLegendComponent(2112)); // n
-
-		return panel;
 	}
 
 	/**

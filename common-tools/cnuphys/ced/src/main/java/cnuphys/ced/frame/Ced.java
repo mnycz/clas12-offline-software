@@ -111,7 +111,7 @@ import cnuphys.bCNU.util.Environment;
 import cnuphys.bCNU.util.FileUtilities;
 import cnuphys.bCNU.util.PropertySupport;
 import cnuphys.bCNU.view.HistoGridView;
-import cnuphys.bCNU.view.IHistogramMaker;
+import cnuphys.bCNU.view.IPlotMaker;
 import cnuphys.bCNU.view.LogView;
 import cnuphys.bCNU.view.PlotView;
 import cnuphys.bCNU.view.ViewManager;
@@ -464,10 +464,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 
 	// dc wire histogram
 	private void addDcHistogram() {
-		IHistogramMaker maker = new IHistogramMaker() {
+		IPlotMaker maker = new IPlotMaker() {
 
 			@Override
-			public PlotPanel addHistogram(int row, int col, int w, int h) {
+			public PlotPanel addPlot(int row, int col, int w, int h) {
 
 				PlotPanel panel;
 
@@ -487,10 +487,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 
 	// ftof paddle histogram
 	private void addFtofHistogram() {
-		IHistogramMaker maker = new IHistogramMaker() {
+		IPlotMaker maker = new IPlotMaker() {
 
 			@Override
-			public PlotPanel addHistogram(int row, int col, int w, int h) {
+			public PlotPanel addPlot(int row, int col, int w, int h) {
 
 				PlotPanel panel;
 
@@ -523,10 +523,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 
 	// ftof wire histogram
 	private void addBstHistogram() {
-		IHistogramMaker maker = new IHistogramMaker() {
+		IPlotMaker maker = new IPlotMaker() {
 
 			@Override
-			public PlotPanel addHistogram(int row, int col, int w, int h) {
+			public PlotPanel addPlot(int row, int col, int w, int h) {
 
 				int layer = row;
 				int sector = col;
@@ -551,10 +551,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 
 	// pcal strip histogram
 	private void addPcalHistogram() {
-		IHistogramMaker maker = new IHistogramMaker() {
+		IPlotMaker maker = new IPlotMaker() {
 
 			@Override
-			public PlotPanel addHistogram(int row, int col, int w, int h) {
+			public PlotPanel addPlot(int row, int col, int w, int h) {
 
 				int sector = row;
 				int plane = col - 1; // u, v, w
@@ -583,10 +583,10 @@ public class Ced extends BaseMDIApplication implements PropertyChangeListener, M
 
 	// ec strip histogram
 	private void addEcHistogram() {
-		IHistogramMaker maker = new IHistogramMaker() {
+		IPlotMaker maker = new IPlotMaker() {
 
 			@Override
-			public PlotPanel addHistogram(int row, int col, int w, int h) {
+			public PlotPanel addPlot(int row, int col, int w, int h) {
 
 				int sector = row;
 				int stack = (col - 1) / 3; // inner outer

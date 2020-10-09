@@ -254,7 +254,6 @@ public class EventMenu extends JMenu implements ActionListener, IEventListener {
 					File file = new File(fn);
 
 					if (file.exists()) {
-//						System.out.println("HEY MAN");
 						try {
 							EventManager.getInstance().openHipoEventFile(file);
 						} catch (FileNotFoundException e) {

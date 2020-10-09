@@ -295,7 +295,6 @@ public class RungeKuttaZ {
 						return nstep; // actual number of steps taken
 					}
 				}
-				// System.err.println("HEY MAN (B) h = " + h);
 				h *= HGROWTH;
 				h = Math.min(h, _maxStepSize);
 

@@ -105,7 +105,7 @@ public class HistoGridView extends ScrollableGridView implements MouseListener, 
 	 * @return
 	 */
 	public static HistoGridView createHistoGridView(String title, int numRow, int numCol, int cellWidth, int cellHeight,
-			double screenFraction, IHistogramMaker histomaker) {
+			double screenFraction, IPlotMaker histomaker) {
 
 		int width = numCol * cellWidth;
 		int height = numRow * cellHeight;
@@ -187,7 +187,7 @@ public class HistoGridView extends ScrollableGridView implements MouseListener, 
 		if (histomaker != null) {
 			for (int row = 1; row <= view._numRow; row++) {
 				for (int col = 1; col <= view._numCol; col++) {
-					PlotPanel histo = histomaker.addHistogram(row, col, view._cellWidth, view._cellHeight);
+					PlotPanel histo = histomaker.addPlot(row, col, view._cellWidth, view._cellHeight);
 					if (histo != null) {
 						view.addComponent(histo);
 						histo.getCanvas().addMouseMotionListener(view);

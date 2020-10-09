@@ -39,6 +39,7 @@ import cnuphys.cnf.event.EventMenu;
 import cnuphys.cnf.event.EventView;
 import cnuphys.cnf.event.IEventListener;
 import cnuphys.cnf.export.ExportManager;
+import cnuphys.cnf.plot.DefGridView;
 import cnuphys.cnf.properties.PropertiesManager;
 import cnuphys.splot.example.MemoryUsageDialog;
 
@@ -67,6 +68,9 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 
 	// the log view
 	private LogView _logView;
+	
+	//the container gridview
+	private DefGridView _gridView;
 
 	// event menu
 	private EventMenu _eventMenu;
@@ -162,6 +166,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 	private void restoreDefaultViewLocations() {
 
 		_virtualView.moveTo(_logView, 3, VirtualView.CENTER);
+		_virtualView.moveTo(_gridView, 1, VirtualView.CENTER);
 		_virtualView.moveTo(_eventView, 0, VirtualView.CENTER);
 
 		Log.getInstance().config("reset views on virtual dekstop");
@@ -179,16 +184,14 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 		
 		// add event view
 		_eventView = EventView.createEventView();
+		
+		//add the grid view
+		_gridView = DefGridView.createDefGridView("Plots", 2, 3, 0.7);
+		_gridView.setLabels(1, 1, "Force Magnitude", "x (fm)", "y (fm)");
 
 		// add the log view
 		_logView = new LogView(800, 750, true);
 		
-		//test plot remove later
-		
-//		ColumnData xdata =  DataManager.getInstance().getColumnData("CNF::DVCSevent.BSA");
-//		ColumnData ydata =  DataManager.getInstance().getColumnData("CNF::DVCSevent.phi");
-//		PlotWrapper.create2DScatterPlot(xdata, ydata);
-
 		// log some environment info
 		Log.getInstance().config(Environment.getInstance().toString());
 
@@ -348,7 +351,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 	private static Def getInstance() {
 		if (_instance == null) {
 			_instance = new Def(PropertySupport.TITLE, "def " + _release, PropertySupport.BACKGROUNDIMAGE,
-					"images/cnu.png", PropertySupport.FRACTION, 0.7,
+					"images/cnu.png", PropertySupport.FRACTION, 0.85,
 					PropertySupport.BACKGROUNDIMAGE, "images/cnfbg.png");
 
 			_instance.addInitialViews();

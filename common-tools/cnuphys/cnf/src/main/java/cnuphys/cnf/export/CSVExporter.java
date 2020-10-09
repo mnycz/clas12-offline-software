@@ -23,9 +23,6 @@ import cnuphys.cnf.alldata.graphics.ColumnsDialog;
  */
 public class CSVExporter extends AExporter {
 	
-	//the data output stream
-//	private DataOutputStream _dos;
-	
 	private PrintWriter _printWriter;
 
 	//the columns being exported
@@ -111,7 +108,6 @@ public class CSVExporter extends AExporter {
 
 			//get a data output stream for the file
 			try {
-				//_dos = new DataOutputStream(new FileOutputStream(_exportFile));
 				_printWriter = new PrintWriter(_exportFile);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -182,7 +178,6 @@ public class CSVExporter extends AExporter {
 				
 				if ((_filter == null) || (_filter.pass(currentRowsData))) {
 					stringLn(_printWriter, sb.toString());
-		//			stringLn(_dos, sb.toString());
 				}
 				else {
 					_totalCount--;
@@ -205,7 +200,6 @@ public class CSVExporter extends AExporter {
 			sb.append(cdata.getColumnName());
 		}
 		stringLn(_printWriter, sb.toString());
-//		stringLn(_dos, sb.toString());
 	}
 
 	@Override
@@ -217,37 +211,13 @@ public class CSVExporter extends AExporter {
 			_printWriter.close();
 			_printWriter = null;
 		}
-		
-//		if (_dos != null) {
-//			try {
-//				_dos.close();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-//		}
-//		
-//		_dos = null;
-		
+				
 	}
 	
 	private static void stringLn(PrintWriter pw, String str) {
 		pw.print(str);
 		pw.print("\n");
 	}
-	
-	
-	//write out a line of text to the data output stream
-	private static void stringLn(DataOutputStream dos, String str) {
-		
-		try {
-			dos.writeChars(str);
-			
-			dos.writeChars("\n");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	
 
 }

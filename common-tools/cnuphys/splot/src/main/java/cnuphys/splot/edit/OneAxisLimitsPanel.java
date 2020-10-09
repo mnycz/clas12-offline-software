@@ -208,7 +208,6 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		}
 		
 		_method1 = method;
-		System.err.println("Hey man new method = " + _method1);
 		fix();
 	}
 

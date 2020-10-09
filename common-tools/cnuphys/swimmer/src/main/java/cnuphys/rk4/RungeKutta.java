@@ -599,10 +599,8 @@ public class RungeKutta {
 					}
 				}
 
-				// System.err.println("HEY MAN (A) h = " + h);
 				h *= HGROWTH;
 				h = Math.min(h, _maxStepSize);
-//				System.err.println("ADAPT GROW h = " + h);
 
 			} // max error < tolerance
 		}

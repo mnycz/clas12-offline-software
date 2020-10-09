@@ -57,27 +57,27 @@ public class ExportManager implements IEventListener {
 		
 		//the filter for "OUTSIDE" or "INSIDE" assuming the ordering is
 		//x, y, z, bx, by, bz
-		IExportFilter filter = new IExportFilter() {
-
-			@Override
-			public boolean pass(double[] a) {
-				
-				
-				double dot = 0;
-				for (int i = 0; i < 3; i++) {
-					dot += a[i] *a[i+3];
-				}
-				return (dot <= 0); //outside
-		//		return dot > 0; //inside
-		//		return true;
-			}
-			
-		};
+//		IExportFilter filter = new IExportFilter() {
+//
+//			@Override
+//			public boolean pass(double[] a) {
+//				
+//				
+//				double dot = 0;
+//				for (int i = 0; i < 3; i++) {
+//					dot += a[i] *a[i+3];
+//				}
+//				return (dot <= 0); //outside
+//		//		return dot > 0; //inside
+//		//		return true;
+//			}
+//			
+//		};
 
 		if (exporter != null) {
 			_activeExporter = exporter;
 
-			boolean okToExport = _activeExporter.prepareToExport(filter);
+			boolean okToExport = _activeExporter.prepareToExport(null);
 
 			if (okToExport) {
 				EventManager.getInstance().rewindFile();

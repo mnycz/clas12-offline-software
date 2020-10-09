@@ -255,7 +255,6 @@ public class ColorModelPanel extends JPanel implements ActionListener {
 			if (_monoModel == null) {
 				_monoModel = ColorScaleModel.getMonochromeModel(_model);
 			}
-			System.out.println("hey man");
 			_legend.setColorScaleModel(_monoModel);
 
 			if (_view != null) {
