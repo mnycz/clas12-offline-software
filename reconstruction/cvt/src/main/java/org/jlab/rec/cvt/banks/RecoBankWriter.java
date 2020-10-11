@@ -221,6 +221,8 @@ public class RecoBankWriter {
             bank.setFloat("ETot", i, (float) cluslist.get(i).get_TotalEnergy());
             bank.setInt("seedStrip", i, cluslist.get(i).get_SeedStrip());
             bank.setFloat("centroid", i, (float) cluslist.get(i).get_Centroid());
+            bank.setFloat("centroidResidual", i, (float) cluslist.get(i).get_CentroidResidual());
+            bank.setFloat("seedResidual", i, (float) cluslist.get(i).get_SeedResidual()); 
             bank.setFloat("seedE", i, (float) cluslist.get(i).get_SeedEnergy());
             bank.setShort("trkID", i, (short) cluslist.get(i).get_AssociatedTrackID());
             for (int j = 0; j < cluslist.get(i).size(); j++) {

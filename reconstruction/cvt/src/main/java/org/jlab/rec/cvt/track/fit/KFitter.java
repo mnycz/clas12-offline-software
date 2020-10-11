@@ -16,6 +16,7 @@ import Jama.Matrix;
 import java.util.HashMap;
 import java.util.Map;
 import org.jlab.clas.swimtools.Swim;
+import org.jlab.geom.prim.Line3D;
 import org.jlab.rec.cvt.Constants;
 import org.jlab.rec.cvt.cluster.Cluster;
 import org.jlab.rec.cvt.hit.FittedHit;
@@ -409,9 +410,11 @@ public class KFitter {
                 int layer = trkcand.get_Clusters().get(i).get_Layer();
                 int sector = trkcand.get_Clusters().get(i).get_Sector();
                 Point3D p = new Point3D(traj.get(layer).x, traj.get(layer).y, traj.get(layer).z);
+                Line3D l = new Line3D(cluster.getEndPoint1(), cluster.getEndPoint2());
                 double doca2Cls = sgeo.getDOCAToStrip(sector, layer, cluster.get_Centroid(), p);
-                double doca2Seed = sgeo.getDOCAToStrip(sector, layer, (double) cluster.get_SeedStrip(), p);
-                cluster.set_SeedResidual(doca2Seed); 
+                
+                //double doca2Seed = sgeo.getDOCAToStrip(sector, layer, (double) cluster.get_SeedStrip(), p);
+                //cluster.set_SeedResidual(doca2Seed); 
                 cluster.set_CentroidResidual(doca2Cls);
             
                 for (FittedHit hit : cluster) {

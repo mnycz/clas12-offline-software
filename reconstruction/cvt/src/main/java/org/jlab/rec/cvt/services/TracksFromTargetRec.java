@@ -13,6 +13,7 @@ import org.jlab.detector.geant4.v2.CTOFGeant4Factory;
 import org.jlab.geom.base.Detector;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
+import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
 import org.jlab.rec.cvt.Constants;
 import org.jlab.rec.cvt.banks.RecoBankWriter;
@@ -49,10 +50,10 @@ public class TracksFromTargetRec {
         
         List<Seed> seeds = null;
         if(Math.abs(Constants.getSolenoidVal())<0.001) {
-            //StraightTrackSeeder trseed = new StraightTrackSeeder();
-            //seeds = trseed.findSeed(crosses.get(0), crosses.get(1), SVTGeom, BMTGeom, isSVTonly);
-            TrackSeederCA trseed = new TrackSeederCA();  // cellular automaton seeder
-            seeds = trseed.findSeed(crosses.get(0), crosses.get(1), SVTGeom, BMTGeom, swimmer);
+            StraightTrackSeeder trseed = new StraightTrackSeeder();
+            seeds = trseed.findSeed(crosses.get(0), crosses.get(1), SVTGeom, BMTGeom, isSVTonly);
+            //TrackSeederCA trseed = new TrackSeederCA();  // cellular automaton seeder
+            //seeds = trseed.findSeed(crosses.get(0), crosses.get(1), SVTGeom, BMTGeom, swimmer);
         } else {
             if(isSVTonly) {
                 TrackSeeder trseed = new TrackSeeder();
@@ -61,7 +62,6 @@ public class TracksFromTargetRec {
             } else {
                 TrackSeederCA trseed = new TrackSeederCA();  // cellular automaton seeder
                 seeds = trseed.findSeed(crosses.get(0), crosses.get(1), SVTGeom, BMTGeom, swimmer);
-                
             }
         }
         if(seeds ==null || seeds.size() == 0) {
@@ -89,7 +89,18 @@ public class TracksFromTargetRec {
             int charge = (int) (Math.signum(Constants.getSolenoidscale())*seed.get_Helix().get_charge());
             if(Math.abs(Constants.getSolenoidVal())<0.001)
                 charge = 1;
+            //
             
+//            DataBank bank = event.getBank("MC::Particle");
+//            px = (double)bank.getFloat("px", 0)*100;
+//            py = (double)bank.getFloat("py", 0)*100;
+//            pz = (double)bank.getFloat("pz", 0)*100;
+//            xr = (double)bank.getFloat("vx", 0)*10;
+//            yr = (double)bank.getFloat("vy", 0)*10;
+//            zr = (double)bank.getFloat("vz", 0)*10;
+//            
+            
+            //
             hlx = new org.jlab.clas.tracking.trackrep.Helix(xr,yr,zr,px,py,pz, 
                     charge, Constants.getSolenoidVal(), org.jlab.clas.tracking.trackrep.Helix.Units.MM);
 
@@ -105,32 +116,13 @@ public class TracksFromTargetRec {
 
                 kf.runFitter(swimmer);
                
-                if (kf.setFitFailed == false) {
-                    trkcands.add(recUtil.OutputTrack(seed, kf, SVTGeom));
+                if (kf.setFitFailed == false && kf.NDF>0) {
+                    trkcands.add(recUtil.OutputTrack(seed, kf, SVTGeom, BMTGeom));
                     trkcands.get(trkcands.size() - 1).set_TrackingStatus(2);
-                    for( Cross c : trkcands.get(trkcands.size() - 1) ) {
-                        if (Double.isNaN(c.get_Point0().x())) {
-
-                            Vector3D v = new Vector3D(kf.TrjPoints.get(c.getOrderedRegion()+3).px,
-                                    kf.TrjPoints.get(c.getOrderedRegion()+3).py,
-                                    kf.TrjPoints.get(c.getOrderedRegion()+3).pz).asUnit();
-                            c.set_Dir(v);
-                            c.set_Point(new Point3D(kf.TrjPoints.get(c.getOrderedRegion()+3).x,
-                                    kf.TrjPoints.get(c.getOrderedRegion()+3).y, c.get_Point().z()));
-                        }
-                        if (Double.isNaN(c.get_Point0().z())) {
-                            Vector3D v = new Vector3D(kf.TrjPoints.get(c.getOrderedRegion()+3).px,
-                                    kf.TrjPoints.get(c.getOrderedRegion()+3).py,
-                                    kf.TrjPoints.get(c.getOrderedRegion()+3).pz).asUnit();
-                            c.set_Dir(v);
-                            c.set_Point(new Point3D(c.get_Point().x(), c.get_Point().y(), 
-                            kf.TrjPoints.get(c.getOrderedRegion()+3).z));
-                        }
-                    }
                 }
             //} else {
-            //    trkcands.add(recUtil.OutputTrack(seed));
-            //    trkcands.get(trkcands.size() - 1).set_TrackingStatus(1);
+                //trkcands.add(recUtil.OutputTrack(seed));
+                //trkcands.get(trkcands.size() - 1).set_TrackingStatus(1);
             //}
         }
     

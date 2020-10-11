@@ -114,7 +114,8 @@ public class RecUtilities {
                     double x = trkcand.get_Crosses().get(c).get_Point().x();
                     double y = trkcand.get_Crosses().get(c).get_Point().y();
                     double phi = Math.atan2(y,x);
-                    double err = trkcand.get_Crosses().get(c).get_Cluster1().get_PhiErr();
+                    double err = trkcand.get_Crosses().get(c).get_Cluster1().get_PhiErr()
+                            *(org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[(trkcand.get_Crosses().get(c).get_Cluster1().get_Layer() + 1) / 2 - 1]+org.jlab.rec.cvt.bmt.Constants.hStrip2Det);
                     
                     Strip strp = new Strip(id, ce, x, y, phi);
                     //cyl.baseArc().setRadius(Math.sqrt(x*x+y*y));
@@ -153,7 +154,7 @@ public class RecUtilities {
     
     public void MatchTrack2Traj(Seed trkcand, Map<Integer, 
             org.jlab.clas.tracking.kalmanfilter.helical.KFitter.HitOnTrack> traj, 
-            org.jlab.rec.cvt.svt.Geometry sgeo) {
+            org.jlab.rec.cvt.svt.Geometry sgeo, org.jlab.rec.cvt.bmt.Geometry bgeo) {
         
         for (int i = 0; i < trkcand.get_Clusters().size(); i++) { //SVT
             if(trkcand.get_Clusters().get(i).get_Detector()==0) {
@@ -170,8 +171,9 @@ public class RecUtilities {
                     double doca1 = sgeo.getDOCAToStrip(sector, layer, (double) hit.get_Strip().get_Strip(), p);
                     double sigma1 = sgeo.getSingleStripResolution(layer, hit.get_Strip().get_Strip(), traj.get(layer).z);
                     hit.set_stripResolutionAtDoca(sigma1);
-                    hit.set_docaToTrk(doca2Cls);  
-
+                    hit.set_docaToTrk(doca1);  
+                    if(traj.get(layer).isMeasUsed)
+                        hit.set_TrkgStatus(1);
                 }
             }
         }
@@ -180,44 +182,50 @@ public class RecUtilities {
         for (int c = 0; c < trkcand.get_Crosses().size(); c++) {
             if (trkcand.get_Crosses().get(c).get_Detector().equalsIgnoreCase("BMT")) {
                 double ce = trkcand.get_Crosses().get(c).get_Cluster1().get_Centroid();
+                int layer = trkcand.get_Crosses().get(c).getOrderedRegion()+3;
+                Cluster cluster = trkcand.get_Crosses().get(c).get_Cluster1();
+                Point3D p = new Point3D(traj.get(layer).x, traj.get(layer).y, traj.get(layer).z);
+                Vector3D v = new Vector3D(traj.get(layer).px, traj.get(layer).py, traj.get(layer).pz).asUnit();
+                trkcand.get_Crosses().get(c).set_Dir(v); 
                 if (trkcand.get_Crosses().get(c).get_DetectorType().equalsIgnoreCase("Z")) {
-                    //double x = trkcand.get_Crosses().get(c).get_Point().x();
-                    //double y = trkcand.get_Crosses().get(c).get_Point().y();
-                    //double phi = Math.atan2(y,x);
-                    //double err = trkcand.get_Crosses().get(c).get_Cluster1().get_PhiErr();
-                    //int sector = trkcand.get_Crosses().get(c).get_Sector();
-                    int layer = trkcand.get_Crosses().get(c).get_Cluster1().get_Layer()+6;
-                    Cluster cluster = trkcand.get_Crosses().get(c).get_Cluster1();
-                    Point3D p = new Point3D(traj.get(layer).x, traj.get(layer).y, traj.get(layer).z);
-                    
-                    double doca2Cls = (Math.atan2(p.y(), p.x())-cluster.get_Phi())*
+                    trkcand.get_Crosses().get(c).set_Point(new Point3D(trkcand.get_Crosses().get(c).get_Point().x(),trkcand.get_Crosses().get(c).get_Point().y(),p.z()));
+                    double xc = trkcand.get_Crosses().get(c).get_Point().x();
+                    double yc = trkcand.get_Crosses().get(c).get_Point().y();
+                    double doca2Cls = (Math.atan2(p.y(), p.x())-Math.atan2(yc, xc))*
                             (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[cluster.get_Region() - 1] 
                             + org.jlab.rec.cvt.bmt.Constants.hStrip2Det);
-                    
                     cluster.set_CentroidResidual(doca2Cls);
 
                     for (FittedHit hit : cluster) {
-                        double doca1 = (Math.atan2(p.y(), p.x())-hit.get_Strip().get_Phi())*
+                        double xh = Math.cos(hit.get_Strip().get_Phi());
+                        double yh = Math.sin(hit.get_Strip().get_Phi());
+                        double doca1 = (Math.atan2(p.y(), p.x())-Math.atan2(yh, xh))*
                             (org.jlab.rec.cvt.bmt.Constants.getCRZRADIUS()[cluster.get_Region() - 1] 
                             + org.jlab.rec.cvt.bmt.Constants.hStrip2Det);
-                       
-                        hit.set_docaToTrk(doca2Cls);  
+                        
+                        if(hit.get_Strip().get_Strip()==cluster.get_SeedStrip())
+                            cluster.set_SeedResidual(doca1); 
+                        if(traj.get(layer).isMeasUsed)
+                            hit.set_TrkgStatus(1);
+                        hit.set_docaToTrk(doca1);  
 
                     }
                 }
                 if (trkcand.get_Crosses().get(c).get_DetectorType().equalsIgnoreCase("C")) {
                     double z = trkcand.get_Crosses().get(c).get_Point().z();
                     double err = trkcand.get_Crosses().get(c).get_Cluster1().get_ZErr();
-                    int layer = trkcand.get_Crosses().get(c).get_Cluster1().get_Layer()+6;
-                    Cluster cluster = trkcand.get_Crosses().get(c).get_Cluster1();
-                    Point3D p = new Point3D(traj.get(layer).x, traj.get(layer).y, traj.get(layer).z);
+                    trkcand.get_Crosses().get(c).set_Point(new Point3D(p.x(),p.y(),trkcand.get_Crosses().get(c).get_Point().z()));
                     double doca2Cls = p.z()-cluster.get_Z();
                     
                     cluster.set_CentroidResidual(doca2Cls);
 
                     for (FittedHit hit : cluster) {
                         double doca1 = p.z()-hit.get_Strip().get_Z();
-                        hit.set_docaToTrk(doca2Cls);  
+                        if(hit.get_Strip().get_Strip()==cluster.get_SeedStrip())
+                            cluster.set_SeedResidual(doca1); 
+                        if(traj.get(layer).isMeasUsed)
+                            hit.set_TrkgStatus(1);
+                        hit.set_docaToTrk(doca1);  
 
                     }
                 }
@@ -226,7 +234,7 @@ public class RecUtilities {
     }
     
     public Track OutputTrack(Seed seed, org.jlab.clas.tracking.kalmanfilter.helical.KFitter kf,
-            org.jlab.rec.cvt.svt.Geometry SVTGeom) {
+            org.jlab.rec.cvt.svt.Geometry SVTGeom, org.jlab.rec.cvt.bmt.Geometry BMTGeom) {
         org.jlab.rec.cvt.trajectory.Helix helix = new org.jlab.rec.cvt.trajectory.Helix(kf.KFHelix.getD0(), 
                 kf.KFHelix.getPhi0(), kf.KFHelix.getOmega(), 
                 kf.KFHelix.getZ0(), kf.KFHelix.getTanL());
@@ -240,8 +248,9 @@ public class RecUtilities {
                 continue;
             }
         }
+        
+        this.MatchTrack2Traj(seed, kf.TrjPoints, SVTGeom, BMTGeom);
         cand.addAll(seed.get_Crosses());
-        this.MatchTrack2Traj(seed, kf.TrjPoints, SVTGeom);
         return cand;
         
     }
