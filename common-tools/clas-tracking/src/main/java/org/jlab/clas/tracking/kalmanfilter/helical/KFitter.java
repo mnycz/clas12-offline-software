@@ -29,6 +29,7 @@ public class KFitter {
     
     private double _Xb;
     private double _Yb;
+    private double resiCut = 100;//residual cut for the measurements
     
     public void setMeasurements(List<Surface> measSurfaces) {
         mv.setMeasVecs(measSurfaces);
@@ -87,6 +88,21 @@ public class KFitter {
             sv.Z0.add(ref.z());
         }
         sv.init( helix, cov, this, swimmer);
+        this.NDF = mv.measurements.size()-6;
+    }
+
+    /**
+     * @return the resiCut
+     */
+    public double getResiCut() {
+        return resiCut;
+    }
+
+    /**
+     * @param resiCut the resiCut to set
+     */
+    public void setResiCut(double resiCut) {
+        this.resiCut = resiCut;
     }
 
     public int totNumIter = 5;
@@ -101,7 +117,7 @@ public class KFitter {
             for (int k = 0; k < sv.X0.size() - 1; k++) {
                 if (sv.trackCov.get(k) == null || mv.measurements.get(k + 1) == null) {
                     return;
-                }
+                } 
                 sv.transport(k, k + 1, sv.trackTraj.get(k), sv.trackCov.get(k), mv.measurements.get(k+1), 
                         swimmer); 
                 this.filter(k + 1, swimmer, 1); 
@@ -149,6 +165,8 @@ public class KFitter {
             double py = invKappa * Math.cos(azi);
             double pz = invKappa * sv.trackTraj.get(k).tanL;
             TrjPoints.put(layer, new HitOnTrack(layer, x, y, z, px, py, pz));
+            if(mv.measurements.get(k).skip)
+                TrjPoints.get(layer).isMeasUsed = false;
             //System.out.println(" Traj layer "+layer+" x "+TrjPoints.get(layer).x+" y "+TrjPoints.get(layer).y+" z "+TrjPoints.get(layer).z);
         }
     }
@@ -168,21 +186,28 @@ public class KFitter {
         double chi2 =0;
         m=0;
         h=0;
+        int ndf = -5;
         StateVec stv = sv.transported(0, 1, sv.trackTraj.get(0), mv.measurements.get(1), swimmer);
         double dh = mv.dh(1, stv);
-        chi2 = dh*dh / mv.measurements.get(1).error;
+        if(mv.measurements.get(1).skip==false) {
+            chi2 = dh*dh / mv.measurements.get(1).error;
+            ndf++;
+        }
         for(int k = 1; k< sv.X0.size()-1; k++) {
-            stv = sv.transported(k, k+1, stv, mv.measurements.get(k+1), swimmer);
-            dh = mv.dh(k+1, stv);
-            chi2 += dh*dh / mv.measurements.get(k+1).error;
+            if(mv.measurements.get(k+1).skip==false) {
+                stv = sv.transported(k, k+1, stv, mv.measurements.get(k+1), swimmer);
+                dh = mv.dh(k+1, stv);
+                chi2 += dh*dh / mv.measurements.get(k+1).error;
+                ndf++;
+            }
         }  
-       
         return chi2;
-
     }
+    
     private void filter(int k, Swim swimmer, int dir) {
 
-        if (sv.trackTraj.get(k) != null && sv.trackCov.get(k).covMat != null) {
+        if (sv.trackTraj.get(k) != null && sv.trackCov.get(k).covMat != null 
+                && mv.measurements.get(k).skip == false) {
 
             double[] K = new double[5];
             double V = mv.measurements.get(k).error;
@@ -240,11 +265,11 @@ public class KFitter {
                     K[j] += H[i] * sv.trackCov.get(k).covMat.get(j, i) / V;
                 } 
             }
-//            if(sv.straight == true) {
-//                for (int i = 0; i < 5; i++) {
-//                    K[i] = 0;
-//                }
-//            }
+            if(sv.straight == true) {
+                //for (int i = 0; i < 5; i++) {
+                    K[2] = 0;
+                //}
+            }
             double drho_filt = sv.trackTraj.get(k).d_rho;
             double phi0_filt = sv.trackTraj.get(k).phi0;
             double kappa_filt = sv.trackTraj.get(k).kappa;
@@ -269,7 +294,8 @@ public class KFitter {
             sv.setStateVecPosAtMeasSite(k, fVec, mv.measurements.get(k), swimmer); 
             
             double dh_filt = mv.dh(k, fVec);  
-            if (Math.abs(dh_filt) < Math.abs(dh)) { 
+            if (Math.abs(dh_filt) < Math.abs(dh) 
+                    && Math.abs(dh_filt)/Math.sqrt(V)<this.getResiCut()) { 
                 sv.trackTraj.get(k).d_rho = drho_filt;
                 sv.trackTraj.get(k).phi0 = phi0_filt;
                 sv.trackTraj.get(k).kappa = kappa_filt;
@@ -279,7 +305,10 @@ public class KFitter {
                 sv.trackTraj.get(k).x = fVec.x;
                 sv.trackTraj.get(k).y = fVec.y;
                 sv.trackTraj.get(k).z = fVec.z;
-            } 
+            } else {
+                this.NDF--;
+                mv.measurements.get(k).skip = true;
+            }
         }
     }
 
@@ -320,7 +349,7 @@ public class KFitter {
             (float)sv.phi0+", "+
             (float)sv.kappa+", "+
             (float)sv.dz+", "+
-            (float)sv.tanL+" xyz "+new Point3D(sv.x,sv.y,sv.z)+" phi "+Math.atan2(sv.y,sv.x));
+            (float)sv.tanL+" xyz "+new Point3D(sv.x,sv.y,sv.z)+" phi "+Math.toDegrees(Math.atan2(sv.y,sv.x))+" theta "+Math.toDegrees(Math.atan2(sv.y,sv.z-sv.dz)));
         System.out.println("  ");
     }
 
@@ -333,7 +362,8 @@ public class KFitter {
         public double px;
         public double py;
         public double pz;
-
+        public boolean isMeasUsed = true;
+        
         HitOnTrack(int layer, double x, double y, double z, double px, double py, double pz) {
             this.layer = layer;
             this.x = x;

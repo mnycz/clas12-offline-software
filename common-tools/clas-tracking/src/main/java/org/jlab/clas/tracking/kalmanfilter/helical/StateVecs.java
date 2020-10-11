@@ -80,9 +80,6 @@ public class StateVecs {
                 double ux = -(Math.signum(kVec.kappa)) * Math.sin(kVec.phi0);
                 double uy = (Math.signum(kVec.kappa)) * Math.cos(kVec.phi0);
                 double uz = (Math.signum(kVec.kappa)) * kVec.tanL;
-                double xf = 0;
-                double yf = 0;
-                double zf = 0;
                 
                 if(mv.surface.plane!=null) {
                     double alpha = (mv.surface.finitePlaneCorner2.y() - mv.surface.finitePlaneCorner1.y()) /
@@ -90,35 +87,31 @@ public class StateVecs {
                     double beta = mv.surface.finitePlaneCorner1.y() - alpha*mv.surface.finitePlaneCorner2.x();
                     
                     double l = (alpha*x -y + beta)/(uy - alpha*ux);
-                    xf = x+l*ux;
-                    yf = y+l*uy;
-                    zf = z+l*uz;
                     
-                    kVec.x = xf;
-                    kVec.y = yf;
-                    kVec.z = zf;
+                    kVec.x = x+l*ux;
+                    kVec.y = y+l*uy;
+                    kVec.z = z+l*uz;
                     
                 }
                 if(mv.surface.cylinder!=null) {
                     double r = 0.5*(mv.surface.cylinder.baseArc().radius()+mv.surface.cylinder.highArc().radius());
-                    double delta = Math.sqrt((ux+uy)*(ux+uy) - (ux*ux+uy*uy)*(x*x+y*y-r*r));
-                    double l = (-(ux+uy)+delta)/(ux*ux+uy*uy);
+                    double delta = Math.sqrt((x*ux+y*uy)*(x*ux+y*uy)-(-r*r+x*x+y*y)*(ux*ux+uy*uy));
+                    double l = (-(x*ux+y*uy)+delta)/(ux*ux+uy*uy);
                     double phi = Math.atan2(trackTraj.get(k-1).y,trackTraj.get(k-1).x);
                     double phiref = Math.atan2(y+l*uy, x+l*ux);
                     
                     if(Math.abs(phiref-phi)>Math.PI/2) {
-                        l = (-(ux+uy)-delta)/(ux*ux+uy*uy); 
+                        l = (-(x*ux+y*uy)-delta)/(ux*ux+uy*uy); 
                     } 
-                    xf = x+l*ux;
-                    yf = y+l*uy;
-                    zf = z+l*uz;
-                    kVec.x = xf;
-                    kVec.y = yf;
-                    kVec.z = zf;
+                    
+                    kVec.x = x+l*ux;
+                    kVec.y = y+l*uy;
+                    kVec.z = z+l*uz;
+                     
                 }
-                value[0] = xf;
-                value[1] = yf;
-                value[2] = zf;
+                value[0] = kVec.x;
+                value[1] = kVec.y;
+                value[2] = kVec.z;
                 value[3] = this.calcPhi(kVec);
                 
                 return value;

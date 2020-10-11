@@ -71,8 +71,8 @@ public class MeasVecs {
                 this.measurements.get(stateVec.k).surface.lineEndPoint2);
                 value = l.distance(new Point3D(stateVec.x, stateVec.y, stateVec.z)).length();
             }
-            if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.Z) {
-               value = stateVec.z-this.measurements.get(stateVec.k).surface.strip.getZ();
+            if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.Z) { 
+                value = stateVec.z-this.measurements.get(stateVec.k).surface.strip.getZ();
             }
             if(this.measurements.get(stateVec.k).surface.strip.type == Strip.Type.PHI) {
                value = Math.atan2(stateVec.y, stateVec.x)-this.measurements.get(stateVec.k).surface.strip.getPhi();
@@ -183,16 +183,11 @@ public class MeasVecs {
     
     public class MeasVec implements Comparable<MeasVec> {
         public Surface surface;
-        //public double x = Double.NaN; 
-        //public double y = Double.NaN; 
-        //public double z = Double.NaN; 
-        //public double value = Double.NaN; 
-        //public double error = Double.NaN;
-        //public Type type  = Type.UDF; 
         public int layer    = -1;
         public int sector   = -1;
         public double error = 1;
         public int k        = -1;
+        public boolean skip = false;
 
 
 
