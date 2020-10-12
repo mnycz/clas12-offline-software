@@ -77,36 +77,34 @@ public class StateVecs {
             }
             
             if(this.straight) {
-                double ux = -(Math.signum(kVec.kappa)) * Math.sin(kVec.phi0);
-                double uy = (Math.signum(kVec.kappa)) * Math.cos(kVec.phi0);
-                double uz = (Math.signum(kVec.kappa)) * kVec.tanL;
+                Vector3D u = new Vector3D(-(Math.signum(kVec.kappa)) * Math.sin(kVec.phi0),
+                                        (Math.signum(kVec.kappa)) * Math.cos(kVec.phi0),
+                                        (Math.signum(kVec.kappa)) * kVec.tanL).asUnit();
                 
                 if(mv.surface.plane!=null) {
                     double alpha = (mv.surface.finitePlaneCorner2.y() - mv.surface.finitePlaneCorner1.y()) /
                             (mv.surface.finitePlaneCorner2.x() - mv.surface.finitePlaneCorner1.x());
-                    double beta = mv.surface.finitePlaneCorner1.y() - alpha*mv.surface.finitePlaneCorner2.x();
+                    double l = (alpha*(x-mv.surface.finitePlaneCorner1.x()) -(y-mv.surface.finitePlaneCorner1.y()))/(u.y() - alpha*u.x());
                     
-                    double l = (alpha*x -y + beta)/(uy - alpha*ux);
-                    
-                    kVec.x = x+l*ux;
-                    kVec.y = y+l*uy;
-                    kVec.z = z+l*uz;
+                    kVec.x = x+l*u.x();
+                    kVec.y = y+l*u.y();
+                    kVec.z = z+l*u.z();
                     
                 }
                 if(mv.surface.cylinder!=null) {
                     double r = 0.5*(mv.surface.cylinder.baseArc().radius()+mv.surface.cylinder.highArc().radius());
-                    double delta = Math.sqrt((x*ux+y*uy)*(x*ux+y*uy)-(-r*r+x*x+y*y)*(ux*ux+uy*uy));
-                    double l = (-(x*ux+y*uy)+delta)/(ux*ux+uy*uy);
+                    double delta = Math.sqrt((x*u.x()+y*u.y())*(x*u.x()+y*u.y())-(-r*r+x*x+y*y)*(u.x()*u.x()+u.y()*u.y()));
+                    double l = (-(x*u.x()+y*u.y())+delta)/(u.x()*u.x()+u.y()*u.y());
                     double phi = Math.atan2(trackTraj.get(k-1).y,trackTraj.get(k-1).x);
-                    double phiref = Math.atan2(y+l*uy, x+l*ux);
+                    double phiref = Math.atan2(y+l*u.y(), x+l*u.x());
                     
                     if(Math.abs(phiref-phi)>Math.PI/2) {
-                        l = (-(x*ux+y*uy)-delta)/(ux*ux+uy*uy); 
+                        l = (-(x*u.x()+y*u.y())-delta)/(u.x()*u.x()+u.y()*u.y()); 
                     } 
                     
-                    kVec.x = x+l*ux;
-                    kVec.y = y+l*uy;
-                    kVec.z = z+l*uz;
+                    kVec.x = x+l*u.x();
+                    kVec.y = y+l*u.y();
+                    kVec.z = z+l*u.z();
                      
                 }
                 value[0] = kVec.x;
