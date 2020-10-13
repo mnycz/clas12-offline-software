@@ -159,6 +159,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		reader.fetch_Cosmics(event, SVTGeom, 0);
 		List<StraightTrack> straightTracks = reader.get_Cosmics();
 
+		
 		//System.out.println("H");
 		List<Matrix> Is = new ArrayList<Matrix>();
 		List<Matrix> As = new ArrayList<Matrix>();
@@ -168,6 +169,8 @@ public class CVTAlignment extends ReconstructionEngine {
 		List<Matrix> cs = new ArrayList<Matrix>();
 		List<Integer> trackIDs = new ArrayList<Integer>();
 		for (StraightTrack track : straightTracks) {
+			if(getDoca(track)> maxDocaCut)
+				continue;
 			/*System.out.println("track read: ");
 			System.out.println("track chi2: "+ track.get_chi2());
 			System.out.println("ndf: "+ track.get_ndf());
@@ -232,6 +235,14 @@ public class CVTAlignment extends ReconstructionEngine {
 
 	}
 	
+	private double getDoca(StraightTrack track) {
+		// TODO Auto-generated method stub
+		Ray ray = track.get_ray();
+		double intercept = ray.get_yxinterc();
+		double slope = ray.get_yxslope();
+		return Math.abs(intercept)/Math.hypot(1, slope);
+	}
+
 	private void fillMisc(DataEvent event, int runNum, int eventNum, List<Integer> trackIDs, 
 			List<Matrix> As, List<Matrix> Bs, List<Matrix> Vs, List<Matrix> ms, List<Matrix> cs,
 			List<Matrix> is) {
@@ -467,8 +478,22 @@ public class CVTAlignment extends ReconstructionEngine {
 			System.out.println("["+this.getName()+"] obtain alignment derivatives for all 6 variables (default) ");
 			this.setAlignVars("Tx Ty Tz Rx Ry Rz");
 		}
+		
+		
+		String maxDocaCut = this.getEngineConfigString("maxDocaCut");
+		
+		if(maxDocaCut != null) {
+			System.out.println("["+this.getName()+"] max doca cut "+ maxDocaCut + " mm");
+			this.maxDocaCut = Double.parseDouble(maxDocaCut);
+		}
+		else {
+			System.out.println("["+this.getName()+"] no max doca cut set (default)");
+			this.maxDocaCut = Double.MAX_VALUE;
+		}
 		return true;
 	}
+	
+	double maxDocaCut;
 	
 
 
