@@ -1,6 +1,5 @@
 package cnuphys.rk4;
 
-import java.util.ArrayDeque;
 import java.util.List;
 
 /**
@@ -17,19 +16,13 @@ public class RungeKutta {
 
 	public static double DEFMINSTEPSIZE = 1.0e-5;
 	public static double DEFMAXSTEPSIZE = 0.4;
-	
+
 	private double _minStepSize = DEFMINSTEPSIZE;
 	private double _maxStepSize = DEFMAXSTEPSIZE;
 
 	// the max dimension we'll use is probably 6, for state vectors
-	// [x,y,z,vx,vy,vz].
+	// e.g., [x, y, z, px/p, py/p, pz/p].
 	private static int MAXDIM = 6; // we'll know if this fails!
-	
-	//object cache
-	private ArrayDeque<HalfStepAdvance> _hafStepAdvCache = new ArrayDeque<>();
-
-	//object cache
-	private ArrayDeque<double []> _workArrayCache = new ArrayDeque<>(); 
 
 	/**
 	 * Create a RungeKutta object that can be used for integration
@@ -38,50 +31,38 @@ public class RungeKutta {
 	}
 
 	/**
-	 * Driver that uses the RungeKutta advance with a uniform step size. (i.e.,
-	 * this does NOT use an adaptive step size.)
+	 * Driver that uses the RungeKutta advance with a uniform step size. (i.e., this
+	 * does NOT use an adaptive step size.)
 	 * 
-	 * This version stores each step into the arrays t[] and y[][]. An
-	 * alternative does not store the results but instead uses an IRk4Listener
-	 * to notify the listener that the next step has been advanced.
+	 * This version stores each step into the arrays t[] and y[][]. An alternative
+	 * does not store the results but instead uses an IRk4Listener to notify the
+	 * listener that the next step has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param y
-	 *            will be filled with results. The first index is small-- the
-	 *            dimensionality of the problem-- i.e., often it is 6 for (xo,
-	 *            yo, zo, vxo, vyo, vzo). The second dimension is for storing
-	 *            results and determining stepsize. If it is 1000, we will have
-	 *            a thousand steps and the stepsize will be (tf-to)/1000
-	 *            (actually 999).
-	 * @param t
-	 *            will filled with the locations of t--should have the exact
-	 *            same large dimension as the second index of y--i.e., something
-	 *            like 1000.
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @return the number of steps used--may be less than the space provided if
-	 *         the integration ended early as a result of an exit condition.
+	 * @param yo      initial values. Probably something like (xo, yo, zo, vxo, vyo,
+	 *                vzo).
+	 * @param to      the initial value of the independent variable, e.g., time.
+	 * @param tf      the maximum value of the independent variable.
+	 * @param y       will be filled with results. The first index is small-- the
+	 *                dimensionality of the problem-- i.e., often it is 6 for (xo,
+	 *                yo, zo, vxo, vyo, vzo). The second dimension is for storing
+	 *                results and determining stepsize. If it is 1000, we will have
+	 *                a thousand steps and the stepsize will be (tf-to)/1000
+	 *                (actually 999).
+	 * @param t       will filled with the locations of t--should have the exact
+	 *                same large dimension as the second index of y--i.e., something
+	 *                like 1000.
+	 * @param deriv   the derivative computer (interface). This is where the problem
+	 *                specificity resides.
+	 * @param stopper if not <code>null</code> will be used to exit the integration
+	 *                early because some condition has been reached.
+	 * @return the number of steps used--may be less than the space provided if the
+	 *         integration ended early as a result of an exit condition.
 	 */
-	public int uniformStep(double yo[],
-			double to,
-			double tf,
-			final double y[][],
-			final double t[],
-			IDerivative deriv,
+	public int uniformStep(double yo[], double to, double tf, final double y[][], final double t[], IDerivative deriv,
 			IStopper stopper) {
 		int nstep = t.length; // the number of steps to store
 
@@ -89,7 +70,8 @@ public class RungeKutta {
 		final int nDim = yo.length;
 
 		// uniform step size
-		double h = (tf - to) / (nstep - 1);
+		double h = (tf - to) / nstep;
+	//	double h = (tf - to) / (nstep - 1);
 
 		// put starting step in
 		t[0] = to;
@@ -116,43 +98,30 @@ public class RungeKutta {
 		return uniformStep(yo, to, tf, h, deriv, stopper, listener);
 
 	}
-	
-
 
 	/**
 	 * Integrator that uses the standard RK4 advance with a uniform step size.
 	 * (i.e., this does NOT use an adaptive step size.)
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param listener
-	 *            listens for each step
+	 * @param yo       initial values. Probably something like (xo, yo, zo, vxo,
+	 *                 vyo, vzo).
+	 * @param to       the initial value of the independent variable, e.g., time.
+	 * @param tf       the maximum value of the independent variable.
+	 * @param deriv    the derivative computer (interface). This is where the
+	 *                 problem specificity resides.
+	 * @param stopper  if not <code>null</code> will be used to exit the integration
+	 *                 early because some condition has been reached.
+	 * @param listener listens for each step
 	 * @return the number of steps used.
 	 */
-	public int uniformStep(double yo[],
-			double to,
-			double tf,
-			double h,
-			IDerivative deriv,
-			IStopper stopper,
+	public int uniformStep(double yo[], double to, double tf, double h, IDerivative deriv, IStopper stopper,
 			IRkListener listener) {
 
 		UniformAdvance advancer = new UniformAdvance();
@@ -163,100 +132,69 @@ public class RungeKutta {
 	 * Integrator that uses the RungeKutta advance with a Butcher Tableau and
 	 * constant stepsize. (i.e., this does NOT use an adaptive step size.)
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param listener
-	 *            listens for each step
-	 * @param tableau
-	 *            the Butcher Tableau
+	 * @param yo       initial values. Probably something like (xo, yo, zo, vxo,
+	 *                 vyo, vzo).
+	 * @param to       the initial value of the independent variable, e.g., time.
+	 * @param tf       the maximum value of the independent variable.
+	 * @param deriv    the derivative computer (interface). This is where the
+	 *                 problem specificity resides.
+	 * @param stopper  if not <code>null</code> will be used to exit the integration
+	 *                 early because some condition has been reached.
+	 * @param listener listens for each step
+	 * @param tableau  the Butcher Tableau
 	 * @return the number of steps used.
 	 */
-	public int uniformStep(double yo[],
-			double to,
-			double tf,
-			double h,
-			IDerivative deriv,
-			IStopper stopper,
-			IRkListener listener,
-			ButcherTableau tableau) {
+	public int uniformStep(double yo[], double to, double tf, double h, IDerivative deriv, IStopper stopper,
+			IRkListener listener, ButcherTableau tableau) {
 
 		ButcherTableauAdvance advancer = new ButcherTableauAdvance(tableau);
 		return driver(yo, to, tf, h, deriv, stopper, listener, advancer);
 	}
 
-
 	/**
 	 * Integrator that uses the RungeKutta advance with a Butcher Tableau and
 	 * adaptive stepsize and a tolerance vector.
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param h
-	 *            the starting steps size
-	 * @param t
-	 *            a list of the values of t at each step
-	 * @param y
-	 *            a list of the values of the state vector at each step
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param tableau
-	 *            the Butcher Tableau
-	 * @param relTolerance
-	 *            the error tolerance as fractional diffs. Note it is a vector,
-	 *            the same dimension of the problem, e.g., 6 for
-	 *            [x,y,z,vx,vy,vz].
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param yo           initial values. Probably something like (xo, yo, zo, vxo,
+	 *                     vyo, vzo).
+	 * @param to           the initial value of the independent variable, e.g.,
+	 *                     time.
+	 * @param tf           the maximum value of the independent variable.
+	 * @param h            the starting steps size
+	 * @param t            a list of the values of t at each step
+	 * @param y            a list of the values of the state vector at each step
+	 * @param deriv        the derivative computer (interface). This is where the
+	 *                     problem specificity resides.
+	 * @param stopper      if not <code>null</code> will be used to exit the
+	 *                     integration early because some condition has been
+	 *                     reached.
+	 * @param tableau      the Butcher Tableau
+	 * @param relTolerance the error tolerance as fractional diffs. Note it is a
+	 *                     vector, the same dimension of the problem, e.g., 6 for
+	 *                     [x,y,z,vx,vy,vz].
+	 * @param hdata        if not null, should be double[3]. Upon return, hdata[0]
+	 *                     is the min stepsize used, hdata[1] is the average
+	 *                     stepsize used, and hdata[2] is the max stepsize used
 	 * @return the number of steps used.
 	 * @throws RungeKuttaException
 	 */
-	public int adaptiveStep(double yo[],
-			double to,
-			double tf,
-			double h,
-			final List<Double> t,
-			final List<double[]> y,
-			IDerivative deriv,
-			IStopper stopper,
-			ButcherTableau tableau,
-			double relTolerance[],
-			double hdata[]) throws RungeKuttaException {
+	public int adaptiveStep(double yo[], double to, double tf, double h, final List<Double> t, final List<double[]> y,
+			IDerivative deriv, IStopper stopper, ButcherTableau tableau, double relTolerance[], double hdata[])
+			throws RungeKuttaException {
 
 		// put starting step in
 		t.add(to);
@@ -276,194 +214,132 @@ public class RungeKutta {
 
 		return adaptiveStep(yo, to, tf, h, deriv, stopper, listener, tableau, relTolerance, hdata);
 	}
-	
-
 
 	/**
 	 * Integrator that uses the RungeKutta advance with a Butcher Tableau and
 	 * adaptive stepsize
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param h
-	 *            the starting steps size
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param listener
-	 *            listens for each step
-	 * @param tableau
-	 *            the Butcher Tableau
-	 * @param relTolerance
-	 *            the error tolerance as fractional diffs. Note it is a vector,
-	 *            the same
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param yo           initial values. Probably something like (xo, yo, zo, vxo,
+	 *                     vyo, vzo).
+	 * @param to           the initial value of the independent variable, e.g.,
+	 *                     time.
+	 * @param tf           the maximum value of the independent variable.
+	 * @param h            the starting steps size
+	 * @param deriv        the derivative computer (interface). This is where the
+	 *                     problem specificity resides.
+	 * @param stopper      if not <code>null</code> will be used to exit the
+	 *                     integration early because some condition has been
+	 *                     reached.
+	 * @param listener     listens for each step
+	 * @param tableau      the Butcher Tableau
+	 * @param relTolerance the error tolerance as fractional diffs. Note it is a
+	 *                     vector, the same
+	 * @param hdata        if not null, should be double[3]. Upon return, hdata[0]
+	 *                     is the min stepsize used, hdata[1] is the average
+	 *                     stepsize used, and hdata[2] is the max stepsize used
 	 * @return the number of steps used.
 	 * @throws RungeKuttaException
 	 */
-	public int adaptiveStep(double yo[],
-			double to,
-			double tf,
-			double h,
-			IDerivative deriv,
-			IStopper stopper,
-			IRkListener listener,
-			ButcherTableau tableau,
-			double relTolerance[],
-			double hdata[]) throws RungeKuttaException {
+	public int adaptiveStep(double yo[], double to, double tf, double h, IDerivative deriv, IStopper stopper,
+			IRkListener listener, ButcherTableau tableau, double relTolerance[], double hdata[])
+			throws RungeKuttaException {
 
 		// ButcherTableauAdvance advancer = new ButcherTableauAdvance(tableau);
 		// use a simple half-step advance
 		IAdvance advancer = new HalfStepAdvance();
 		return driver(yo, to, tf, h, deriv, stopper, listener, advancer, relTolerance, hdata);
 	}
-	
 
 	/**
 	 * Integrator that uses the RungeKutta advance with a Butcher Tableau and
 	 * adaptive stepsize
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param yf  space for final state vector
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param h
-	 *            the starting steps size
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param tableau
-	 *            the Butcher Tableau
-	 * @param relTolerance
-	 *            the error tolerance as fractional diffs. Note it is a vector,
-	 *            the same
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param yo           initial values. Probably something like (xo, yo, zo, vxo,
+	 *                     vyo, vzo).
+	 * @param yf           space for final state vector
+	 * @param to           the initial value of the independent variable, e.g.,
+	 *                     time.
+	 * @param tf           the maximum value of the independent variable.
+	 * @param h            the starting steps size
+	 * @param deriv        the derivative computer (interface). This is where the
+	 *                     problem specificity resides.
+	 * @param stopper      if not <code>null</code> will be used to exit the
+	 *                     integration early because some condition has been
+	 *                     reached.
+	 * @param tableau      the Butcher Tableau
+	 * @param relTolerance the error tolerance as fractional diffs. Note it is a
+	 *                     vector, the same
+	 * @param hdata        if not null, should be double[3]. Upon return, hdata[0]
+	 *                     is the min stepsize used, hdata[1] is the average
+	 *                     stepsize used, and hdata[2] is the max stepsize used
 	 * @return the number of steps used.
 	 * @throws RungeKuttaException
 	 */
-	public int adaptiveStep(double yo[],
-			double yf[],
-			double to,
-			double tf,
-			double h,
-			double maxH,
-			IDerivative deriv,
-			IStopper stopper,
-			ButcherTableau tableau,
-			double relTolerance[],
-			double hdata[]) throws RungeKuttaException {
+	public int adaptiveStep(double yo[], double yf[], double to, double tf, double h, double maxH, IDerivative deriv,
+			IStopper stopper, ButcherTableau tableau, double relTolerance[], double hdata[])
+			throws RungeKuttaException {
 
 		// ButcherTableauAdvance advancer = new ButcherTableauAdvance(tableau);
 		// use a simple half-step advance
-		
-		HalfStepAdvance advancer;
-		if (_hafStepAdvCache.isEmpty()) {
-			advancer = new HalfStepAdvance();
-		}
-		else {
-			advancer = _hafStepAdvCache.pop();
-		}
+
+		HalfStepAdvance advancer = new HalfStepAdvance();
 
 		int n = driver(yo, yf, to, tf, h, maxH, deriv, stopper, advancer, relTolerance, hdata);
-		_hafStepAdvCache.push(advancer);
 		return n;
 	}
 
-
 	/**
 	 * Integrator that uses the RungeKutta advance with a Butcher Tableau and
-	 * adaptive stepsize. This uses an desired absolute error relative to some
-	 * scale (of max values of the dependent variables)
+	 * adaptive stepsize. This uses an desired absolute error relative to some scale
+	 * (of max values of the dependent variables)
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param h
-	 *            the starting steps size
-	 * @param t
-	 *            a list of the values of t at each step
-	 * @param y
-	 *            a list of the values of the state vector at each step
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param tableau
-	 *            the Butcher Tableau
-	 * @param eps
-	 *            the required accuracy
-	 * @param yscale
-	 *            scale the error against this array. It can be the approximate
-	 *            max value of each component of y, which gives you constant
-	 *            absolute errors, or it can be null in which case y will be
-	 *            used and you have constant relative error.
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param yo      initial values. Probably something like (xo, yo, zo, vxo, vyo,
+	 *                vzo).
+	 * @param to      the initial value of the independent variable, e.g., time.
+	 * @param tf      the maximum value of the independent variable.
+	 * @param h       the starting steps size
+	 * @param t       a list of the values of t at each step
+	 * @param y       a list of the values of the state vector at each step
+	 * @param deriv   the derivative computer (interface). This is where the problem
+	 *                specificity resides.
+	 * @param stopper if not <code>null</code> will be used to exit the integration
+	 *                early because some condition has been reached.
+	 * @param tableau the Butcher Tableau
+	 * @param eps     the required accuracy
+	 * @param yscale  scale the error against this array. It can be the approximate
+	 *                max value of each component of y, which gives you constant
+	 *                absolute errors, or it can be null in which case y will be
+	 *                used and you have constant relative error.
+	 * @param hdata   if not null, should be double[3]. Upon return, hdata[0] is the
+	 *                min stepsize used, hdata[1] is the average stepsize used, and
+	 *                hdata[2] is the max stepsize used
 	 * @return the number of steps used.
 	 * @throws RungeKuttaException
 	 */
-	public int adaptiveStep(double yo[],
-			double to,
-			double tf,
-			double h,
-			final List<Double> t,
-			final List<double[]> y,
-			IDerivative deriv,
-			IStopper stopper,
-			ButcherTableau tableau,
-			double eps,
-			double yscale[],
-			double hdata[]) throws RungeKuttaException {
+	public int adaptiveStep(double yo[], double to, double tf, double h, final List<Double> t, final List<double[]> y,
+			IDerivative deriv, IStopper stopper, ButcherTableau tableau, double eps, double yscale[], double hdata[])
+			throws RungeKuttaException {
 
 		// put starting step in
 		t.add(to);
@@ -484,60 +360,41 @@ public class RungeKutta {
 
 	/**
 	 * Integrator that uses the RungeKutta advance with a Butcher Tableau and
-	 * adaptive stepsize. This uses an desired absolute error relative to some
-	 * scale (of max values of the dependent variables)
+	 * adaptive stepsize. This uses an desired absolute error relative to some scale
+	 * (of max values of the dependent variables)
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param h
-	 *            the starting steps size
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param listener
-	 *            listens for each step
-	 * @param tableau
-	 *            the Butcher Tableau
-	 * @param eps
-	 *            the required accuracy
-	 * @param yscale
-	 *            scale the error against this array. It can be the approximate
-	 *            max value of each component of y, which gives you constant
-	 *            absolute errors, or it can be null in which case y will be
-	 *            used and you have constant relative error.
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param yo       initial values. Probably something like (xo, yo, zo, vxo,
+	 *                 vyo, vzo).
+	 * @param to       the initial value of the independent variable, e.g., time.
+	 * @param tf       the maximum value of the independent variable.
+	 * @param h        the starting steps size
+	 * @param deriv    the derivative computer (interface). This is where the
+	 *                 problem specificity resides.
+	 * @param stopper  if not <code>null</code> will be used to exit the integration
+	 *                 early because some condition has been reached.
+	 * @param listener listens for each step
+	 * @param tableau  the Butcher Tableau
+	 * @param eps      the required accuracy
+	 * @param yscale   scale the error against this array. It can be the approximate
+	 *                 max value of each component of y, which gives you constant
+	 *                 absolute errors, or it can be null in which case y will be
+	 *                 used and you have constant relative error.
+	 * @param hdata    if not null, should be double[3]. Upon return, hdata[0] is
+	 *                 the min stepsize used, hdata[1] is the average stepsize used,
+	 *                 and hdata[2] is the max stepsize used
 	 * @return the number of steps used.
 	 * @throws RungeKuttaException
 	 */
-	public int adaptiveStep(double yo[],
-			double to,
-			double tf,
-			double h,
-			IDerivative deriv,
-			IStopper stopper,
-			IRkListener listener,
-			ButcherTableau tableau,
-			double eps,
-			double yscale[],
-			double hdata[]) throws RungeKuttaException {
+	public int adaptiveStep(double yo[], double to, double tf, double h, IDerivative deriv, IStopper stopper,
+			IRkListener listener, ButcherTableau tableau, double eps, double yscale[], double hdata[])
+			throws RungeKuttaException {
 
 		// ButcherTableauAdvance advancer = new ButcherTableauAdvance(tableau);
 		// use a simple half-step advance
@@ -557,39 +414,28 @@ public class RungeKutta {
 	}
 
 	/**
-	 * Driver that uses the RungeKutta advance with a uniform step size. (I.e.,
-	 * this does NOT use an adaptive step size.)
+	 * Driver that uses the RungeKutta advance with a uniform step size. (I.e., this
+	 * does NOT use an adaptive step size.)
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
+	 * @param yo      initial values. Probably something like (xo, yo, zo, vxo, vyo,
+	 *                vzo).
+	 * @param to      the initial value of the independent variable, e.g., time.
+	 * @param tf      the maximum value of the independent variable.
+	 * @param deriv   the derivative computer (interface). This is where the problem
+	 *                specificity resides.
+	 * @param stopper if not <code>null</code> will be used to exit the integration
+	 *                early because some condition has been reached.
 	 * @return the number of steps used.
 	 */
-	private int driver(double yo[],
-			double to,
-			double tf,
-			double h,
-			IDerivative deriv,
-			IStopper stopper,
-			IRkListener listener,
-			IAdvance advancer) {
+	private int driver(double yo[], double to, double tf, double h, IDerivative deriv, IStopper stopper,
+			IRkListener listener, IAdvance advancer) {
 		int nstep = (int) (1 + (tf - to) / h); // the number of steps to store
 
 		// the dimensionality of the problem. E.., 6 if (x, y, z, vx, vy, vz)
@@ -629,58 +475,40 @@ public class RungeKutta {
 		return nstep;
 	}
 
-
-
 	/**
 	 * Driver that uses the RungeKutta advance with an adaptive step size
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param h
-	 *            the step size
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param listener
-	 *            listens for each step
-	 * @param advancer
-	 *            takes the next step
-	 * @param relTolerance
-	 *            the error tolerance as fractional diffs. Note it is a vector,
-	 *            the same
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param yo           initial values. Probably something like (xo, yo, zo, vxo,
+	 *                     vyo, vzo).
+	 * @param to           the initial value of the independent variable, e.g.,
+	 *                     time.
+	 * @param tf           the maximum value of the independent variable.
+	 * @param h            the step size
+	 * @param deriv        the derivative computer (interface). This is where the
+	 *                     problem specificity resides.
+	 * @param stopper      if not <code>null</code> will be used to exit the
+	 *                     integration early because some condition has been
+	 *                     reached.
+	 * @param listener     listens for each step
+	 * @param advancer     takes the next step
+	 * @param relTolerance the error tolerance as fractional diffs. Note it is a
+	 *                     vector, the same
+	 * @param hdata        if not null, should be double[3]. Upon return, hdata[0]
+	 *                     is the min stepsize used, hdata[1] is the average
+	 *                     stepsize used, and hdata[2] is the max stepsize used
 	 * @return the number of steps used.
-	 * @throw(new RungeKuttaException("Step size too small in Runge Kutta
-	 *            driver" ));
+	 * @throw(new RungeKuttaException("Step size too small in Runge Kutta driver"
+	 *            ));
 	 */
-	private int driver(double yo[],
-			double to,
-			double tf,
-			double h,
-			IDerivative deriv,
-			IStopper stopper,
-			IRkListener listener,
-			IAdvance advancer,
-			double relTolerance[],
-			double hdata[]) throws RungeKuttaException {
+	private int driver(double yo[], double to, double tf, double h, IDerivative deriv, IStopper stopper,
+			IRkListener listener, IAdvance advancer, double relTolerance[], double hdata[]) throws RungeKuttaException {
 
 		// if our advancer does not compute error we can't use adaptive stepsize
 		if (!advancer.computesError()) {
@@ -712,6 +540,7 @@ public class RungeKutta {
 		}
 
 		int nstep = 0;
+//		System.err.println("------   h = " + h + "   so = " + to + "   sf = " + tf);
 		while (t < tf) {
 			// use derivs at previous t
 			deriv.derivative(t, yt, dydt);
@@ -730,11 +559,12 @@ public class RungeKutta {
 
 			if (decreaseStep) {
 				h = h / 2;
+				
+//				System.err.println("ADAPT SHRINK h = " + h);
 				if (h < _minStepSize) {
 					throw (new RungeKuttaException("Step size too small in Runge Kutta driver (A)"));
 				}
-			}
-			else { // accepted this step
+			} else { // accepted this step
 
 				if (hdata != null) {
 					hdata[0] = Math.min(hdata[0], h);
@@ -772,6 +602,7 @@ public class RungeKutta {
 				// System.err.println("HEY MAN (A) h = " + h);
 				h *= HGROWTH;
 				h = Math.min(h, _maxStepSize);
+//				System.err.println("ADAPT GROW h = " + h);
 
 			} // max error < tolerance
 		}
@@ -783,58 +614,41 @@ public class RungeKutta {
 		}
 		return nstep;
 	}
-	
 
 	/**
 	 * Driver that uses the RungeKutta advance with an adaptive step size
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param uo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param uf  space to hold the final values           
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param h
-	 *            the step size
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param advancer
-	 *            takes the next step
-	 * @param relTolerance
-	 *            the error tolerance as fractional diffs. Note it is a vector,
-	 *            the same
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param uo           initial values. Probably something like (xo, yo, zo, vxo,
+	 *                     vyo, vzo).
+	 * @param uf           space to hold the final values
+	 * @param to           the initial value of the independent variable, e.g.,
+	 *                     time.
+	 * @param tf           the maximum value of the independent variable.
+	 * @param h            the step size
+	 * @param deriv        the derivative computer (interface). This is where the
+	 *                     problem specificity resides.
+	 * @param stopper      if not <code>null</code> will be used to exit the
+	 *                     integration early because some condition has been
+	 *                     reached.
+	 * @param advancer     takes the next step
+	 * @param relTolerance the error tolerance as fractional diffs. Note it is a
+	 *                     vector, the same
+	 * @param hdata        if not null, should be double[3]. Upon return, hdata[0]
+	 *                     is the min stepsize used, hdata[1] is the average
+	 *                     stepsize used, and hdata[2] is the max stepsize used
 	 * @return the number of steps used.
-	 * @throw(new RungeKuttaException("Step size too small in Runge Kutta
-	 *            driver" ));
+	 * @throw(new RungeKuttaException("Step size too small in Runge Kutta driver"
+	 *            ));
 	 */
-	private int driver(double uo[],
-			double uf[],
-			double to,
-			double tf,
-			double h,
-			double maxH,
-			IDerivative deriv,
-			IStopper stopper,
-			IAdvance advancer,
-			double relTolerance[],
-			double hdata[]) throws RungeKuttaException {
+	private int driver(double uo[], double uf[], double to, double tf, double h, double maxH, IDerivative deriv,
+			IStopper stopper, IAdvance advancer, double relTolerance[], double hdata[]) throws RungeKuttaException {
 
 		// the dimensionality of the problem. E.., 6 if (x, y, z, vx, vy, vz)
 		int nDim = uo.length;
@@ -852,16 +666,14 @@ public class RungeKutta {
 			hdata[2] = h;
 		}
 
-
 		// yf is the current value of the state vector,
 		// typically [x, y, z, vx, vy, vz] and derivative
-		
 
-		double yt[] = getWorkArrayFromCache();
-		double yt2[] = getWorkArrayFromCache();
-		double dydt[] = getWorkArrayFromCache();
+		double yt[] = new double[nDim];
+		double yt2[] = new double[nDim];
+		double dydt[] = new double[nDim];
 		System.arraycopy(uo, 0, yt, 0, nDim);
-		
+
 		// do we compute error?
 		double error[] = new double[nDim];
 
@@ -871,7 +683,7 @@ public class RungeKutta {
 		while (t < tf) {
 			// use derivs at previous t
 			deriv.derivative(t, yt, dydt);
-			
+
 			advancer.advance(t, yt, dydt, h, deriv, yt2, error);
 
 			boolean decreaseStep = false;
@@ -879,7 +691,7 @@ public class RungeKutta {
 				decreaseStep = error[i] > relTolerance[i];
 				// System.err.println("error " + error[i] + " reltol: " +
 				// relTolerance[i] + " dec: " + decreaseStep);
-				if (decreaseStep) {			
+				if (decreaseStep) {
 					break;
 				}
 			}
@@ -889,8 +701,7 @@ public class RungeKutta {
 				if (h < _minStepSize) {
 					throw (new RungeKuttaException("Step size too small in Runge Kutta driver (A)"));
 				}
-			}
-			else { // accepted this step
+			} else { // accepted this step
 
 				if (hdata != null) {
 					hdata[0] = Math.min(hdata[0], h);
@@ -912,21 +723,16 @@ public class RungeKutta {
 							hdata[1] = hdata[1] / nstep;
 						}
 
-                        //get the last state if we are truly done
+						// get the last state if we are truly done
 						if (stopper.terminateIntegration(t, yt)) {
 							System.arraycopy(yt, 0, uf, 0, nDim);
 						}
-						
-						_workArrayCache.push(yt);
-						_workArrayCache.push(yt2);
-						_workArrayCache.push(dydt);
-						
+
 						return nstep; // actual number of steps taken
 					}
 				}
-				
-				System.arraycopy(yt, 0, uf, 0, nDim);
 
+				System.arraycopy(yt, 0, uf, 0, nDim);
 
 				h *= HGROWTH;
 				h = Math.min(h, maxH);
@@ -937,71 +743,46 @@ public class RungeKutta {
 		if ((hdata != null) && (nstep > 0)) {
 			hdata[1] = hdata[1] / nstep;
 		}
-		
-		_workArrayCache.push(yt);
-		_workArrayCache.push(yt2);
-		_workArrayCache.push(dydt);
-		
-//		System.out.println("  ****** workarray cache size: " + _workArrayCache.size());
 
 		return nstep;
 	}
 
-
 	/**
-	 * Driver that uses the RungeKutta advance with an adaptive step size. This
-	 * uses an desired absolute error relative to some scale (of max values of
-	 * the dependent variables)
+	 * Driver that uses the RungeKutta advance with an adaptive step size. This uses
+	 * an desired absolute error relative to some scale (of max values of the
+	 * dependent variables)
 	 * 
-	 * This version uses an IRk4Listener to notify the listener that the next
-	 * step has been advanced.
+	 * This version uses an IRk4Listener to notify the listener that the next step
+	 * has been advanced.
 	 * 
 	 * A very typical case is a 2nd order ODE converted to a 1st order where the
-	 * dependent variables are x, y, z, vx, vy, vz and the independent variable
-	 * is time.
+	 * dependent variables are x, y, z, vx, vy, vz and the independent variable is
+	 * time.
 	 * 
-	 * @param yo
-	 *            initial values. Probably something like (xo, yo, zo, vxo, vyo,
-	 *            vzo).
-	 * @param to
-	 *            the initial value of the independent variable, e.g., time.
-	 * @param tf
-	 *            the maximum value of the independent variable.
-	 * @param deriv
-	 *            the derivative computer (interface). This is where the problem
-	 *            specificity resides.
-	 * @param stopper
-	 *            if not <code>null</code> will be used to exit the integration
-	 *            early because some condition has been reached.
-	 * @param listener
-	 *            listens for each step
-	 * @param advancer
-	 *            takes the next step
-	 * @param eps
-	 *            the required accuracy
-	 * @param yscale
-	 *            scale the error against this array. It can be the approximate
-	 *            max value of each component of y, which gives you constant
-	 *            absolute errors, or it can be null in which case y will be
-	 *            used and you have constant relative error.
-	 * @param hdata
-	 *            if not null, should be double[3]. Upon return, hdata[0] is the
-	 *            min stepsize used, hdata[1] is the average stepsize used, and
-	 *            hdata[2] is the max stepsize used
+	 * @param yo       initial values. Probably something like (xo, yo, zo, vxo,
+	 *                 vyo, vzo).
+	 * @param to       the initial value of the independent variable, e.g., time.
+	 * @param tf       the maximum value of the independent variable.
+	 * @param deriv    the derivative computer (interface). This is where the
+	 *                 problem specificity resides.
+	 * @param stopper  if not <code>null</code> will be used to exit the integration
+	 *                 early because some condition has been reached.
+	 * @param listener listens for each step
+	 * @param advancer takes the next step
+	 * @param eps      the required accuracy
+	 * @param yscale   scale the error against this array. It can be the approximate
+	 *                 max value of each component of y, which gives you constant
+	 *                 absolute errors, or it can be null in which case y will be
+	 *                 used and you have constant relative error.
+	 * @param hdata    if not null, should be double[3]. Upon return, hdata[0] is
+	 *                 the min stepsize used, hdata[1] is the average stepsize used,
+	 *                 and hdata[2] is the max stepsize used
 	 * @return the number of steps used.
 	 * @throws RungeKuttaException
 	 */
-	private int driver(double yo[],
-			double to,
-			double tf,
-			double h,
-			IDerivative deriv,
-			IStopper stopper,
-			IRkListener listener,
-			IAdvance advancer,
-			double eps,
-			double yscale[],
-			double hdata[]) throws RungeKuttaException {
+	private int driver(double yo[], double to, double tf, double h, IDerivative deriv, IStopper stopper,
+			IRkListener listener, IAdvance advancer, double eps, double yscale[], double hdata[])
+			throws RungeKuttaException {
 
 		// if our advancer does not compute error we can't use adaptive stepsize
 		if (!advancer.computesError()) {
@@ -1057,8 +838,7 @@ public class RungeKutta {
 				if (h < _minStepSize) {
 					throw (new RungeKuttaException("Step size too small in Runge Kutta driver (B)"));
 				}
-			}
-			else { // accepted this step
+			} else { // accepted this step
 
 				if (hdata != null) {
 					hdata[0] = Math.min(hdata[0], h);
@@ -1091,8 +871,7 @@ public class RungeKutta {
 
 				if (errMax > 1.89e-4) {
 					h = 0.9 * h * Math.pow(errMax, 0.2);
-				}
-				else {
+				} else {
 					h = 5.0 * h; // limit growth
 				}
 
@@ -1104,40 +883,24 @@ public class RungeKutta {
 		}
 		return nstep;
 	}
-	
-	private double [] getWorkArrayFromCache() {
-		double array[];
-		if (_workArrayCache.isEmpty()) {
-			array = new double[MAXDIM];
-		}
-		else {
-			array = _workArrayCache.pop();
-		}
-		return array;
-	}
+
 
 	// A uniform step size advancer
 	class UniformAdvance implements IAdvance {
 
 		@Override
-		public void advance(double t,
-				double[] y,
-				double[] dydt,
-				double h,
-				IDerivative deriv,
-				double[] yout,
+		public void advance(double t, double[] y, double[] dydt, double h, IDerivative deriv, double[] yout,
 				double[] error) {
 			int nDim = y.length;
 
 			// note that dydt (input) is k1
 			double k1[] = dydt; // the current dreivatives
 			// we need some arrays from the pool
-			
-			
-			double k2[] = getWorkArrayFromCache();
-			double k3[] = getWorkArrayFromCache();
-			double k4[] = getWorkArrayFromCache();
-			double ytemp[] = getWorkArrayFromCache();
+
+			double k2[] = new double[nDim];
+			double k3[] = new double[nDim];
+			double k4[] = new double[nDim];
+			double ytemp[] = new double[nDim];
 
 			double hh = h * 0.5; // half step
 			double h6 = h / 6.0;
@@ -1169,12 +932,6 @@ public class RungeKutta {
 				yout[i] = y[i] + h6 * (k1[i] + +2.0 * k2[i] + 2 * k3[i] + k4[i]);
 			}
 
-			// return the work arrays to the cache
-			// note k1 is NOT a work array
-			_workArrayCache.push(k2);
-			_workArrayCache.push(k3);
-			_workArrayCache.push(k4);
-			_workArrayCache.push(ytemp);
 		}
 
 		@Override
@@ -1194,12 +951,7 @@ public class RungeKutta {
 		}
 
 		@Override
-		public void advance(double t,
-				double[] y,
-				double[] dydt,
-				double h,
-				IDerivative deriv,
-				double[] yout,
+		public void advance(double t, double[] y, double[] dydt, double h, IDerivative deriv, double[] yout,
 				double[] error) {
 
 			// System.err.println("HALF STEP ADVANCE");
@@ -1220,7 +972,7 @@ public class RungeKutta {
 			// compute absolute errors
 			for (int i = 0; i < ndim; i++) {
 				error[i] = Math.abs(yfull[i] - yout[i]);
-				
+
 //				if (error[i] > 1.0e-10) {
 //				error[i] /= Math.max(Math.abs(yfull[i]),  Math.abs(yout[i]));
 //				}
@@ -1244,31 +996,26 @@ public class RungeKutta {
 		}
 
 		@Override
-		public void advance(double t,
-				double[] y,
-				double[] dydt,
-				double h,
-				IDerivative deriv,
-				double[] yout,
+		public void advance(double t, double[] y, double[] dydt, double h, IDerivative deriv, double[] yout,
 				double[] error) {
 
 			// System.err.println("TABLEAU ADVANCE");
 			int nDim = y.length;
-			int numStage = tableau.getS();
+			int numStage = tableau.getNumStage();
 
-			double ytemp[] = getWorkArrayFromCache();
+			double ytemp[] = new double[nDim];
 			double k[][] = new double[numStage + 1][];
 			k[0] = null; // not used
 
 			// k1 is just h*dydt
-			k[1] = getWorkArrayFromCache();
+			k[1] = new double[nDim];
 			for (int i = 0; i < nDim; i++) {
 				k[1][i] = h * dydt[i];
 			}
 
 			// fill the numStage k vectors
 			for (int s = 2; s <= numStage; s++) {
-				k[s] = getWorkArrayFromCache();
+				k[s] =new double[nDim];
 
 				double ts = t + tableau.c(s);
 				for (int i = 0; i < nDim; i++) {
@@ -1321,11 +1068,6 @@ public class RungeKutta {
 
 			}
 
-			// //return the work arrays
-			_workArrayCache.push(ytemp);
-			for (int s = 1; s <= numStage; s++) {
-				_workArrayCache.push((k[s]));
-			}
 		}
 
 		@Override
@@ -1338,8 +1080,7 @@ public class RungeKutta {
 	/**
 	 * Set the maximum step size
 	 * 
-	 * @param maxSS
-	 *            the maximum stepsize is whatever units you are using
+	 * @param maxSS the maximum stepsize is whatever units you are using
 	 */
 	public void setMaxStepSize(double maxSS) {
 		_maxStepSize = maxSS;
@@ -1348,8 +1089,7 @@ public class RungeKutta {
 	/**
 	 * Set the minimum step size
 	 * 
-	 * @param maxSS
-	 *            the minimum stepsize is whatever units you are using
+	 * @param maxSS the minimum stepsize is whatever units you are using
 	 */
 	public void setMinStepSize(double minSS) {
 		_minStepSize = minSS;
@@ -1363,7 +1103,7 @@ public class RungeKutta {
 	public double getMaxStepSize() {
 		return _maxStepSize;
 	}
-	
+
 	/**
 	 * Get the minimum step size
 	 * 
@@ -1372,6 +1112,5 @@ public class RungeKutta {
 	public double getMinStepSize() {
 		return _minStepSize;
 	}
-
 
 }

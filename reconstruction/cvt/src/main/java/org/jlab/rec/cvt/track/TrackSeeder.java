@@ -243,11 +243,11 @@ public class TrackSeeder {
             ((ArrayList<Double>) Xs).ensureCapacity(seedcrs.size()+1);
             ((ArrayList<Double>) Ys).ensureCapacity(seedcrs.size()+1);
             ((ArrayList<Double>) Ws).ensureCapacity(seedcrs.size()+1);
-            
-            Xs.add((double) org.jlab.rec.cvt.Constants.getXb());
-            Ys.add((double) org.jlab.rec.cvt.Constants.getYb());
+
+            Xs.add(0, org.jlab.rec.cvt.Constants.getXb()); 
+            Ys.add(0, org.jlab.rec.cvt.Constants.getYb());
             Ws.add(0, 0.1);
-            
+
             for (Cross c : seedcrs ) { 
                 if(c.get_DetectorType().equalsIgnoreCase("C") ) continue;
                 c.set_AssociatedTrackID(122221);
@@ -435,7 +435,7 @@ public class TrackSeeder {
             ((ArrayList<Double>) ErrRho).ensureCapacity(svtSz * useSVTdipAngEst + bmtCSz); // Try: don't use svt in dipdangle fit determination
             ((ArrayList<Double>) ErrRt).ensureCapacity(svtSz + bmtZSz);
 
-            cand = new Track(null, swimmer);
+            cand = new Track(null);
             cand.addAll(SVTCrosses);
             for (int j = 0; j < SVTCrosses.size(); j++) {
                 X.add(j, SVTCrosses.get(j).get_Point().x());
@@ -470,9 +470,8 @@ public class TrackSeeder {
                     ErrZ.add(j, BMTCrossesC.get(j - svtSz * useSVTdipAngEst).get_PointErr().z());
                 }
             }
-            X.add((double) 0);
-            Y.add((double) 0);
-
+            X.add((double) org.jlab.rec.cvt.Constants.getXb());
+            Y.add((double) org.jlab.rec.cvt.Constants.getYb());
             ErrRt.add((double) 0.1);
             
             fitTrk.fit(X, Y, Z, Rho, ErrRt, ErrRho, ErrZ);
@@ -481,11 +480,14 @@ public class TrackSeeder {
                 return null;
             }
 
-            cand = new Track(fitTrk.get_helix(), swimmer);
+            cand = new Track(fitTrk.get_helix());
             //cand.addAll(SVTCrosses);
             cand.addAll(SVTCrosses);
             
-            cand.set_HelicalTrack(fitTrk.get_helix(), swimmer, b);
+            swimmer.BfieldLab(0, 0, 0, b);
+            double Bz = Math.abs(b[2]);
+            fitTrk.get_helix().B = Bz;
+            cand.set_HelicalTrack(fitTrk.get_helix());
             //if(shift==0)
             if (fitTrk.get_chisq()[0] < chisqMax) {
                 chisqMax = fitTrk.get_chisq()[0];

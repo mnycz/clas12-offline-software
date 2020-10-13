@@ -2,6 +2,8 @@ package org.jlab.rec.cvt;
 
 public class Constants {
 
+    public static double PTCUT = 0.075;
+
     /**
      * Constants used in the reconstruction
      */
@@ -285,6 +287,7 @@ public class Constants {
     }
 
     private static double SOLENOIDSCALE = 0;
+    private static double SOLENOIDVAL = 0;
 
     public static final void setSolenoidscale(double scale) {
         SOLENOIDSCALE = scale;
@@ -292,6 +295,14 @@ public class Constants {
 
     public static final double getSolenoidscale() {
         return SOLENOIDSCALE;
+    }
+    
+    public static final void setSolenoidVal(double val) {
+        SOLENOIDVAL = val;
+    }
+
+    public static final double getSolenoidVal() {
+        return SOLENOIDVAL;
     }
 
 }
