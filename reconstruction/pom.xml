@@ -27,6 +27,6 @@
     <module>eb</module>
     <module>band</module>
     <module>rtpc</module>
-    <module>swaps</module>
+    <module>raw</module>
   </modules>
 </project>

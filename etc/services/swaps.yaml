@@ -19,5 +19,6 @@ configuration:
       timestamp: 10/13/2020
       previousTimestamp: 08/10/2020
       detectors: "BMT"
+      modifyBanks: "true"
 mime-types:
   - binary/data-hipo
