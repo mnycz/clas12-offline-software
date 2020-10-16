@@ -1,36 +1,27 @@
 package cnuphys.cnf.plot;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.io.File;
 
 import javax.swing.JPanel;
 
-import org.jlab.io.base.DataEvent;
-
 import cnuphys.bCNU.graphics.GraphicsUtilities;
-import cnuphys.bCNU.graphics.container.BaseContainer;
 import cnuphys.bCNU.graphics.container.ContainerPanel;
 import cnuphys.bCNU.graphics.toolbar.BaseToolBar;
 import cnuphys.bCNU.graphics.toolbar.ToolBarToggleButton;
 import cnuphys.bCNU.util.Environment;
 import cnuphys.bCNU.util.PropertySupport;
-import cnuphys.bCNU.util.X11Colors;
 import cnuphys.bCNU.view.ContainerGridView;
-import cnuphys.bCNU.view.ScrollableGridView;
-import cnuphys.cnf.event.EventManager;
-import cnuphys.cnf.event.IEventListener;
 
 /**
  * A view that contains a grid of BaseContainers.
  * @author heddle
  *
  */
-public class DefGridView extends ContainerGridView implements IEventListener {
+public class DefGridView extends ContainerGridView {
 	
 	/**
-	 * Creat a crid of BaseContainers each with independent drawing.
+	 * Create a crid of BaseContainers each with independent drawing.
 	 * @param numRow
 	 * @param numCol
 	 * @param cellWidth
@@ -39,7 +30,6 @@ public class DefGridView extends ContainerGridView implements IEventListener {
 	 */
 	protected DefGridView(int numRow, int numCol, int cellWidth, int cellHeight, Object... keyVals) {
 		super(numRow, numCol, cellWidth, cellHeight, keyVals);
-		EventManager.getInstance().addEventListener(this, 2);	
 	}
 	
 	
@@ -87,8 +77,8 @@ public class DefGridView extends ContainerGridView implements IEventListener {
 		
 		for (int row = 0; row < numRow; row++) {
 			for (int col = 0; col < numCol; col++) {
-				view._containerPanel[row][col] = new ContainerPanel(tbarbits);
-				p.add(view._containerPanel[row][col]);
+				view._panels[row][col] = new ContainerPanel(tbarbits);
+				p.add(view._panels[row][col]);
 			}
 		}
 		view.add(p);
@@ -96,37 +86,16 @@ public class DefGridView extends ContainerGridView implements IEventListener {
 		return view;
 	}
 
-
 	/**
 	 * Check whether the pointer bar is active on the tool bar
 	 * 
 	 * @return <code>true</code> if the Pointer button is active.
 	 */
+	@Override
 	protected boolean isPointerButtonActive() {
 		ToolBarToggleButton mtb = getContainer().getActiveButton();
 		return (mtb == getContainer().getToolBar().getPointerButton());
 	}
 
-
-	
-	@Override
-	public void newEvent(DataEvent event, boolean isStreaming) {
-	}
-
-	@Override
-	public void openedNewEventFile(File file) {
-	}
-
-	@Override
-	public void rewoundFile(File file) {
-	}
-
-	@Override
-	public void streamingStarted(File file, int numToStream) {
-	}
-
-	@Override
-	public void streamingEnded(File file, int reason) {
-	}
 
 }

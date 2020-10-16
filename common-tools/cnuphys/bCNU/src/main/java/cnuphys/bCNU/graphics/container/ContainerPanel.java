@@ -13,13 +13,10 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.border.Border;
 import javax.swing.event.MouseInputAdapter;
 
 import cnuphys.bCNU.graphics.component.CommonBorder;
@@ -55,7 +52,6 @@ public class ContainerPanel extends JPanel  {
 	//the compass panels
 	private JPanel _northPanel;
 	private JPanel _southPanel;
-	private JPanel _westPanel;
 
 
 	// how adorned
@@ -110,8 +106,6 @@ public class ContainerPanel extends JPanel  {
 
 		addSouth();
 		addNorth();
-		
-		addWest();
 		
 		setBackground(Color.white);
 		setOpaque(true);
@@ -181,25 +175,23 @@ public class ContainerPanel extends JPanel  {
 	public void setYLabel(String ylabel) {
 		if (ylabel == null) {
 			if (_yLabel != null) {
-				_westPanel.remove(_yLabel);
+				remove(_yLabel);
 				_yLabel = null;
 				return;
 			}
 		}
 
 		if (_yLabel == null) {
-			Box box = new Box(BoxLayout.Y_AXIS);
-	        add( box );
-
-	        box.add( Box.createVerticalGlue() );
-	        box.add( Box.createVerticalGlue() );
+			JPanel wp = new JPanel();
+			wp.setOpaque(false);
+			wp.setLayout(new BorderLayout());
+			_yLabel = makeRotatedLabel(Fonts.defaultFont, Color.white, Color.black);
 			
-
-			box.setBackground(Color.white);
-			box.setOpaque(true);
-			
-			_yLabel = makeRotatedLabel(box, Fonts.defaultFont, Color.white, Color.black);
-			_westPanel.add(box, BorderLayout.CENTER);
+			wp.add(_yLabel, BorderLayout.CENTER);
+			wp.add(Box.createVerticalStrut(100), BorderLayout.SOUTH);
+			wp.add(Box.createHorizontalStrut(6), BorderLayout.EAST);
+			add(wp, BorderLayout.WEST);
+		
 
 		}
 		_yLabel.setText(ylabel);
@@ -235,7 +227,7 @@ public class ContainerPanel extends JPanel  {
 	//convenience method to make a label
 	private JLabel makeLabel(JPanel p, Font font, Color bg, Color fg) {
 		JLabel label = new JLabel();
-		label.setFont(Fonts.defaultLargeFont);
+		label.setFont(font);
 		
 		label.setOpaque(true);
 		label.setBackground(bg);
@@ -245,7 +237,7 @@ public class ContainerPanel extends JPanel  {
 	}
 	
 	// convenience function for making a rotated label for y axis label
-	private JLabel makeRotatedLabel(Box p, Font font, Color bg, Color fg) {
+	private JLabel makeRotatedLabel(Font font, Color bg, Color fg) {
 		JLabel lab = new JLabel();
 		lab.setLayout(new BorderLayout());
 		lab.setFont(font);
@@ -260,7 +252,6 @@ public class ContainerPanel extends JPanel  {
 			lab.setForeground(fg);
 		}
 		
-		p.add(lab, BorderLayout.CENTER);
 		return lab;
 	}
 
@@ -360,16 +351,6 @@ public class ContainerPanel extends JPanel  {
 			_northPanel.add(_toolbar, BorderLayout.NORTH);
 		}
 		add(_northPanel, BorderLayout.NORTH);
-	}
-
-	// add the west component
-	private void addWest() {
-		_westPanel = new JPanel();
-		_westPanel.setOpaque(true);
-		_westPanel.setBackground(Color.white);
-		_westPanel.setLayout(new BorderLayout());
-		
-		add(_westPanel, BorderLayout.WEST);
 	}
 
 	//create the status label

@@ -40,6 +40,7 @@ import cnuphys.cnf.event.EventView;
 import cnuphys.cnf.event.IEventListener;
 import cnuphys.cnf.export.ExportManager;
 import cnuphys.cnf.plot.DefGridView;
+import cnuphys.cnf.plot.PlotManager;
 import cnuphys.cnf.properties.PropertiesManager;
 import cnuphys.splot.example.MemoryUsageDialog;
 
@@ -186,8 +187,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 		_eventView = EventView.createEventView();
 		
 		//add the grid view
-		_gridView = DefGridView.createDefGridView("Plots", 2, 3, 0.7);
-		_gridView.setLabels(1, 1, "Force Magnitude", "x (fm)", "y (fm)");
+		_gridView = PlotManager.getInstance().getDefGridView();
 
 		// add the log view
 		_logView = new LogView(800, 750, true);

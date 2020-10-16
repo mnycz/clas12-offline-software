@@ -418,6 +418,39 @@ public class ColorScaleModel {
 	public Color getHotColor() {
 		return HOTCOLOR;
 	}
+	
+	public static ColorScaleModel createColorModel(double minVal, double maxVal, int numVal, Color start, Color end) {
+		int numColor = numVal-1;
+		double values[] = new double[numVal];
+		Color[] colors = new Color[numColor];
+		
+	
+		double dv = (maxVal - minVal)/(numVal-1);
+		for (int i = 0; i < numVal; i++) {
+			values[i] = minVal + i*dv;
+		}
+		
+		int r1 = start.getRed();
+		int r2 = end.getRed();
+		int g1 = start.getGreen();
+		int g2 = end.getGreen();
+		int b1 = start.getBlue();
+		int b2 = end.getBlue();
+
+		double dr = ((double)(r2-r1))/(numColor-1);
+		double dg = ((double)(g2-g1))/(numColor-1);
+		double db = ((double)(b2-b1))/(numColor-1);
+		
+		for (int i = 0; i < numColor; i++) {
+			int r = Math.min(255, (int)(r1 + i*dr));
+			int g = Math.min(255, (int)(g1 + i*dg));
+			int b = Math.min(255, (int)(b1 + i*db));
+			
+			colors[i] = new Color(r, g, b);
+		}
+		
+		return new ColorScaleModel(values, colors);
+	}
 
 	/**
 	 * Get a monochrome model companion to a color model.

@@ -1,8 +1,6 @@
 package cnuphys.bCNU.view;
 
 
-import java.awt.Color;
-
 import cnuphys.bCNU.graphics.container.BaseContainer;
 import cnuphys.bCNU.graphics.container.ContainerPanel;
 import cnuphys.bCNU.graphics.toolbar.ToolBarToggleButton;
@@ -15,28 +13,28 @@ import cnuphys.bCNU.graphics.toolbar.ToolBarToggleButton;
 public class ContainerGridView extends ScrollableGridView {
 	
 	// the containers
-	protected ContainerPanel _containerPanel[][];
-	protected int _numRow;
-	protected int _numCol;
+	protected ContainerPanel _panels[][];
+	public final int numRow;
+	public final int numCol;
 
-	// which 1-based cell is selected
+	// which cell is selected
 	protected BaseContainer _hotContainer;
 
 	/**
-	 * Creat a crid of BaseContainers each with independent drawing.
-	 * @param numRow
-	 * @param numCol
+	 * Create a grid of BaseContainers each with independent drawing.
+	 * @param numRow the number of rows
+	 * @param numCol the number of columns
 	 * @param cellWidth
 	 * @param cellHeight
 	 * @param keyVals
 	 */
 	protected ContainerGridView(int numRow, int numCol, int cellWidth, int cellHeight, Object... keyVals) {
 		super(numRow, numCol, cellWidth, cellHeight, keyVals);
-		_numRow = numRow;
-		_numCol = numCol;
-		_containerPanel = new ContainerPanel[numRow][numCol];
+		this.numRow = numRow;
+		this.numCol = numCol;
+		_panels = new ContainerPanel[numRow][numCol];
 	}
-	
+		
 
 	/**
 	 * Check whether the pointer bar is active on the tool bar
@@ -50,8 +48,8 @@ public class ContainerGridView extends ScrollableGridView {
 
 	/**
 	 * Set all three labels
-	 * @param row the 1-base row
-	 * @param col the 1-bases column
+	 * @param row the 0-based row
+	 * @param col the 0-based column
 	 * @param title the title
 	 * @param xlabel the x label
 	 * @param yLabel the y label
@@ -68,8 +66,8 @@ public class ContainerGridView extends ScrollableGridView {
 
 	/**
 	 * Set the title for one of the cells
-	 * @param row the 1-base row
-	 * @param col the 1-bases column
+	 * @param row the 0-based row
+	 * @param col the 0-based column
 	 * @param title the title
 	 */
 	public void setTitle(int row, int col, String title) {
@@ -82,8 +80,8 @@ public class ContainerGridView extends ScrollableGridView {
 	
 	/**
 	 * Set the x label for one of the cells
-	 * @param row the 1-base row
-	 * @param col the 1-bases column
+	 * @param row the 0-based row
+	 * @param col the 0-based column
 	 * @param label the label
 	 */
 	public void setXLabel(int row, int col, String label) {
@@ -96,8 +94,8 @@ public class ContainerGridView extends ScrollableGridView {
 
 	/**
 	 * Set the y label for one of the cells
-	 * @param row the 1-base row
-	 * @param col the 1-bases column
+	 * @param row the 0-based row
+	 * @param col the 0-based column
 	 * @param label the label
 	 */
 	public void setYLabel(int row, int col, String label) {
@@ -111,19 +109,31 @@ public class ContainerGridView extends ScrollableGridView {
 	/**
 	 * Get the container panel in the given cell
 	 * 
-	 * @param row the 1-based row
-	 * @param col the 1-based column
+	 * @param row the 0-based row
+	 * @param col the 0-based column
 	 * @return the container panel (might be <code>null</code>);
 	 */
 	public ContainerPanel getContainerPanel(int row, int col) {
-		if ((row < 1) || (row > _numRow)) {
+		if ((row < 0) || (row >= numRow)) {
 			return null;
 		}
-		if ((col < 1) || (col > _numCol)) {
+		if ((col < 0) || (col >= numCol)) {
 			return null;
 		}
 
-		return _containerPanel[row - 1][col - 1];
+		return _panels[row][col];
+	}
+	
+	/**
+	 * Get the container in the given cell
+	 * 
+	 * @param row the 0-based row
+	 * @param col the 0-based column
+	 * @return the container  (might be <code>null</code>);
+	 */
+	public BaseContainer getContainer(int row, int col) {
+        ContainerPanel panel = getContainerPanel(row, col);
+		return (panel == null) ? null : panel.getBaseContainer();
 	}
 
 }

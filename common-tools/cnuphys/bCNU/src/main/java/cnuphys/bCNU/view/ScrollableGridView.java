@@ -31,7 +31,7 @@ public class ScrollableGridView extends BaseView {
 	protected int _cellHeight;
 
 	protected JPanel _gridPanel;
-
+	
 	// status
 	protected JLabel _status;
 
@@ -46,6 +46,8 @@ public class ScrollableGridView extends BaseView {
 	 */
 	protected ScrollableGridView(int numRow, int numCol, int cellWidth, int cellHeight, Object... keyVals) {
 		super(keyVals);
+		
+		
 
 		_gridPanel = new JPanel();
 		_gridPanel.setLayout(new GridLayout(numRow, numCol, 2, 2));
@@ -58,10 +60,18 @@ public class ScrollableGridView extends BaseView {
 		_cellHeight = cellHeight;
 
 		_scrollPane = new JScrollPane(_gridPanel);
-		add(_scrollPane);
+		add(_scrollPane, BorderLayout.CENTER);
 
 		addStatusLine();
 	}
+	
+	protected void addEastPanel() {
+		
+	}
+	protected void addWestPanel() {
+		
+	}
+
 
 	protected void addStatusLine() {
 		JPanel sp = new JPanel();
