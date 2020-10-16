@@ -1,9 +1,11 @@
 package org.jlab.detector.raw;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.jlab.detector.base.DetectorType;
@@ -23,16 +25,27 @@ public class StatusManager {
 
     // since it looks like a consistent nameing convention wasn't followed, we'd need this:
     private static final Map<DetectorType,Table> DETECTORS = new HashMap<DetectorType,Table>() {{
-        put(DetectorType.FTCAL,new Table("/calibration/ft/ftcal/status","status"));
-        put(DetectorType.FTHODO,new Table("/calibration/ft/fthodo/status","status"));
+        put(DetectorType.FTCAL, new Table("/calibration/ft/ftcal/status"));
+        put(DetectorType.FTHODO,new Table("/calibration/ft/fthodo/status"));
+        put(DetectorType.LTCC,  new Table("/calibration/ltcc/status"));
+        put(DetectorType.ECAL,  new Table("/calibration/ec/status"));
+        put(DetectorType.HTCC,  new Table("/calibration/htcc/status"));
+        put(DetectorType.DC,    new Table("/calibration/dc/status_tables/Bad_Wires"));
+        put(DetectorType.CTOF,  new Table("/calibration/ctof/status","status_upstream","status_downstream"));
+        put(DetectorType.FTOF,  new Table("/calibration/ftof/status","status_left","status_right"));
+        put(DetectorType.BST,   new Table("/calibration/cvt/status"));
     }};
 
     private static class Table {
         public String tableName;
-        public String varName;
-        public Table(String tableName,String varName) {
+        public List<String> varName = new ArrayList<>();
+        public Table(String tableName,String... varName) {
             this.tableName=tableName;
-            this.varName=varName;
+            this.varName.addAll(Arrays.asList(varName));
+        }
+        public Table(String tableName) {
+            this.tableName = tableName;
+            this.varName.add("status");
         }
         @Override
         public String toString() {
@@ -62,12 +75,16 @@ public class StatusManager {
         return ret;
     }
     
-    public int getStatus(int run,DetectorType type,int... slc) {
+    public int getStatus(int run,DetectorType type,String varName,int... slc) {
         if (conman == null || !DETECTORS.containsKey(type)) {
             return NOSTATUS;
         }
         IndexedTable table = conman.getConstants(run, DETECTORS.get(type).tableName);
-        return table.getIntValue(DETECTORS.get(type).varName,slc);
+        return table.getIntValue(varName,slc);
+    }
+
+    public int getStatus(int run,DetectorType type,int... slc) {
+        return this.getStatus(run,type,DETECTORS.get(type).varName.get(0),slc);
     }
 
     public void initialize(ConstantsManager conman) {
