@@ -23,8 +23,8 @@ public class StatusManager {
 
     // since it looks like a consistent nameing convention wasn't followed, we'd need this:
     private static final Map<DetectorType,Table> DETECTORS = new HashMap<DetectorType,Table>() {{
-        put(DetectorType.FTCAL,new Table("/calibraion/ft/ftcal/status","status"));
-        put(DetectorType.FTHODO,new Table("/calibraion/ft/fthodo/status","status"));
+        put(DetectorType.FTCAL,new Table("/calibration/ft/ftcal/status","status"));
+        put(DetectorType.FTHODO,new Table("/calibration/ft/fthodo/status","status"));
     }};
 
     private static class Table {
@@ -33,6 +33,10 @@ public class StatusManager {
         public Table(String tableName,String varName) {
             this.tableName=tableName;
             this.varName=varName;
+        }
+        @Override
+        public String toString() {
+            return tableName+"."+varName;
         }
     }
    
@@ -76,6 +80,9 @@ public class StatusManager {
         conman.init(new ArrayList<>(StatusManager.getTables()));
         StatusManager statman = StatusManager.getInstance();
         statman.initialize(conman);
-        statman.getStatus(10400,DetectorType.FTCAL,1,2,3);
+        for (int c=50; c<65; c++) {
+            System.out.println(String.format("%d/%d/%d : %d",
+                    1,1,c,statman.getStatus(17,DetectorType.FTCAL,1,1,c)));
+        }
     }
 }
