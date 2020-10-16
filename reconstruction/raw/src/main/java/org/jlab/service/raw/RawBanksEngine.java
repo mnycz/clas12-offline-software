@@ -1,12 +1,12 @@
-package org.jlab.service.rawbanks;
+package org.jlab.service.raw;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.detector.base.DetectorType;
-import org.jlab.detector.swaps.StatusManager;
-import org.jlab.detector.swaps.SwapManager;
+import org.jlab.detector.raw.StatusManager;
+import org.jlab.detector.raw.SwapManager;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.base.DataBank;
 

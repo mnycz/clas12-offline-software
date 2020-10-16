@@ -1,5 +1,6 @@
-package org.jlab.detector.swaps;
+package org.jlab.detector.raw;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,11 +45,11 @@ public class StatusManager {
         return instance;
     }
     
-    public Set<DetectorType> getDetectorTypes() {
+    public static Set<DetectorType> getDetectorTypes() {
         return DETECTORS.keySet();
     }
 
-    public Set<String> getTables() {
+    public static Set<String> getTables() {
         Set<String> ret = new HashSet<>();
         Iterator it = DETECTORS.values().iterator();
         while (it.hasNext()) {
@@ -69,4 +70,12 @@ public class StatusManager {
         this.conman = conman;
     }
     
+    public static void main(String[] args) {
+        ConstantsManager conman = new ConstantsManager();
+        conman.setVariation("default");
+        conman.init(new ArrayList<>(StatusManager.getTables()));
+        StatusManager statman = StatusManager.getInstance();
+        statman.initialize(conman);
+        statman.getStatus(10400,DetectorType.FTCAL,1,2,3);
+    }
 }
