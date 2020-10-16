@@ -20,7 +20,9 @@ import org.jlab.clara.engine.Engine;
 import org.jlab.clara.engine.EngineData;
 import org.jlab.clara.engine.EngineDataType;
 import org.jlab.clara.engine.EngineStatus;
+import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.calib.utils.ConstantsManager;
+import org.jlab.detector.raw.StatusManager;
 
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataEvent;
@@ -44,6 +46,8 @@ public abstract class ReconstructionEngine implements Engine {
 
     volatile ConcurrentMap<String,String>           engineConfigMap;
     volatile String                                 engineConfiguration = null;
+
+    StatusManager statusManager;
     
     String             engineName        = "UnknownEngine";
     String             engineAuthor      = "N.T.";
@@ -62,6 +66,13 @@ public abstract class ReconstructionEngine implements Engine {
         //System.out.println("[Engine] >>>>> constants manager : " + getConstantsManager().toString());
     }
 
+    public void initStatusTables(DetectorType type) {
+        statusManager = new StatusManager(type,this.constantsManager);
+    }
+    public int getChannelStatus(int run, int... slco) {
+        return statusManager.getStatus(run, slco);
+    }
+    
     abstract public boolean processDataEvent(DataEvent event);
     abstract public boolean init();
     

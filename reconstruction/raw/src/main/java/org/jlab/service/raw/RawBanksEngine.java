@@ -111,7 +111,6 @@ public class RawBanksEngine extends ReconstructionEngine {
         this.swapman.initialize(dets,previousTimestamp,currentTimestamp);
       
         this.statman = StatusManager.getInstance();
-        this.requireConstants(new ArrayList<>(this.statman.getTables()));
         this.statman.initialize(this.getConstantsManager());
 
         // and then anywhere:
