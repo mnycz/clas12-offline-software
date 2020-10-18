@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 
@@ -15,8 +14,6 @@ import org.jlab.io.base.DataSource;
 import org.jlab.io.hipo.HipoDataSource;
 
 import cnuphys.cnf.alldata.DataManager;
-import cnuphys.cnf.frame.Def;
-import cnuphys.cnf.frame.IDefCommon;
 
 public class EventManager {
 	
@@ -387,17 +384,6 @@ public class EventManager {
 
 		} // index loop
 
-		finalSteps();
-	}
-
-	// final steps
-	private void finalSteps() {
-		JFrame frame = Def.getFrame();
-
-		if (frame instanceof IDefCommon) {
-			IDefCommon defCommon = (IDefCommon) frame;
-			defCommon.setEventNumberLabel(getEventNumber());
-		}
 	}
 
 	/**
