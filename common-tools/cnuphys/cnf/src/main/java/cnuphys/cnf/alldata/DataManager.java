@@ -65,11 +65,10 @@ public class DataManager {
 			_knownBanks[i] = okbanks.get(i);
 		}
 
-		// _knownBanks = _dictionary.getDescriptorList();
 		Arrays.sort(_knownBanks);
-
 		initializeColumnData();
 	}
+	
 
 	// check exclusions
 	private boolean include(String bankName) {
@@ -200,7 +199,20 @@ public class DataManager {
 	 */
 	public String[] getColumnNames(String bankName) {
 		DataDescriptor dd = _dictionary.getDescriptor(bankName);
+		if (dd == null) {
+			return null;
+		}
 		return dd.getEntryList();
+	}
+
+	/**
+	 * Get the full name of the bank and column
+	 * @param bankName the bank name
+	 * @param columnName the column name
+	 * @return the full name
+	 */
+	public String fullName(String bankName, String columnName) {
+		return bankName + "." + columnName;
 	}
 
 	// initialize the column data
@@ -217,8 +229,13 @@ public class DataManager {
 
 				DataDescriptor dd = _dictionary.getDescriptor(bankName);
 
-				String entries[] = dd.getEntryList();
-				for (String columnName : entries) {
+				String columnNames[] = getColumnNames(bankName);
+				if (columnNames == null) {
+					continue;
+				}
+				
+				
+				for (String columnName : columnNames) {
 					int type = dd.getProperty("type", columnName);
 
 					if ((type < 1) || (type > 6) || (type == 24)) {
@@ -235,6 +252,7 @@ public class DataManager {
 			} // bank names
 		} // known banks not null
 	}
+	
 
 	/**
 	 * Get the dictionary

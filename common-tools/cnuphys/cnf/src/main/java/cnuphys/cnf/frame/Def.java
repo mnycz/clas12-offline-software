@@ -22,7 +22,6 @@ import org.jlab.io.base.DataEvent;
 
 import cnuphys.bCNU.application.BaseMDIApplication;
 import cnuphys.bCNU.application.Desktop;
-import cnuphys.bCNU.dialog.TextDisplayDialog;
 import cnuphys.bCNU.log.Log;
 import cnuphys.bCNU.menu.FileMenu;
 import cnuphys.bCNU.menu.MenuManager;
@@ -39,12 +38,14 @@ import cnuphys.cnf.event.EventMenu;
 import cnuphys.cnf.event.EventView;
 import cnuphys.cnf.event.IEventListener;
 import cnuphys.cnf.export.ExportManager;
+import cnuphys.cnf.grid.GridManager;
 import cnuphys.cnf.plot.DefGridView;
+import cnuphys.cnf.plot.PlotManager;
 import cnuphys.cnf.properties.PropertiesManager;
-import cnuphys.splot.example.MemoryUsageDialog;
+import cnuphys.cnf.stream.StreamManager;
 
 @SuppressWarnings("serial")
-public class Def extends BaseMDIApplication implements IEventListener, IDefCommon {
+public class Def extends BaseMDIApplication implements IEventListener {
 	
 	private static JFrame _frame;
 
@@ -52,7 +53,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 	private static Def _instance;
 
 	// release string
-	protected static final String _release = "build 0.01";
+	protected static final String _release = "build 0.20";
 
 	// used for one time inits
 	private int _firstTime = 0;
@@ -87,11 +88,6 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 	// event number label 
 	private static JLabel _eventNumberLabel;
 	
-	// memory usage dialog
-	private MemoryUsageDialog _memoryUsage;
-
-	// Environment display
-	private TextDisplayDialog _envDisplay;
 
 	/** Last selected data file */
 	private static String dataFilePath;
@@ -104,7 +100,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 
 	//stream events menu item
 	private static JMenuItem _streamItem;
-
+	
 	/**
 	 * Constructor (private--used to create singleton)
 	 * 
@@ -143,7 +139,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 		addComponentListener(cl);
 		EventManager.getInstance().addEventListener(this, 2);
 	}
-
+	
 	// arrange the views on the virtual desktop
 	private void placeViewsOnVirtualDesktop() {
 		if (_firstTime == 1) {
@@ -186,8 +182,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 		_eventView = EventView.createEventView();
 		
 		//add the grid view
-		_gridView = DefGridView.createDefGridView("Plots", 2, 3, 0.7);
-		_gridView.setLabels(1, 1, "Force Magnitude", "x (fm)", "y (fm)");
+		_gridView = PlotManager.getInstance().getDefGridView();
 
 		// add the log view
 		_logView = new LogView(800, 750, true);
@@ -269,11 +264,18 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 	 */
 	@Override
 	public void newEvent(final DataEvent event, boolean isStreaming) {
-		if (EventManager.getInstance().isStreaming()) {
-			return;
+		
+		if (isStreaming) {
+			int evNum = EventManager.getInstance().getEventNumber();
+			if ((evNum % 1000) == 0) {
+				setEventNumberLabel(evNum);
+			}
 		}
-
-		fixState();
+		else {
+			fixState();
+		}
+		
+		
 	}
 
 	/**
@@ -314,13 +316,16 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 		fixState();
 	}
 	
+	//fix the state
 	private void fixState() {		
-		
+		setEventNumberLabel(EventManager.getInstance().getEventNumber());
+
 		//any events remaining
 		int numRemaining = EventManager.getInstance().getNumRemainingEvents();
 		
 		//number of events
 		int eventCount = EventManager.getInstance().getEventCount();
+		
 		
 		//set selectability
 		_streamItem.setEnabled(numRemaining > 0);
@@ -348,7 +353,7 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 	 * 
 	 * @return the singleton Def (the main application frame.)
 	 */
-	private static Def getInstance() {
+	public static Def getInstance() {
 		if (_instance == null) {
 			_instance = new Def(PropertySupport.TITLE, "def " + _release, PropertySupport.BACKGROUNDIMAGE,
 					"images/cnu.png", PropertySupport.FRACTION, 0.85,
@@ -358,6 +363,9 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 			_instance.createMenus();
 			_instance.placeViewsOnVirtualDesktop();
 			_instance.createEventNumberLabel();
+			
+			//initialize
+			StreamManager.getInstance();
 
 		}
 		return _instance;
@@ -373,17 +381,13 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 	/**
 	 * Fix the title of the main frame
 	 */
-	@Override
 	public void fixTitle() {
 		DefCommon.fixTitle(this);
 	}
 
-	@Override
 	public void setEventNumberLabel(int num) {
 		DefCommon.setEventNumberLabel(_eventNumberLabel, num);
 	}
-
-
 
 	/**
 	 * Add items to existing menus and/or create new menus NOTE: Swim menu is
@@ -407,6 +411,9 @@ public class Def extends BaseMDIApplication implements IEventListener, IDefCommo
 		//the definition menu
 		_definitionMenu = DefinitionManager.getInstance().getMenu();
 		getJMenuBar().add(_definitionMenu);
+		
+		//the grid menu
+		getJMenuBar().add(GridManager.getInstance().getGridMenu());
 		
 	//	System.out.println("Menu font " + _definitionMenu.getFont());
 		

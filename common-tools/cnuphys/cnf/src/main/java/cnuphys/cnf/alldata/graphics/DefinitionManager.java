@@ -177,13 +177,7 @@ public class DefinitionManager implements ActionListener {
 					histo.setLocation(x, y);
 					_plots.put(name, new Holder(name, histo, item));
 
-					ActionListener al = new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							histo.setVisible(true);
-						}
-					};
-					item.addActionListener(al);
+					item.addActionListener(event->histo.setVisible(true));
 					_menu.add(item);
 					// histo.setVisible(true);
 				}
@@ -212,13 +206,7 @@ public class DefinitionManager implements ActionListener {
 					histo.setLocation(x, y);
 					_plots.put(name, new Holder(name, histo, item));
 
-					ActionListener al = new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							histo.setVisible(true);
-						}
-					};
-					item.addActionListener(al);
+					item.addActionListener(event -> histo.setVisible(true));
 					_menu.add(item);
 				} // unique name
 			} // histodata != null
@@ -246,13 +234,7 @@ public class DefinitionManager implements ActionListener {
 			JMenuItem item = new JMenuItem(name);
 			_plots.put(name, new Holder(name, histo, item));
 
-			ActionListener al = new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					histo.setVisible(true);
-				}
-			};
-			item.addActionListener(al);
+			item.addActionListener(event->histo.setVisible(true));
 			_menu.add(item);
 
 			return histo;
@@ -279,13 +261,7 @@ public class DefinitionManager implements ActionListener {
 			JMenuItem item = new JMenuItem(name);
 			_plots.put(name, new Holder(name, histo, item));
 
-			ActionListener al = new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					histo.setVisible(true);
-				}
-			};
-			item.addActionListener(al);
+			item.addActionListener(event->histo.setVisible(true));
 			_menu.add(item);
 
 			return histo;
@@ -317,13 +293,7 @@ public class DefinitionManager implements ActionListener {
 					plot.setLocation(x, y);
 					_plots.put(name, new Holder(name, plot, item));
 
-					ActionListener al = new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							plot.setVisible(true);
-						}
-					};
-					item.addActionListener(al);
+					item.addActionListener(event->plot.setVisible(true));
 					_menu.add(item);
 				}
 

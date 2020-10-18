@@ -61,13 +61,12 @@ public class EventMenu extends JMenu implements ActionListener, IEventListener {
 	/** Last selected data file */
 	private static String dataFilePath;
 
-
 	private static FileFilter _hipoEventFileFilter;
 
 	/**
-	 * The event menu 
+	 * The event menu
 	 * 
-	 * @param includeQuit         include quite option
+	 * @param includeQuit include quite option
 	 */
 	public EventMenu(boolean includeQuit) {
 		super("Events");
@@ -108,27 +107,17 @@ public class EventMenu extends JMenu implements ActionListener, IEventListener {
 		fixState();
 	}
 
-
-	/** 
+	/**
 	 * Get the menu item to open a HIPO event file
+	 * 
 	 * @return the menu item to open an event file
 	 */
 	public static JMenuItem getOpenHipoEventFileItem() {
 		final JMenuItem item = new JMenuItem("Open Hipo File...");
 
-		ActionListener al = new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				openHipoEventFile();
-			}
-
-		};
-		item.addActionListener(al);
+		item.addActionListener(event -> openHipoEventFile());
 		return item;
 	}
-	
-
 
 	// convenience method to add menu item
 	private JMenuItem addMenuItem(String label, int accelKey) {
@@ -193,7 +182,7 @@ public class EventMenu extends JMenu implements ActionListener, IEventListener {
 
 				if (_hipoEventFileFilter.accept(file)) {
 					EventManager.getInstance().openHipoEventFile(file);
-				} 
+				}
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -353,18 +342,8 @@ public class EventMenu extends JMenu implements ActionListener, IEventListener {
 						float period = Float.parseFloat(_periodTF.getText());
 						_period = Math.max(0.001f, Math.min(60f, period));
 
-						ActionListener nextAl = new ActionListener() {
-
-							@Override
-							public void actionPerformed(ActionEvent e) {
-								// System.err.println("NEXT EVENT period = " + _period);
-								_eventManager.getNextEvent();
-							}
-
-						};
-
 						int delay = (int) (1000 * _period);
-						_nextEventTimer = new Timer(delay, nextAl);
+						_nextEventTimer = new Timer(delay, event->_eventManager.getNextEvent());
 
 					}
 					if (!_nextEventTimer.isRunning()) {
@@ -443,15 +422,16 @@ public class EventMenu extends JMenu implements ActionListener, IEventListener {
 	public void openedNewEventFile(File file) {
 
 		String path = file.getAbsolutePath();
-		
+
 		// remember which file was chosen
 		setDefaultDataDir(path);
 		updateRecentFiles(path);
 		fixState();
 	}
-	
+
 	/**
 	 * Rewound the current file
+	 * 
 	 * @param file the file
 	 */
 	@Override
@@ -460,21 +440,22 @@ public class EventMenu extends JMenu implements ActionListener, IEventListener {
 
 	/**
 	 * Streaming start message
-	 * @param file file being streamed
+	 * 
+	 * @param file        file being streamed
 	 * @param numToStream number that will be streamed
 	 */
 	@Override
 	public void streamingStarted(File file, int numToStream) {
 	}
-	
+
 	/**
 	 * Streaming ended message
+	 * 
 	 * @param file the file that was streamed
-	 * @param int the reason the streaming ended
+	 * @param int  the reason the streaming ended
 	 */
 	@Override
 	public void streamingEnded(File file, int reason) {
 	}
-
 
 }
