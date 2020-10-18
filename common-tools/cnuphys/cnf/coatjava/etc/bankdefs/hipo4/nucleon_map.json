@@ -10,7 +10,8 @@
 			{"name":"z","type":"F", "info":"z position of the grid point (fm)"},
 			{"name":"Bx","type":"F", "info":"Bx coordinates of the vector at grid point (GeV/fm)"},
 			{"name":"By","type":"F", "info":"By coordinates of the vector at grid point (GeV/fm)"},
-			{"name":"Bz","type":"F", "info":"Bz coordinates of the vector at grid point (GeV/fm)"}
+			{"name":"Bz","type":"F", "info":"Bz coordinates of the vector at grid point (GeV/fm)"},
+			{"name":"Del","type":"F", "info":"Total uncertainty on vector (GeV/fm)"}
 		]
 	}
 ]
