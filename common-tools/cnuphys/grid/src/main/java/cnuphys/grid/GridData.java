@@ -40,26 +40,11 @@ public class GridData implements IData {
 	/** Index where max data vector magnitude resides */
 	protected int maxDataIndex = -1;
 	
-	/** Total number of data points. */
-	protected int numPoints;
-
+	/** Data file header */
+	private Header _header;
+	
 	/** holds the field in a float buffer. */
 	protected FloatBuffer field;
-
-	/** high word of unix creation time */
-	protected int highTime;
-
-	/** low word of unix creation time */
-	protected int lowTime;
-
-	/** reserved word */
-	protected int reserved1;
-
-	/** reserved word */
-	protected int reserved2;
-
-	/** reserved word */
-	protected int reserved3;
 
 	/** The maximum magnitude of the data. */
 	protected float maxDataMagnitude = Float.NEGATIVE_INFINITY;
@@ -295,13 +280,24 @@ public class GridData implements IData {
 	
 	/** compute max data quantities */
 	protected void computeMaxDataMagnitude() {
+		
+		maxDataIndex = -1;
+		
+		if (_header == null) {
+			maxDataMagnitude = Float.NaN;
+			avgDataMagnitude = Float.NaN;
+			for (int i = 0; i < 3; i++) {
+				maxVector[i] = Float.NaN;
+				maxVectorLocation[i] = Float.NaN;
+			}
+			return;
+		}
 
 		double maxf = -1.0e10;
-		maxDataIndex = -1;
 
 		double sum = 0.0;
 
-		for (int i = 0; i < numPoints; i++) {
+		for (int i = 0; i < _header.numPoints; i++) {
 			double fm = Math.sqrt(squareMagnitude(i));
 			sum += fm;
 
@@ -312,7 +308,7 @@ public class GridData implements IData {
 		}
 		vectorField(maxDataIndex, maxVector);
 		maxDataMagnitude = (float) maxf;
-		avgDataMagnitude = (float) sum / numPoints;
+		avgDataMagnitude = (float) sum / _header.numPoints;
 		getLocation(maxDataIndex, maxVectorLocation);
 	}
 	
@@ -359,59 +355,17 @@ public class GridData implements IData {
 
 		try {
 			DataInputStream dos = new DataInputStream(new FileInputStream(binaryFile));
-			Header header = Header.read(dos);
-			if (header == null) {
+			_header = Header.read(dos);
+			if (_header == null) {
+				System.err.println("Header not read sucessfully from " + binaryFile.getPath());
 				return;
 			}
-
-//			boolean swap = false;
-//			int magicnum = dos.readInt(); // magic number
-//			
-//			System.out.println(String.format("Magic number: %04x", magicnum));
-//
-//			// TODO handle swapping if necessary
-//			swap = (magicnum != MAGICNUMBER);
-//			if (swap) {
-//				System.err.println("byte swapping required but not yet implemented.");
-//				dos.close();
-//				return;
-//			}
-//
-//			//first two int words in header are q1Min and q1 Max
-//			float q1Min = dos.readFloat();
-//			float q1Max = dos.readFloat();
-//			int nQ1 = dos.readInt();
-//			q1Coordinate = new GridCoordinate(q1Name, q1Min, q1Max, nQ1);
-//
-//			//next two int words in header are q2Min and q2 Max
-//			float q2Min = dos.readFloat();
-//			float q2Max = dos.readFloat();
-//			int nQ2 = dos.readInt();
-//			q2Coordinate = new GridCoordinate(q2Name, q2Min, q2Max, nQ2);
-//
-//			//next two int words in header are q3Min and q3 Max
-//			float q3Min = dos.readFloat();
-//			float q3Max = dos.readFloat();
-//			int nQ3 = dos.readInt();
-//			q3Coordinate = new GridCoordinate(q3Name, q3Min, q3Max, nQ3);
-//
-//			//can now compute the number of points
-//			numPoints = nQ1 * nQ2 * nQ3;
-//
-//			// next tow words reconstruct creation time
-//			highTime = dos.readInt();
-//			lowTime = dos.readInt();
-//			
-//			
-//			reserved1 = dos.readInt();
-//			reserved2 = dos.readInt();
-//			reserved3 = dos.readInt();
-
-			// now get the field values
-			//3 components x 4 bytes x numPoints
-			int size = 3 * 4 * numPoints;
-
-			byte bytes[] = new byte[size];
+			
+			q1Coordinate = new GridCoordinate(q1Name, _header.q1Min, _header.q1Max, _header.nQ1);
+			q2Coordinate = new GridCoordinate(q2Name, _header.q2Min, _header.q2Max, _header.nQ2);
+			q3Coordinate = new GridCoordinate(q3Name, _header.q3Min, _header.q3Max, _header.nQ3);
+			
+			byte bytes[] = new byte[_header.dataSize];
 
 			// read the bytes as a block
 			dos.read(bytes);

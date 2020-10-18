@@ -11,6 +11,7 @@ import cnuphys.cnf.alldata.ColumnData;
 import cnuphys.cnf.alldata.DataManager;
 import cnuphys.cnf.event.EventManager;
 import cnuphys.cnf.event.IEventListener;
+import cnuphys.cnf.grid.GridManager;
 
 
 public class StreamManager implements IEventListener {
@@ -48,12 +49,13 @@ public class StreamManager implements IEventListener {
 	ColumnData cd_Bz;
 	ColumnData cd_Del;
 	
-	private ArrayList<float[]> _tableData;
+	//the actual data in memory
+	private ArrayList<float[]> _data;
 	
 	//private constructor
 	private StreamManager() {
 		EventManager.getInstance().addEventListener(this, 2);
-		_tableData = new ArrayList<>();
+		_data = new ArrayList<>();
 		initializeColumnData();
 	}
 
@@ -84,7 +86,7 @@ public class StreamManager implements IEventListener {
 	 * Clear all in memory data
 	 */
 	public void clear() {
-		_tableData.clear();
+		_data.clear();
 		_dataRanges = new DataRanges();
 	}
 
@@ -108,7 +110,7 @@ public class StreamManager implements IEventListener {
 	 * @return in memory data for a given column
 	 */
 	public ArrayList<float[]> getData() {
-		return _tableData;
+		return _data;
 	}
 	
 	/**
@@ -116,7 +118,7 @@ public class StreamManager implements IEventListener {
 	 * @return the number of data rows
 	 */
 	public int count() {
-		return _tableData.size();
+		return _data.size();
 	}
 
 	/**
@@ -125,7 +127,7 @@ public class StreamManager implements IEventListener {
 	 * @param array will be filled with the data
 	 */
 	public float[] getDataRow(int index) {
-		return _tableData.get(index);
+		return _data.get(index);
 	}
 	
 	@Override
@@ -156,7 +158,7 @@ public class StreamManager implements IEventListener {
 			float[] newRow = { (float) x[i], (float) y[i], (float) z[i], 
 					(float) bx[i], (float) by[i], (float) bz[i], 
 					(float)del[i], (float) r, (float) b };
-			_tableData.add(newRow);
+			_data.add(newRow);
 		}
 
 	}
@@ -188,7 +190,7 @@ public class StreamManager implements IEventListener {
 		System.err.println(
 				"Streaming Ended [" + file.getPath() + "] reason: " + ((reason == 0) ? "completed" : "interrupted"));
 
-		System.err.println(String.format("table has %d values", _tableData.size()));
+		System.err.println(String.format("table has %d values", _data.size()));
 		
 		//sort for potential gridding
 		Comparator<float[]> comp = new Comparator<float[]>() {
@@ -227,14 +229,18 @@ public class StreamManager implements IEventListener {
 			}
 		};
 
-		Collections.sort(_tableData, comp);
+		Collections.sort(_data, comp);
 		System.err.println("data sorted in griddable manner.");
 		//update the data range
-		for (float[] array : _tableData) {
+		for (float[] array : _data) {
 			_dataRanges.newValue(array);
 		}
 
 		System.err.println(_dataRanges.toString());
+		
+		//is it gridable?
+		
+		System.err.println("Data is gridable: " + GridManager.getInstance().isGridable());
 	}
 
 }

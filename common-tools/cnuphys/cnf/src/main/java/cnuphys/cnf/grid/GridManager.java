@@ -1,6 +1,8 @@
 package cnuphys.cnf.grid;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -9,6 +11,7 @@ import org.jlab.io.base.DataEvent;
 
 import cnuphys.cnf.event.EventManager;
 import cnuphys.cnf.event.IEventListener;
+import cnuphys.cnf.stream.StreamManager;
 
 public class GridManager implements IEventListener {
 
@@ -62,7 +65,6 @@ public class GridManager implements IEventListener {
 	
 	//gridify any data in memory
 	private void gridify() {
-		
 	}
 	
 	/**
@@ -70,6 +72,54 @@ public class GridManager implements IEventListener {
 	 * @return true if the data in memory is gridable.
 	 */
 	public boolean isGridable() {
+		
+		ArrayList<float[]> data = StreamManager.getInstance().getData();
+		
+		if ((data == null) || data.isEmpty()) {
+			return false;
+		}
+		
+		ArrayList<Float> uniqueX = new ArrayList<>();
+		ArrayList<Float> uniqueY = new ArrayList<>();
+		ArrayList<Float> uniqueZ = new ArrayList<>();
+
+		for (float[] row : data) {
+			
+			float x = row[StreamManager.X];
+			float y = row[StreamManager.Y];
+			float z = row[StreamManager.Z];
+			
+			uniqueX.remove(x);
+			uniqueX.add(x);
+			
+			uniqueY.remove(y);
+			uniqueY.add(y);
+
+			uniqueZ.remove(z);
+			uniqueZ.add(z);
+
+		}
+		
+		Collections.sort(uniqueX);
+		Collections.sort(uniqueY);
+		Collections.sort(uniqueZ);
+		
+		System.err.println("\nNumber of unique X: " + uniqueX.size());
+		for (float x : uniqueX) {
+			System.err.println(String.format("%7.4f", x));
+		}
+		
+		System.err.println("\nNumber of unique Y: " + uniqueY.size());
+		for (float y : uniqueY) {
+			System.err.println(String.format("%7.4f", y));
+		}
+
+		System.err.println("\nNumber of unique Z: " + uniqueZ.size());
+		for (float z : uniqueZ) {
+			System.err.println(String.format("%7.4f", z));
+		}
+
+		
 		return true;
 	}
 
