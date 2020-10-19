@@ -118,7 +118,7 @@ public class Geometry {
         if(trkPoint==null)
             return 0;
         int[] rm = SVTConstants.convertLayer2RegionModule(layer-1);
-        int Sect = SVTConstants.NSECTORS[rm[0]];
+        int Sect = -1;
         for (int s = 0; s < SVTConstants.NSECTORS[rm[0]] - 1; s++) {
             int sector = s + 1;
             Vector3D orig = new Vector3D(getPlaneModuleOrigin(sector, layer).x(),
