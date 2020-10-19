@@ -84,6 +84,25 @@ public class CosmicTracksRec {
             }
             recUtil.CleanupSpuriousCrosses(crosses, null, SVTGeom) ;
             //4)  ---  write out the banks
+            List<Cross> bmtCrosses = new ArrayList<Cross>();
+            List<Cross> bmtCrossesRm = new ArrayList<Cross>();
+            for(int k0 = 0; k0<crosses.get(1).size(); k0++){
+                for (int k1 = 0; k1 < cosmics.size(); k1++) { 
+                    cosmics.get(k1).set_Id(k1 + 1);
+                    for (int k2 = 0; k2 < cosmics.get(k1).size(); k2++) {
+                        if(cosmics.get(k1).get(k2).get_Detector().equalsIgnoreCase("SVT")==true)
+                            continue;
+                        if(cosmics.get(k1).get(k2).get_Id()==crosses.get(1).get(k0).get_Id()){
+                            if(crosses.get(1).get(k0).get_AssociatedTrackID()==-1) {
+                                bmtCrossesRm.add(crosses.get(1).get(k0));
+                            }
+                        }
+                        bmtCrosses.add(cosmics.get(k1).get(k2));
+                    }
+                }
+            }
+            crosses.get(1).removeAll(bmtCrossesRm);
+            crosses.get(1).addAll(bmtCrosses);
             rbc.appendCVTCosmicsBanks(event, SVThits, BMThits, SVTclusters, BMTclusters, crosses, cosmics, zShift);
         }
         return true;
