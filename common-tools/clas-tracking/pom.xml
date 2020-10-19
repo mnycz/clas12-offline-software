@@ -26,17 +26,12 @@
       </plugins>
   </build>
 
-  <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
   <dependencies>
+    
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-math3</artifactId>
-      <version>3.6.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jlab.coat</groupId>
-      <artifactId>coat-libs</artifactId>
-      <version>6.5.3-SNAPSHOT</version>
+      <groupId>org.jlab.clas</groupId>
+      <artifactId>swim-tools</artifactId>
+      <version>6.5.11-SNAPSHOT</version>
       <type>jar</type>
     </dependency>
   </dependencies>
