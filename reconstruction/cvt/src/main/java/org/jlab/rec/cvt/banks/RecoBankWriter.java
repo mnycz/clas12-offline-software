@@ -221,9 +221,9 @@ public class RecoBankWriter {
             bank.setFloat("ETot", i, (float) cluslist.get(i).get_TotalEnergy());
             bank.setInt("seedStrip", i, cluslist.get(i).get_SeedStrip());
             bank.setFloat("centroid", i, (float) cluslist.get(i).get_Centroid());
+            bank.setFloat("seedE", i, (float) cluslist.get(i).get_SeedEnergy());
             bank.setFloat("centroidResidual", i, (float) cluslist.get(i).get_CentroidResidual());
             bank.setFloat("seedResidual", i, (float) cluslist.get(i).get_SeedResidual()); 
-            bank.setFloat("seedE", i, (float) cluslist.get(i).get_SeedEnergy());
             bank.setShort("trkID", i, (short) cluslist.get(i).get_AssociatedTrackID());
             for (int j = 0; j < cluslist.get(i).size(); j++) {
                 if (j < hitIdxArray.length) {
@@ -326,16 +326,19 @@ public class RecoBankWriter {
                 bank.setByte("fittingMethod", i, (byte) 0);
             }
             bank.setShort("ID", i, (short) trkcands.get(i).get_Id());
+
             bank.setByte("q", i, (byte)trkcands.get(i).get_Q());
             bank.setFloat("p", i, (float) trkcands.get(i).get_P());
             bank.setFloat("pt", i, (float) trkcands.get(i).get_Pt());
             Helix helix = trkcands.get(i).get_helix();
+
             bank.setFloat("phi0", i, (float) helix.get_phi_at_dca());
             bank.setFloat("tandip", i, (float) helix.get_tandip());
             bank.setFloat("z0", i, (float) (helix.get_Z0()/10.+zShift));
             bank.setFloat("d0", i, (float) (helix.get_dca()/10.));
             bank.setFloat("xb", i, (float) (org.jlab.rec.cvt.Constants.getXb()/10.0));
             bank.setFloat("yb", i, (float) (org.jlab.rec.cvt.Constants.getYb()/10.0));
+            bank.setFloat("curvature", i, (float)helix.get_curvature()*10.f);
             // this is the format of the covariance matrix for helical tracks
             // cov matrix = 
             // | d_dca*d_dca                   d_dca*d_phi_at_dca            d_dca*d_curvature        0            0             |

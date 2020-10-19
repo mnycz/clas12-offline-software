@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.jlab.clas.reco.ReconstructionEngine;
+//import org.jlab.clas.swimtools.Swim;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.base.GeometryFactory;
 import org.jlab.detector.calib.utils.DatabaseConstantProvider;
@@ -14,6 +15,7 @@ import org.jlab.detector.geant4.v2.SVT.SVTConstants;
 import org.jlab.detector.geant4.v2.SVT.SVTStripFactory;
 import org.jlab.geom.base.ConstantProvider;
 import org.jlab.geom.base.Detector;
+import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.geometry.prim.Line3d;
 import org.jlab.io.base.DataBank;
@@ -27,6 +29,8 @@ import org.jlab.rec.cvt.bmt.CCDBConstantsLoader;
 import org.jlab.rec.cvt.cluster.Cluster;
 import org.jlab.rec.cvt.cross.Cross;
 import org.jlab.rec.cvt.track.StraightTrack;
+import org.jlab.rec.cvt.track.Track;
+import org.jlab.rec.cvt.trajectory.Helix;
 import org.jlab.rec.cvt.trajectory.Ray;
 import Jama.Matrix;
 import eu.mihosoft.vrl.v3d.Vector3d;
@@ -156,9 +160,9 @@ public class CVTAlignment extends ReconstructionEngine {
 
 		RecoBankReader reader = new RecoBankReader();
 
-		reader.fetch_Cosmics(event, SVTGeom, 0);
-		List<StraightTrack> straightTracks = reader.get_Cosmics();
-
+		//reader.fetch_Cosmics(event, SVTGeom, 0);
+		reader.fetch_Tracks(event, SVTGeom, 0);
+		List<Track> tracks = reader.get_Tracks();
 		
 		//System.out.println("H");
 		List<Matrix> Is = new ArrayList<Matrix>();
@@ -168,8 +172,9 @@ public class CVTAlignment extends ReconstructionEngine {
 		List<Matrix> ms = new ArrayList<Matrix>();
 		List<Matrix> cs = new ArrayList<Matrix>();
 		List<Integer> trackIDs = new ArrayList<Integer>();
-		for (StraightTrack track : straightTracks) {
-			if(getDoca(track)> maxDocaCut)
+		
+		for (Track track : tracks) {
+			if(Math.abs(track.get_helix().get_dca())> maxDocaCut)
 				continue;
 			/*System.out.println("track read: ");
 			System.out.println("track chi2: "+ track.get_chi2());
@@ -183,7 +188,9 @@ public class CVTAlignment extends ReconstructionEngine {
 				if(c.get_Detector().equalsIgnoreCase("SVT"))
 					nCross++;
 			}
-			Ray ray = track.get_ray();
+			Ray ray = getRay(track);
+			System.out.println(ray.get_dirVec().toString());
+			System.out.println(ray.get_refPoint().toString());
 			Matrix A = new Matrix(2*nCross, svtTopBottomSep ? 2*nAlignVars*nCross : nAlignVars*nCross);//not sure why there aren't 6 columns
 			Matrix B = new Matrix(2*nCross, 4);
 			Matrix V = new Matrix(2*nCross,2*nCross);
@@ -193,6 +200,7 @@ public class CVTAlignment extends ReconstructionEngine {
 			
 			int i = 0;
 			for(Cross cross : track) {
+				System.out.println("cross " +cross.get_Point());
 				if(!cross.get_Detector().equalsIgnoreCase("SVT"))
 					continue;
 				Cluster cl1 = cross.get_Cluster1();
@@ -201,6 +209,7 @@ public class CVTAlignment extends ReconstructionEngine {
 				Cluster cl2 = cross.get_Cluster2();
 				fillMatrices(i,ray,cl2,A,B,V,m,c,I);
 				i++;
+				
 			}
 
 			/*System.out.println("dm: ");
@@ -219,6 +228,11 @@ public class CVTAlignment extends ReconstructionEngine {
 			ms.add(m);
 			cs.add(c);
 			Is.add(I);
+			
+
+			c.print(7, 4);
+			m.print(7, 4);
+			
 			trackIDs.add(track.get_Id());
 		}
 		AlignmentBankWriter writer = new AlignmentBankWriter();
@@ -235,6 +249,31 @@ public class CVTAlignment extends ReconstructionEngine {
 
 	}
 	
+	private Ray getRay(Track track) {
+		Helix h = track.get_helix();
+		
+		double d = h.get_dca();
+		double z = h.get_Z0();
+		double phi = h.get_phi_at_dca();
+		double td = h.get_tandip();
+		double cd = 1/Math.hypot(td, 1);
+		double sd = td*cd;
+		//Vector3D u = new Vector3D(-cd*Math.sin(phi), cd*Math.cos(phi), sd);
+		//Point3D x = new Point3D(d*Math.cos(phi),d*Math.sin(phi), z);
+		Vector3D u = new Vector3D(cd*Math.cos(phi), cd*Math.sin(phi), sd);
+		Point3D x = new Point3D(-d*Math.sin(phi),d*Math.cos(phi), z);
+		//if(u.y() <0)
+		//	u = u.multiply(-1);
+		//x = x.toVector3D().add(u.multiply(-x.y()/u.y())).toPoint3D();
+		Ray ray = new Ray(x, u);
+		System.out.println("doca " + d);
+		System.out.println("td " + td);
+		
+		return ray;
+	}
+
+	
+
 	private double getDoca(StraightTrack track) {
 		// TODO Auto-generated method stub
 		Ray ray = track.get_ray();
@@ -282,6 +321,8 @@ public class CVTAlignment extends ReconstructionEngine {
 		// there is a single-hit cluster on the last strip,
 		// in which obtaining the next strip (line2) gives 
 		// an IllegalArgumentException
+		
+		
 		if(centroid == SVTConstants.NSTRIPS)
 			centroid = SVTConstants.NSTRIPS-.001;
 		Line3d line1 = SVTGeom.getStrip(layer-1, sector-1, (int)centroid-1);
@@ -300,6 +341,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		double udotn = u.dot(n);
 		double sdotu = s.dot(u);
 		Vector3d extrap = xref.plus(u.times(n.dot(e.minus(xref))/udotn));
+		System.out.println(extrap.toStlString());
 		double resolution = cl.get_ResolutionAlongZ(extrap.z, SVTGeom);
 		/*System.out.println("sector: " + sector + " of " + SVTConstants.NSECTORS[region-1]);
 		System.out.println("xref: " + xref.toStlString());
@@ -377,6 +419,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		//dm.set(i,0, s.dot(e.minus(extrap)));
 		c.set(i,0,s.dot(extrap));
 		m.set(i,0,s.dot(e));
+		
 	}
 
 

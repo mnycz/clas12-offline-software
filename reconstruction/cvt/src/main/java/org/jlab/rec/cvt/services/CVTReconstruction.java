@@ -141,6 +141,7 @@ public class CVTReconstruction extends ReconstructionEngine {
         FieldsConfig = fieldsConfig;
     }
     @Override
+    
     public boolean processDataEvent(DataEvent event) {
         
         this.setRunConditionsParameters(event, FieldsConfig, Run, false, "");
@@ -220,7 +221,7 @@ public class CVTReconstruction extends ReconstructionEngine {
             return true; 
          }
 
-         {//System.out.println(" FITTING SEED......................");
+         //System.out.println(" FITTING SEED......................");
 
            
             List<Seed> seeds = null;

@@ -3,6 +3,7 @@ package org.jlab.rec.cvt.banks;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jlab.clas.swimtools.Swim;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.geom.prim.Vector3D;
 import org.jlab.io.base.DataBank;
@@ -13,6 +14,8 @@ import org.jlab.rec.cvt.hit.FittedHit;
 import org.jlab.rec.cvt.hit.Hit;
 import org.jlab.rec.cvt.hit.Strip;
 import org.jlab.rec.cvt.track.StraightTrack;
+import org.jlab.rec.cvt.track.Track;
+import org.jlab.rec.cvt.trajectory.Helix;
 import org.jlab.rec.cvt.trajectory.Ray;
 
 public class RecoBankReader {
@@ -123,6 +126,79 @@ public class RecoBankReader {
 
 		}
 	}
+	
+	ArrayList<Track> _tracks;
+	
+	public void fetch_Tracks(DataEvent event, org.jlab.rec.cvt.svt.Geometry geo, double zShift) {
+
+		if(_crosses == null)
+			fetch_SVTCrosses(event, zShift);
+		if (event.hasBank("CVTRec::Tracks") == false) {
+			//System.err.println("there is no BST bank ");
+			_tracks = new ArrayList<Track>();
+
+			return;
+		}
+
+		List<Hit> hits = new ArrayList<Hit>();
+
+		DataBank bank = event.getBank("CVTRec::Tracks");
+
+		int rows = bank.rows();;
+
+		short ids[] = bank.getShort("ID");
+		float chi2s[] = bank.getFloat("chi2");
+		short ndfs[] = bank.getShort("ndf");
+		byte qs[] = bank.getByte("q");
+		float ps[] = bank.getFloat("p");
+		float pts[] = bank.getFloat("pt");
+		float tandips[] = bank.getFloat("tandip");
+		float phi0s[] = bank.getFloat("phi0");
+		float z0s[] = bank.getFloat("z0");
+		float d0s[] = bank.getFloat("d0");
+		float xbs[] = bank.getFloat("xb");
+		float ybs[] = bank.getFloat("yb");
+		float curvatures[] = bank.getFloat("curvature");
+
+		
+		 /*bank.setFloat("phi0", i, (float) helix.get_phi_at_dca());
+         bank.setFloat("tandip", i, (float) helix.get_tandip());
+         bank.setFloat("z0", i, (float) (helix.get_Z0()/10.+zShift));
+         bank.setFloat("d0", i, (float) (helix.get_dca()/10.));
+         bank.setFloat("xb", i, (float) (org.jlab.rec.cvt.Constants.getXb()/10.0));
+         bank.setFloat("yb", i, (float) (org.jlab.rec.cvt.Constants.getYb()/10.0));*/
+
+		_tracks = new ArrayList<Track>();
+		
+		for(int i = 0; i<rows; i++) {
+			// get the cosmics ray unit direction vector
+			Track track = new Track(new Helix(d0s[i]*10.f, phi0s[i], curvatures[i]/10.f, (z0s[i]-zShift)*10.f, tandips[i], null));
+			track.set_Id(ids[i]);
+			track.setChi2(chi2s[i]);
+			track.setNDF(ndfs[i]);
+			//there are other entries that should be read.  add these later.  
+
+
+			for (int j = 0; j < 18; j++) { 
+
+				String hitStrg = "Cross";
+				hitStrg += (j + 1);
+				hitStrg += "_ID";
+				if(!hasColumn(bank,hitStrg))
+					continue;
+				int crossid = bank.getShort(hitStrg, i);
+				for(Cross cross : _crosses) {
+					if(cross.get_Id() == crossid)
+						track.add(cross);
+				}
+			}
+			_tracks.add(track);
+
+		}
+	}
+	
+	
+	
 
 	private boolean hasColumn(DataBank bank, String name) {
 		for(String n : bank.getColumnList()) {
@@ -204,6 +280,9 @@ public class RecoBankReader {
 		return _cosmics;
 	}
 
+	public List<Track> get_Tracks() {
+		return _tracks;
+	}
 
 
 }	
