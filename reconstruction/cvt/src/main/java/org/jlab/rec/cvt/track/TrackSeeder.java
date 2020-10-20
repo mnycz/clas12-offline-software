@@ -44,6 +44,8 @@ public class TrackSeeder {
         Ws = new ArrayList<Double>();
     }
     private void MatchSeed(List<Cross> othercrs) {
+        if(othercrs==null || othercrs.size()==0)
+            return;
         
         for (Seed seed : seedScan) {
             double d = seed.doca;
@@ -214,16 +216,14 @@ public class TrackSeeder {
         List<Cross> crosses = new ArrayList<Cross>();
         List<Cross> bmtC_crosses = new ArrayList<Cross>();
         
-        
-        for(Cross c : bmt_crosses) { 
-            if(c.get_DetectorType().equalsIgnoreCase("Z"))
-                crosses.add(c);
-            if(c.get_DetectorType().equalsIgnoreCase("C"))
-                bmtC_crosses.add(c);
+        if(bmt_crosses!=null) {
+            for(Cross c : bmt_crosses) { 
+                if(c.get_DetectorType().equalsIgnoreCase("Z"))
+                    crosses.add(c);
+                if(c.get_DetectorType().equalsIgnoreCase("C"))
+                    bmtC_crosses.add(c);
+            }
         }
-        
-        //this.FindSeedCrossList(crosses);
-        //this.MatchSeed(svt_crosses);
         this.FindSeedCrossList(svt_crosses);
         this.MatchSeed(crosses);
         

@@ -139,12 +139,11 @@ public class CVTRecNewKF extends ReconstructionEngine {
         ADCConvertor adcConv = new ADCConvertor();
 
         RecoBankWriter rbc = new RecoBankWriter();
-
         HitReader hitRead = new HitReader();
         hitRead.fetch_SVTHits(event, adcConv, -1, -1, SVTGeom);
-        if(isSVTonly==false)
+        if(isSVTonly==false) 
           hitRead.fetch_BMTHits(event, adcConv, BMTGeom);
-
+        
         List<Hit> hits = new ArrayList<Hit>();
         //I) get the hits
         List<Hit> svt_hits = hitRead.get_SVTHits();
@@ -263,13 +262,13 @@ public class CVTRecNewKF extends ReconstructionEngine {
         
         if (svtCosmics!=null) {
             System.out.println("["+this.getName()+"] run with cosmics settings "+svtCosmics+" config chosen based on yaml");
-            this.isSVTonly= Boolean.valueOf(svtCosmics);
+            this.isCosmic= Boolean.valueOf(svtCosmics);
         }
         else {
             svtCosmics = System.getenv("COAT_SVT_ONLY");
             if (svtCosmics!=null) {
                 System.out.println("["+this.getName()+"] run with cosmics settings "+svtCosmics+" config chosen based on env");
-                this.isSVTonly= Boolean.valueOf(svtCosmics);
+                this.isCosmic= Boolean.valueOf(svtCosmics);
             }
         }
         if (svtCosmics==null) {

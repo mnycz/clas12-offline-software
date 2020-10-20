@@ -57,7 +57,7 @@ public class TracksFromTargetRec {
         } else {
             if(isSVTonly) {
                 TrackSeeder trseed = new TrackSeeder();
-                seeds = trseed.findSeed(crosses.get(0), crosses.get(1), SVTGeom, BMTGeom, swimmer);
+                seeds = trseed.findSeed(crosses.get(0), null, SVTGeom, BMTGeom, swimmer);
             
             } else {
                 TrackSeederCA trseed = new TrackSeederCA();  // cellular automaton seeder
@@ -89,18 +89,7 @@ public class TracksFromTargetRec {
             int charge = (int) (Math.signum(Constants.getSolenoidscale())*seed.get_Helix().get_charge());
             if(Math.abs(Constants.getSolenoidVal())<0.001)
                 charge = 1;
-            //
             
-//            DataBank bank = event.getBank("MC::Particle");
-//            px = (double)bank.getFloat("px", 0)*100;
-//            py = (double)bank.getFloat("py", 0)*100;
-//            pz = (double)bank.getFloat("pz", 0)*100;
-//            xr = (double)bank.getFloat("vx", 0)*10;
-//            yr = (double)bank.getFloat("vy", 0)*10;
-//            zr = (double)bank.getFloat("vz", 0)*10;
-//            
-            
-            //
             hlx = new org.jlab.clas.tracking.trackrep.Helix(xr,yr,zr,px,py,pz, 
                     charge, Constants.getSolenoidVal(), org.jlab.clas.tracking.trackrep.Helix.Units.MM);
 
