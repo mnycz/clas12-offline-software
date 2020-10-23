@@ -32,6 +32,8 @@ import org.jlab.rec.cvt.track.StraightTrack;
 import org.jlab.rec.cvt.track.Track;
 import org.jlab.rec.cvt.trajectory.Helix;
 import org.jlab.rec.cvt.trajectory.Ray;
+import org.jlab.rec.cvt.trajectory.Trajectory;
+
 import Jama.Matrix;
 import eu.mihosoft.vrl.v3d.Vector3d;
 
@@ -138,22 +140,16 @@ public class CVTAlignment extends ReconstructionEngine {
 	public void setFieldsConfig(String fieldsConfig) {
 		FieldsConfig = fieldsConfig;
 	}
-	
-	/**
-	 * Type of alignment:
-	 * @author spaul
-	 *
-	 */
-	
-	
-	
+
+	boolean isCosmics = false;
+
 	@Override
 	public boolean processDataEvent(DataEvent event) {
 		int runNum = event.getBank("RUN::config").getInt("run", 0);
 		int eventNum = event.getBank("RUN::config").getInt("event", 0);
 		this.setRunConditionsParameters(event, FieldsConfig, Run, false, "");
-		
-		double shift = 0;
+
+		double shift = org.jlab.rec.cvt.Constants.getZoffset();;
 
 		this.FieldsConfig = this.getFieldsConfig();
 
@@ -161,9 +157,16 @@ public class CVTAlignment extends ReconstructionEngine {
 		RecoBankReader reader = new RecoBankReader();
 
 		//reader.fetch_Cosmics(event, SVTGeom, 0);
-		reader.fetch_Tracks(event, SVTGeom, 0);
-		List<Track> tracks = reader.get_Tracks();
-		
+
+		List<? extends Trajectory> tracks;
+		if(isCosmics) {
+			reader.fetch_Cosmics(event, SVTGeom, shift);
+			tracks = reader.get_Cosmics();
+		} else {
+			reader.fetch_Tracks(event, SVTGeom, shift);
+			tracks = reader.get_Tracks();
+		}
+
 		//System.out.println("H");
 		List<Matrix> Is = new ArrayList<Matrix>();
 		List<Matrix> As = new ArrayList<Matrix>();
@@ -172,9 +175,9 @@ public class CVTAlignment extends ReconstructionEngine {
 		List<Matrix> ms = new ArrayList<Matrix>();
 		List<Matrix> cs = new ArrayList<Matrix>();
 		List<Integer> trackIDs = new ArrayList<Integer>();
-		
-		for (Track track : tracks) {
-			if(Math.abs(track.get_helix().get_dca())> maxDocaCut)
+
+		for (Trajectory track : tracks) {
+			if(Math.abs(getDoca(track))>maxDocaCut)
 				continue;
 			/*System.out.println("track read: ");
 			System.out.println("track chi2: "+ track.get_chi2());
@@ -188,20 +191,31 @@ public class CVTAlignment extends ReconstructionEngine {
 				if(c.get_Detector().equalsIgnoreCase("SVT"))
 					nCross++;
 			}
-			Ray ray = getRay(track);
-			System.out.println(ray.get_dirVec().toString());
-			System.out.println(ray.get_refPoint().toString());
+			if(nCross <= 2)
+				continue;
+			Ray ray = track.get_ray();
+			if(ray == null) {
+				ray = getRay(track.get_helix());
+				//System.out.println("curvature " +  track.get_helix().get_curvature());
+				//System.out.println("doca " +  track.get_helix().get_dca());
+				if(Math.abs(track.get_helix().get_curvature())>0.0001) {
+					continue;
+				}
+			}
+			//getRay(track);
+			//System.out.println(ray.get_dirVec().toString());
+			//System.out.println(ray.get_refPoint().toString());
 			Matrix A = new Matrix(2*nCross, svtTopBottomSep ? 2*nAlignVars*nCross : nAlignVars*nCross);//not sure why there aren't 6 columns
 			Matrix B = new Matrix(2*nCross, 4);
 			Matrix V = new Matrix(2*nCross,2*nCross);
 			Matrix m = new Matrix(2*nCross,1);
 			Matrix c = new Matrix(2*nCross,1);
 			Matrix I = new Matrix(2*nCross,1);
-			
+
 			int i = 0;
 			for(Cross cross : track) {
-				System.out.println("cross " +cross.get_Point());
-				if(!cross.get_Detector().equalsIgnoreCase("SVT"))
+				//System.out.println("cross " +cross.get_Point());
+				if(!cross.get_Detector().equalsIgnoreCase("SVT") && isSVTonly)
 					continue;
 				Cluster cl1 = cross.get_Cluster1();
 				fillMatrices(i,ray,cl1,A,B,V,m,c,I);
@@ -232,7 +246,7 @@ public class CVTAlignment extends ReconstructionEngine {
 
 			c.print(7, 4);
 			m.print(7, 4);
-			
+
 			trackIDs.add(track.get_Id());
 		}
 		AlignmentBankWriter writer = new AlignmentBankWriter();
@@ -243,15 +257,14 @@ public class CVTAlignment extends ReconstructionEngine {
 		writer.write_Matrix(event, "m", ms);
 		writer.write_Matrix(event, "c", cs);
 		fillMisc(event,runNum,eventNum,trackIDs,As,Bs,Vs,ms,cs,Is);
-		
+
 		//event.show();
 		return true;
 
 	}
-	
-	private Ray getRay(Track track) {
-		Helix h = track.get_helix();
-		
+
+	private Ray getRay(Helix h) {
+
 		double d = h.get_dca();
 		double z = h.get_Z0();
 		double phi = h.get_phi_at_dca();
@@ -266,20 +279,22 @@ public class CVTAlignment extends ReconstructionEngine {
 		//	u = u.multiply(-1);
 		//x = x.toVector3D().add(u.multiply(-x.y()/u.y())).toPoint3D();
 		Ray ray = new Ray(x, u);
-		System.out.println("doca " + d);
-		System.out.println("td " + td);
-		
+		//System.out.println("doca " + d);
+		//System.out.println("td " + td);
+
 		return ray;
 	}
 
-	
 
-	private double getDoca(StraightTrack track) {
-		// TODO Auto-generated method stub
-		Ray ray = track.get_ray();
-		double intercept = ray.get_yxinterc();
-		double slope = ray.get_yxslope();
-		return Math.abs(intercept)/Math.hypot(1, slope);
+
+	private double getDoca(Trajectory track) {
+		if(track instanceof StraightTrack) {
+			// TODO Auto-generated method stub
+			Ray ray = track.get_ray();
+			double intercept = ray.get_yxinterc();
+			double slope = ray.get_yxslope();
+			return Math.abs(intercept)/Math.hypot(1, slope);
+		} else return track.get_helix().get_dca();
 	}
 
 	private void fillMisc(DataEvent event, int runNum, int eventNum, List<Integer> trackIDs, 
@@ -325,14 +340,18 @@ public class CVTAlignment extends ReconstructionEngine {
 		
 		if(centroid == SVTConstants.NSTRIPS)
 			centroid = SVTConstants.NSTRIPS-.001;
-		Line3d line1 = SVTGeom.getStrip(layer-1, sector-1, (int)centroid-1);
-		Line3d line2 = SVTGeom.getStrip(layer-1, sector-1, (int)centroid); 
-		//take the weighted average of the directions of the two lines.
-		Vector3d l = line1.diff().normalized().times(centroid%1).add(line2.diff().normalized().times(1-(centroid%1))).normalized();
+		Line3d line1 = SVTGeom.getStrip(layer-1, sector-1, (int)Math.floor(centroid)-1);
+		Line3d line2 = SVTGeom.getStrip(layer-1, sector-1, (int)Math.floor(centroid)-0); 
 		
+		
+		
+		
+		//take the weighted average of the directions of the two lines.
+		Vector3d l = line1.diff().normalized().times(1-(centroid%1)).add(line2.diff().normalized().times((centroid%1))).normalized();
+
 		Vector3d e1 = line1.origin();
 		Vector3d e2 = line2.origin();
-		Vector3d e = e1.times(centroid%1).add(e2.times(1-(centroid%1)));
+		Vector3d e = e1.times(1-(centroid%1)).add(e2.times((centroid%1)));
 		Vector3d s = e2.minus(e1);
 		Vector3d xref = convertVector(ray.get_refPoint().toVector3D());
 		Vector3d u = convertVector(ray.get_dirVec()); 
@@ -341,12 +360,12 @@ public class CVTAlignment extends ReconstructionEngine {
 		double udotn = u.dot(n);
 		double sdotu = s.dot(u);
 		Vector3d extrap = xref.plus(u.times(n.dot(e.minus(xref))/udotn));
-		System.out.println(extrap.toStlString());
+		//System.out.println(extrap.toStlString());
 		double resolution = cl.get_ResolutionAlongZ(extrap.z, SVTGeom);
 		/*System.out.println("sector: " + sector + " of " + SVTConstants.NSECTORS[region-1]);
 		System.out.println("xref: " + xref.toStlString());
 		System.out.println("e: " + e.toStlString());
-		
+
 		System.out.println("u: " + u.magnitude() + " " + u.toStlString());
 		System.out.println("l: " + l.magnitude() + " " + l.toStlString());
 		System.out.println("n: " + n.magnitude() + " " + n.toStlString());
@@ -354,12 +373,12 @@ public class CVTAlignment extends ReconstructionEngine {
 		System.out.println("extrap: " + extrap.toStlString());
 		System.out.println("resolution: " + resolution);
 
-		
+
 		//extrap should be on ths same plane as e., 
 		//basis vectors must be perp to one another.
 		System.out.println("these should be zero:  " + extrap.minus(e).dot(n)+" " + n.dot(s) 
 				+ " " + s.dot(l) + " "+ l.dot(n) + " " + extrap.minus(xref).cross(u).magnitude());
-		*/
+		 */
 		V.set(i, i, Math.pow(resolution,2));
 
 
@@ -410,7 +429,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		
 
 		I.set(i, 0, index);
-		
+
 		Vector3d dmdu = sp.times(e.minus(xref).dot(n)/udotn);
 		B.set(i,0, sp.x);
 		B.set(i,1, sp.z);
@@ -533,9 +552,20 @@ public class CVTAlignment extends ReconstructionEngine {
 			System.out.println("["+this.getName()+"] no max doca cut set (default)");
 			this.maxDocaCut = Double.MAX_VALUE;
 		}
+		
+		String cosmics = this.getEngineConfigString("cosmics");
+
+		if(cosmics != null) {
+			System.out.println("["+this.getName()+"] use cosmics bank instead of tracks bank? "+ cosmics );
+			this.isCosmics = Boolean.parseBoolean(cosmics);
+		}
+		else {
+			System.out.println("["+this.getName()+"] using tracks bank (default)");
+			this.isCosmics = false;
+		}
 		return true;
 	}
-	
+
 	double maxDocaCut;
 	
 
