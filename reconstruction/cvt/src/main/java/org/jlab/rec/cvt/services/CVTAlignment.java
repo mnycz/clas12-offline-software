@@ -176,7 +176,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		List<Matrix> cs = new ArrayList<Matrix>();
 		List<Integer> trackIDs = new ArrayList<Integer>();
 
-		for (Trajectory track : tracks) {
+		tracksLoop : for (Trajectory track : tracks) {
 			if(Math.abs(getDoca(track))>maxDocaCut)
 				continue;
 			/*System.out.println("track read: ");
@@ -218,11 +218,15 @@ public class CVTAlignment extends ReconstructionEngine {
 				if(!cross.get_Detector().equalsIgnoreCase("SVT") && isSVTonly)
 					continue;
 				Cluster cl1 = cross.get_Cluster1();
-				fillMatrices(i,ray,cl1,A,B,V,m,c,I);
+				boolean ok = fillMatrices(i,ray,cl1,A,B,V,m,c,I);
 				i++;
+				if(!ok) //reject track if there's a cluster with really bad values.  
+					continue tracksLoop;
 				Cluster cl2 = cross.get_Cluster2();
-				fillMatrices(i,ray,cl2,A,B,V,m,c,I);
+				ok = fillMatrices(i,ray,cl2,A,B,V,m,c,I);
 				i++;
+				if(!ok)
+					continue tracksLoop;
 				
 			}
 
@@ -236,6 +240,11 @@ public class CVTAlignment extends ReconstructionEngine {
 			A.print(7, 4);
 			System.out.println("track chi2: " + dm.transpose().times(V.inverse()).times(dm).get(0, 0));
 			System.out.println();*/
+			
+			for(double res : c.minus(m).getRowPackedCopy()) {
+				if(Math.abs(res)>maxResidualCut)
+					continue;
+			}
 			As.add(A);
 			Bs.add(B);
 			Vs.add(V);
@@ -244,8 +253,8 @@ public class CVTAlignment extends ReconstructionEngine {
 			Is.add(I);
 			
 
-			c.print(7, 4);
-			m.print(7, 4);
+			//c.print(7, 4);
+			//m.print(7, 4);
 
 			trackIDs.add(track.get_Id());
 		}
@@ -323,8 +332,9 @@ public class CVTAlignment extends ReconstructionEngine {
 	private Vector3d convertVector(Vector3D v) {
 		return new Vector3d(v.x(),v.y(),v.z());
 	}
-
-	private void fillMatrices(int i, Ray ray, Cluster cl, Matrix A, Matrix B, Matrix V, Matrix m, Matrix c, Matrix I) {
+	
+	//returns false if there's a problem
+	private boolean fillMatrices(int i, Ray ray, Cluster cl, Matrix A, Matrix B, Matrix V, Matrix m, Matrix c, Matrix I) {
 		int region = cl.get_Region();
 		int layer = cl.get_Layer();
 		int sector = cl.get_Sector();
@@ -358,6 +368,8 @@ public class CVTAlignment extends ReconstructionEngine {
 		s = s.minus(l.times(s.dot(l))).normalized();
 		Vector3d n = l.cross(s);
 		double udotn = u.dot(n);
+		if(Math.abs(udotn)<0.01)
+			return false;
 		double sdotu = s.dot(u);
 		Vector3d extrap = xref.plus(u.times(n.dot(e.minus(xref))/udotn));
 		//System.out.println(extrap.toStlString());
@@ -383,7 +395,10 @@ public class CVTAlignment extends ReconstructionEngine {
 
 
 		Vector3d sp = s.minus(n.times(sdotu/udotn));
-
+		if(sp.magnitude() > 10) {  //this can only happen if the angle between the track and the normal is small
+			System.out.println("rejecting track");
+			return false;
+		}
 		int index = getIndexSVT(region-1, sector-1);
 		if(svtTopBottomSep && (layer-1)%2==1) {
 			index += 42;
@@ -438,6 +453,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		//dm.set(i,0, s.dot(e.minus(extrap)));
 		c.set(i,0,s.dot(extrap));
 		m.set(i,0,s.dot(e));
+		return true;
 		
 	}
 
@@ -563,8 +579,24 @@ public class CVTAlignment extends ReconstructionEngine {
 			System.out.println("["+this.getName()+"] using tracks bank (default)");
 			this.isCosmics = false;
 		}
+		
+		//svt stand-alone
+        String maxResidual = this.getEngineConfigString("maxResidual");
+        
+        if (maxResidual!=null) {
+            System.out.println("["+this.getName()+"] run with cut on maximum residual "+maxResidual+" config chosen based on yaml");
+            this.maxResidualCut =  Double.valueOf(maxResidual);
+        }
+        
+        if (maxResidual==null) {
+             System.out.println("["+this.getName()+"] run with maximum residual cut setting default = none");
+             this.maxResidualCut = Double.MAX_VALUE;
+        }
+
 		return true;
 	}
+	
+	double maxResidualCut;
 
 	double maxDocaCut;
 	
