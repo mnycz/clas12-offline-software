@@ -108,6 +108,25 @@ public class TracksFromTargetRec {
             if(Math.abs(Constants.getSolenoidVal())>0.001 &&
                     Constants.LIGHTVEL * seed.get_Helix().radius() *Constants.getSolenoidVal()<Constants.PTCUT)
                 continue;
+            else if(Math.abs(Constants.getSolenoidVal())<0.001) {
+            	hlx.setR(1e10);
+            	double omega = hlx.getOmega();
+            	double doca = hlx.getOmega();
+            	double phi = hlx.getPhi0();
+            	double cod = cov.get(0, 2);
+            	double coo = cov.get(2, 2);
+            	double cdd = cov.get(0, 0);
+            	double coph = cov.get(1, 2);
+            	double cphph = cov.get(1, 1);
+            	hlx.setOmega(0);
+            	//hlx.setD0(doca-omega*cod/Math.sqrt(coo*cdd));
+            	//hlx.setD0(doca-omega*coph/Math.sqrt(coo*cphph));
+            	cov.set(2,2, 1e-15);
+            	//cov.set(2,0, 0);
+            	//cov.set(2,1, 0);
+            	//cov.set(0,2, 0);
+            	//cov.set(1,2, 0);
+            }
                 kf = new org.jlab.clas.tracking.kalmanfilter.helical.KFitter( hlx, cov, event,  swimmer, 
                     org.jlab.rec.cvt.Constants.getXb(), 
                     org.jlab.rec.cvt.Constants.getYb(),
