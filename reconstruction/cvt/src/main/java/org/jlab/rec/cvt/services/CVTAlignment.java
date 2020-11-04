@@ -333,6 +333,8 @@ public class CVTAlignment extends ReconstructionEngine {
 		return new Vector3d(v.x(),v.y(),v.z());
 	}
 	
+	boolean useDocaPhiZTandip=true;
+	
 	//returns false if there's a problem
 	private boolean fillMatrices(int i, Ray ray, Cluster cl, Matrix A, Matrix B, Matrix V, Matrix m, Matrix c, Matrix I) {
 		int region = cl.get_Region();
@@ -363,9 +365,10 @@ public class CVTAlignment extends ReconstructionEngine {
 		Vector3d e2 = line2.origin();
 		Vector3d e = e1.times(1-(centroid%1)).add(e2.times((centroid%1)));
 		Vector3d s = e2.minus(e1);
+		s = s.minus(l.times(s.dot(l))).normalized();
+		
 		Vector3d xref = convertVector(ray.get_refPoint().toVector3D());
 		Vector3d u = convertVector(ray.get_dirVec()); 
-		s = s.minus(l.times(s.dot(l))).normalized();
 		Vector3d n = l.cross(s);
 		double udotn = u.dot(n);
 		if(Math.abs(udotn)<0.01)
@@ -446,10 +449,28 @@ public class CVTAlignment extends ReconstructionEngine {
 		I.set(i, 0, index);
 
 		Vector3d dmdu = sp.times(e.minus(xref).dot(n)/udotn);
-		B.set(i,0, sp.x);
-		B.set(i,1, sp.z);
-		B.set(i,2, dmdu.x);
-		B.set(i,3, dmdu.z);
+		if(!this.useDocaPhiZTandip) {
+			B.set(i,0, sp.x);
+			B.set(i,1, sp.z);
+			B.set(i,2, dmdu.x);
+			B.set(i,3, dmdu.z);
+		} else {
+			
+			double phi = Math.atan2(u.y,u.x);
+			Vector3d csphi = new Vector3d(Math.cos(phi), Math.sin(phi),0);
+			Vector3d mscphi = new Vector3d(-Math.sin(phi), Math.cos(phi),0);
+			double d = mscphi.dot(xref);
+			B.set(i, 0, s.dot(mscphi.minus(u.times(n.dot(mscphi)/udotn))));
+			B.set(i, 1, s.dot(csphi.times(-d)
+					.plus(mscphi.times(n.dot(e.minus(xref))/udotn))
+					.minus(u.times(mscphi.dot(n)*n.dot(e.minus(xref))/(udotn*udotn)))
+					.plus(u.times(d*n.dot(csphi)/udotn)))
+					);
+			B.set(i, 2, s.z);
+			B.set(i, 3, (s.z/udotn-n.z*sdotu/(udotn*udotn))*n.dot(e.minus(xref)));
+			
+			
+		}
 		//dm.set(i,0, s.dot(e.minus(extrap)));
 		c.set(i,0,s.dot(extrap));
 		m.set(i,0,s.dot(e));
@@ -520,7 +541,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		DatabaseConstantProvider cp = new DatabaseConstantProvider(11, variationName);
 		cp = SVTConstants.connect( cp );
 		cp.disconnect();  
-		SVTStripFactory svtFac = new SVTStripFactory(cp, false);
+		SVTStripFactory svtFac = new SVTStripFactory(cp, true);
 		SVTGeom.setSvtStripFactory(svtFac);
 
 		String svtTopBottomSep = this.getEngineConfigString("svtAlignTopBottomSeparately");
@@ -593,6 +614,13 @@ public class CVTAlignment extends ReconstructionEngine {
              this.maxResidualCut = Double.MAX_VALUE;
         }
 
+        for(int layer = 0; layer<6; layer++)
+        {
+        	Line3d line = SVTGeom.getStrip(layer, 0, 0);
+        	System.out.println("debug. Layer" + layer + " (" + line.origin().x + ", "+ line.origin().y + ", "+ line.origin().z+"), "
+        			+ " (" + line.end().x + ", "+ line.end().y + ", "+ line.end().z+"), ");
+        }
+        
 		return true;
 	}
 	
