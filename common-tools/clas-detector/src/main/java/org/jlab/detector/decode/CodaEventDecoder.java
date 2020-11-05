@@ -1249,13 +1249,13 @@ public class CodaEventDecoder {
                     for(int loop = 2; loop < intData.length; loop++){
                         int  dataEntry = intData[loop];
                         if(node.getTag()==57637) {
-                            int helicity = DataUtils.getInteger(dataEntry, 31, 31);
-                            int quartet  = DataUtils.getInteger(dataEntry, 30, 30);
+                            int quartet  = DataUtils.getInteger(dataEntry, 31, 31);
+                            int helicity = DataUtils.getInteger(dataEntry, 30, 30);
                             int interval = DataUtils.getInteger(dataEntry, 29, 29);
                             int id       = DataUtils.getInteger(dataEntry, 24, 28);
                             long value   = DataUtils.getLongFromInt(DataUtils.getInteger(dataEntry,  0, 23));
-                            if(id < 3) {
-                                DetectorDataDgtz entry = new DetectorDataDgtz(crate,num,id+32*interval);
+                            if(id < 32) {
+                                DetectorDataDgtz entry = new DetectorDataDgtz(crate,num,id);
                                 SCALERData scaler = new SCALERData();
                                 scaler.setHelicity((byte) helicity);
                                 scaler.setQuartet((byte) quartet);
