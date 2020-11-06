@@ -15,6 +15,9 @@ import org.jlab.detector.base.DetectorType;
 
 import org.jlab.clas.pdg.PhysicsConstants;
 import org.jlab.clas.pdg.PDGDatabase;
+import org.jlab.clas.physics.Vector3;
+import org.jlab.clas.swimtools.Swim;
+import org.jlab.geom.prim.Vector3D;
 
 import org.jlab.rec.eb.EBConstants;
 import org.jlab.rec.eb.EBCCDBConstants;
@@ -62,6 +65,26 @@ public class EBAnalyzer {
         //neutralBetaDetectors.put(DetectorType.FTOF,Arrays.asList(2,1,3));
     }
 
+    /**
+     * Swim all the FT particles in the event to a z-plane and reassign
+     * their momentum and vertex.
+     * @param event
+     * @param zvertex z-plane to swim tagger momentum to
+     */
+    public void swimTaggerToVertex(DetectorEvent event, double zvertex) {
+        Swim swim = new Swim();
+        for (DetectorParticle p : event.getParticles()) {
+            if (p.getStatus().isTagger()) {
+                Vector3 vtx = p.vertex();
+                Vector3 mom = p.vector();
+                swim.SetSwimParameters(vtx.x(),vtx.y(),vtx.z(),
+                        mom.x(),mom.y(),mom.z(),p.getCharge());
+                double[] c = swim.SwimToPlaneLab(zvertex);
+                p.vertex().setXYZ(c[0],c[1],c[2]);
+                p.vector().setXYZ(c[3],c[4],c[5]);
+            }
+        }
+    }
     
     /**
      *
@@ -90,7 +113,9 @@ public class EBAnalyzer {
 
         // Match FT against these hypotheses in FD:
         final int[] hypotheses = new int[]{-11,11,-211,211,-321,321,2212};
-    
+   
+        double eventVertex = 0;
+        
         // particle candidates for FT-FD time-matching:
         List<DetectorParticle> electronFT = new ArrayList<>();
         List<DetectorParticle> chargedFD = new ArrayList<>();
@@ -152,6 +177,7 @@ public class EBAnalyzer {
                         if (Math.abs(vtxTimeFD-startTimeFT) < Math.abs(minTimeDiff)) {
                             minTimeDiff = vtxTimeFD-startTimeFT;
                             iMinTimeDiffFT = itag;
+                            eventVertex = chargedFD.get(ifd).vertex().z();
                         }
                     }
                 }
@@ -169,6 +195,7 @@ public class EBAnalyzer {
                 final double startTime = ebrf.getStartTime(electronFT.get(iMinTimeDiffFT),DetectorType.FTCAL,-1);
                 event.getEventHeader().setStartTimeFT(startTime);
                 assignParticleStartTimes(event,DetectorType.FTCAL,-1);
+                this.swimTaggerToVertex(event,eventVertex);
 
                 // recalculate betas, pids, etc:
                 this.assignBetas(event,true);
@@ -232,6 +259,7 @@ public class EBAnalyzer {
                 event.getEventHeader().setStartTime(startTime);
                 this.assignBetas(event,false);
                 this.assignPids(event,false);
+                this.swimTaggerToVertex(event,trigger.vertex().z());
             }
         }
         this.assignNeutralMomenta(event);
