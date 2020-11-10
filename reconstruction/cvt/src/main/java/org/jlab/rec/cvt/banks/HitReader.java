@@ -165,6 +165,9 @@ public class HitReader {
                 
                 strip[i] = bankDGTZ.getShort("component", i);
                 ADC[i] = bankDGTZ.getInt("ADC", i);
+                float time = bankDGTZ.getFloat("time", i);
+                if(time >180 || time < 34)
+                	continue;
                 
                 double angle = 2. * Math.PI * ((double) (sector[i] - 1) / (double) org.jlab.rec.cvt.svt.Constants.NSECT[layer[i] - 1]) + org.jlab.rec.cvt.svt.Constants.PHI0[layer[i] - 1];
                 int hemisphere = (int) Math.signum(Math.sin(angle));
