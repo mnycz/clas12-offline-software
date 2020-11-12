@@ -176,7 +176,9 @@ public class CVTAlignment extends ReconstructionEngine {
 		List<Matrix> cs = new ArrayList<Matrix>();
 		List<Integer> trackIDs = new ArrayList<Integer>();
 
+		
 		tracksLoop : for (Trajectory track : tracks) {
+			
 			if(Math.abs(getDoca(track))>maxDocaCut)
 				continue;
 			/*System.out.println("track read: ");
@@ -186,11 +188,15 @@ public class CVTAlignment extends ReconstructionEngine {
 			System.out.println("ray: "+ track.get_ray().get_refPoint() + 
 					" + lambda*" + track.get_ray().get_dirVec());
 			System.out.println();*/
-			int nCross = 0;
+			int nCrossSVT = 0, nCrossBMT = 0;
 			for(Cross c : track) {
 				if(c.get_Detector().equalsIgnoreCase("SVT"))
-					nCross++;
+					nCrossSVT++;
+				if(c.get_Detector().equalsIgnoreCase("BMT") && !isSVTonly)
+					nCrossBMT++;
+				
 			}
+			int nCross = nCrossSVT + nCrossBMT;
 			if(nCross <= 2)
 				continue;
 			Ray ray = track.get_ray();
@@ -205,7 +211,9 @@ public class CVTAlignment extends ReconstructionEngine {
 			//getRay(track);
 			//System.out.println(ray.get_dirVec().toString());
 			//System.out.println(ray.get_refPoint().toString());
-			Matrix A = new Matrix(2*nCross, svtTopBottomSep ? 2*nAlignVars*nCross : nAlignVars*nCross);//not sure why there aren't 6 columns
+			
+			int colsA = (svtTopBottomSep ? 2*nAlignVars*nCrossSVT : nAlignVars*nCrossSVT) + nCrossBMT;
+			Matrix A = new Matrix(2*nCross, colsA);//not sure why there aren't 6 columns
 			Matrix B = new Matrix(2*nCross, 4);
 			Matrix V = new Matrix(2*nCross,2*nCross);
 			Matrix m = new Matrix(2*nCross,1);
@@ -215,18 +223,32 @@ public class CVTAlignment extends ReconstructionEngine {
 			int i = 0;
 			for(Cross cross : track) {
 				//System.out.println("cross " +cross.get_Point());
-				if(!cross.get_Detector().equalsIgnoreCase("SVT") && isSVTonly)
-					continue;
-				Cluster cl1 = cross.get_Cluster1();
-				boolean ok = fillMatrices(i,ray,cl1,A,B,V,m,c,I);
-				i++;
-				if(!ok) //reject track if there's a cluster with really bad values.  
-					continue tracksLoop;
-				Cluster cl2 = cross.get_Cluster2();
-				ok = fillMatrices(i,ray,cl2,A,B,V,m,c,I);
-				i++;
-				if(!ok)
-					continue tracksLoop;
+				if(cross.get_Detector().equalsIgnoreCase("SVT"))
+				{
+					Cluster cl1 = cross.get_Cluster1();
+					boolean ok = fillMatricesSVT(i,ray,cl1,A,B,V,m,c,I);
+					i++;
+					if(!ok) //reject track if there's a cluster with really bad values.  
+						continue tracksLoop;
+					Cluster cl2 = cross.get_Cluster2();
+					ok = fillMatricesSVT(i,ray,cl2,A,B,V,m,c,I);
+					i++;
+					if(!ok)
+						continue tracksLoop;
+				} else {
+					if(isSVTonly)
+						continue;
+					Cluster cl1 = cross.get_Cluster1();
+					boolean ok = fillMatricesBMT(i,ray,cl1,A,B,V,m,c,I);
+					i++;
+					if(!ok) //reject track if there's a cluster with really bad values.  
+						continue tracksLoop;
+					Cluster cl2 = cross.get_Cluster2();
+					ok = fillMatricesBMT(i,ray,cl2,A,B,V,m,c,I);
+					i++;
+					if(!ok)
+						continue tracksLoop;
+				}
 				
 			}
 
@@ -270,6 +292,36 @@ public class CVTAlignment extends ReconstructionEngine {
 		//event.show();
 		return true;
 
+	}
+
+	private boolean fillMatricesBMT(int i, Ray ray, Cluster cl, Matrix a, Matrix b, Matrix v, Matrix m, Matrix c,
+			Matrix i2) {
+		double centroid = cl.get_Centroid();
+		if(i %2 == 1) { //Z layer
+			double phi1 = BMTGeom.CRZStrip_GetPhi(cl.get_Sector(), cl.get_Layer(), (int)centroid-1);
+			double phi2 = BMTGeom.CRZStrip_GetPhi(cl.get_Sector(), cl.get_Layer(), (int)centroid-0);
+			double phi = phi1*(1-(centroid%1))+ phi2*(centroid%1);
+			
+			
+			
+			
+			Vector3d l = new Vector3d(0,0,1);
+			Vector3d s = new Vector3d(-Math.sin(phi),Math.cos(phi), 0);
+			s = s.minus(l.times(s.dot(l))).normalized();
+			
+			Vector3d xref = convertVector(ray.get_refPoint().toVector3D());
+			Vector3d u = convertVector(ray.get_dirVec()); 
+			Vector3d n = l.cross(s);
+			double udotn = u.dot(n);
+			if(Math.abs(udotn)<0.01)
+				return false;
+			double sdotu = s.dot(u);
+			//org.jlab.rec.cvt.bmt.Constants.
+			//Vector3d extrap = xref.plus(u.times(n.dot(e.minus(xref))/udotn));
+			
+			
+		}
+		return false;
 	}
 
 	private Ray getRay(Helix h) {
@@ -336,7 +388,7 @@ public class CVTAlignment extends ReconstructionEngine {
 	boolean useDocaPhiZTandip=true;
 	
 	//returns false if there's a problem
-	private boolean fillMatrices(int i, Ray ray, Cluster cl, Matrix A, Matrix B, Matrix V, Matrix m, Matrix c, Matrix I) {
+	private boolean fillMatricesSVT(int i, Ray ray, Cluster cl, Matrix A, Matrix B, Matrix V, Matrix m, Matrix c, Matrix I) {
 		int region = cl.get_Region();
 		int layer = cl.get_Layer();
 		int sector = cl.get_Sector();
@@ -375,8 +427,10 @@ public class CVTAlignment extends ReconstructionEngine {
 			return false;
 		double sdotu = s.dot(u);
 		Vector3d extrap = xref.plus(u.times(n.dot(e.minus(xref))/udotn));
+		
+		
 		//System.out.println(extrap.toStlString());
-		double resolution = cl.get_ResolutionAlongZ(extrap.z, SVTGeom);
+		double resolution = cl.get_ResolutionAlongZ(extrap.z-SVTConstants.Z0ACTIVE[(layer-1)/2], SVTGeom);
 		/*System.out.println("sector: " + sector + " of " + SVTConstants.NSECTORS[region-1]);
 		System.out.println("xref: " + xref.toStlString());
 		System.out.println("e: " + e.toStlString());
@@ -539,6 +593,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		
 		System.out.println("SVT LOADING WITH VARIATION "+variationName);
 		DatabaseConstantProvider cp = new DatabaseConstantProvider(11, variationName);
+		//cp = new HackConstantsProvider(cp);
 		cp = SVTConstants.connect( cp );
 		cp.disconnect();  
 		SVTStripFactory svtFac = new SVTStripFactory(cp, true);
