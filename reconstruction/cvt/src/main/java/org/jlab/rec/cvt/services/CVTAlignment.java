@@ -404,10 +404,10 @@ public class CVTAlignment extends ReconstructionEngine {
 		
 		if(centroid == SVTConstants.NSTRIPS)
 			centroid = SVTConstants.NSTRIPS-.001;
-		Line3d line1 = SVTGeom.getStrip(layer-1, sector-1, (int)Math.floor(centroid)-1);
-		Line3d line2 = SVTGeom.getStrip(layer-1, sector-1, (int)Math.floor(centroid)-0); 
+		Line3d line1 = SVTGeom.getStripFactory().getShiftedStrip(layer-1, sector-1, (int)Math.floor(centroid)-1);
+		Line3d line2 = SVTGeom.getStripFactory().getShiftedStrip(layer-1, sector-1, (int)Math.floor(centroid)-0); 
 		
-		
+		System.out.println( SVTConstants.getLayerSectorAlignmentData()[0][0][1]);
 		
 		
 		//take the weighted average of the directions of the two lines.

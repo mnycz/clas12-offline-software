@@ -9,7 +9,6 @@ import org.jlab.detector.calib.utils.DatabaseConstantProvider; // coatjava-3.0
 import org.jlab.geom.base.ConstantProvider;
 
 import eu.mihosoft.vrl.v3d.Transform;
-import org.jlab.geom.prim.Point3D;
 
 /**
  * <h1> Geometry for the SVT </h1>
@@ -39,6 +38,7 @@ public class SVTConstants
 	// data for alignment shifts
 	private static double[][] SECTORSHIFTDATA = null;
 	private static String filenameSectorShiftData = null;
+        private static double[][][] LAYERSHIFTDATA = null;
 	
 	//private static double[][] LAYERSHIFTDATA = null;
 	//private static String filenameLayerShiftData = null;
@@ -119,7 +119,7 @@ public class SVTConstants
 		cp.loadTable( ccdbPath +"material/box");
 		cp.loadTable( ccdbPath +"material/tube");
 		cp.loadTable( ccdbPath +"alignment");
-		cp.loadTable( ccdbPath +"position");
+		cp.loadTable( ccdbPath +"layeralignment");
                 //shift by target
                 cp.loadTable("/geometry/target");
                 
@@ -332,7 +332,7 @@ public class SVTConstants
 				NSECTORS[region] = cp.getInteger(ccdbPath+"region/nSectors", region );
                                 
 				STATUS[region] = cp.getInteger(ccdbPath+"region/status", region );
-				Z0ACTIVE[region] = cp.getDouble(ccdbPath+"region/zStart", region )+cp.getDouble("/geometry/target/position", 0)*10.0; // Cu edge of hybrid sensor's active volume
+				Z0ACTIVE[region] = cp.getDouble(ccdbPath+"region/zStart", region ); // Cu edge of hybrid sensor's active volume
 				REFRADIUS[region] = cp.getDouble(ccdbPath+"region/UlayerOuterRadius", region); // radius to outer side of U (inner) module
 				SUPPORTRADIUS[region] = cp.getDouble(ccdbPath+"region/CuSupportInnerRadius", region); // radius to inner side of heatSinkRidge
 				
@@ -363,12 +363,6 @@ public class SVTConstants
                                 System.out.println(" a Region "+aRegion +" aSector "+aSector+" RSI "+RSI[aRegion][aSector] );
                             }
                         }
-			System.out.println("Reading detector global position from database");
-                        double xpos = cp.getDouble(ccdbPath+"position/x", 0 );
-                        double ypos = cp.getDouble(ccdbPath+"position/y", 0 );
-                        double zpos = cp.getDouble(ccdbPath+"position/z", 0 );
-                        System.out.println("SVT position set to (" + xpos + "," + ypos + "," + zpos + ") mm");
-                        
 			System.out.println("Reading alignment shifts from database");
 		
                         SECTORSHIFTDATA = new double[NTOTALSECTORS][];
@@ -382,14 +376,26 @@ public class SVTConstants
                                 double ry = cp.getDouble(ccdbPath+"alignment/ry", i );
                                 double rz = cp.getDouble(ccdbPath+"alignment/rz", i );
                                 double ra = cp.getDouble(ccdbPath+"alignment/ra", i );
-                                System.out.println("SVT alignment pars "+new Point3D(tx, ty, tz)+ " "+ new Point3D(rx, ry, rz)+" "+ Math.toRadians(ra));
-                                // adding global shift to internal alignment shifts
-                                tx += xpos;
-                                ty += ypos;
-                                tz += zpos;
+
                                 SECTORSHIFTDATA[i] = new double[]{ tx, ty, tz, rx, ry, rz, Math.toRadians(ra) };
-                                
+
                         }
+                        
+                        LAYERSHIFTDATA = new double[NSECTORS[3]][NLAYERS][];
+                        for( int i = 0; i < (NTOTALSECTORS-NSECTORS[3])*2; i++ )    // layeralignment tables doesn't cover region 4
+                        {
+                                int sector = cp.getInteger(ccdbPath+"layeralignment/sector", i );
+                                int layer  = cp.getInteger(ccdbPath+"layeralignment/layer", i );
+                                double tx  = cp.getDouble(ccdbPath+"layeralignment/deltaX", i );
+                                double ty  = cp.getDouble(ccdbPath+"layeralignment/deltaY", i );
+                                double tz  = cp.getDouble(ccdbPath+"layeralignment/deltaZ", i );
+                                double rx  = cp.getDouble(ccdbPath+"layeralignment/rotX", i );
+                                double ry  = cp.getDouble(ccdbPath+"layeralignment/rotY", i );
+                                double rz  = cp.getDouble(ccdbPath+"layeralignment/rotZ", i );
+                                double ra  = cp.getDouble(ccdbPath+"layeralignment/rotA", i );
+                                LAYERSHIFTDATA[sector-1][layer-1] = new double[]{ tx, ty, tz, rx, ry, rz, ra };
+                        }
+                        
                         
 			if( VERBOSE )
 			{
@@ -412,7 +418,7 @@ public class SVTConstants
 			//if( NREGIONS == 0 || NSECTORS[0] == 0 || FIDCUX == 0 || MATERIALS[0][0] == 0 || SUPPORTRADIUS[0] == 0 )
 				//throw new NullPointerException("please load the following tables from CCDB in "+ccdbPath+"\n svt\n region\n support\n fiducial\n material\n");
 			
-//			bLoadedConstants = true;
+			bLoadedConstants = true;
 			
 			if( VERBOSE )
 			{
@@ -844,4 +850,15 @@ public class SVTConstants
 		if( SECTORSHIFTDATA == null ){ System.err.println("error: SVTConstants.getDataAlignmentSectorShift: SECTORSHIFTDATA requested is null"); } // System.exit(-1);
 		return SECTORSHIFTDATA;
 	}
+
+        /**
+         * Returns the layer/sector alignment data
+         * @return
+         */
+        public static double[][][] getLayerSectorAlignmentData() {
+                if(LAYERSHIFTDATA == null ) { System.err.println("error: SVTConstants.getLayerSectorAlignmentData: LAYERSHIFTDATA requested is null"); }
+                return LAYERSHIFTDATA;
+        }
+        
+        
 }

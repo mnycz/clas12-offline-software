@@ -224,6 +224,8 @@ public class CVTRecNewKF extends ReconstructionEngine {
      
     @Override
     public boolean init() {
+    	System.out.println( SVTConstants.getLayerSectorAlignmentData()[0][0][1]);
+		
         // Load config
         String rmReg = this.getEngineConfigString("removeRegion");
         
