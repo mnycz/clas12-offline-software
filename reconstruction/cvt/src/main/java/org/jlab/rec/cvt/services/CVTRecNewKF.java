@@ -129,7 +129,7 @@ public class CVTRecNewKF extends ReconstructionEngine {
     }
     @Override
     public boolean processDataEvent(DataEvent event) {
-        
+    	
         this.setRunConditionsParameters(event, FieldsConfig, Run, false, "");
         double shift = org.jlab.rec.cvt.Constants.getZoffset();
 
@@ -224,8 +224,9 @@ public class CVTRecNewKF extends ReconstructionEngine {
      
     @Override
     public boolean init() {
-    	System.out.println( SVTConstants.getLayerSectorAlignmentData()[0][0][1]);
-		
+		if(this.getEngineConfiguration() == null || "null".equals(this.getEngineConfiguration())) {
+			return true; //prevents init from being run twice.
+		}
         // Load config
         String rmReg = this.getEngineConfigString("removeRegion");
         

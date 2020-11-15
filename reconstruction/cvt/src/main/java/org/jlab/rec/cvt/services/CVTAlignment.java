@@ -407,7 +407,7 @@ public class CVTAlignment extends ReconstructionEngine {
 		Line3d line1 = SVTGeom.getStripFactory().getShiftedStrip(layer-1, sector-1, (int)Math.floor(centroid)-1);
 		Line3d line2 = SVTGeom.getStripFactory().getShiftedStrip(layer-1, sector-1, (int)Math.floor(centroid)-0); 
 		
-		System.out.println( SVTConstants.getLayerSectorAlignmentData()[0][0][1]);
+		//System.out.println( SVTConstants.getLayerSectorAlignmentData()[0][0][1]);
 		
 		
 		//take the weighted average of the directions of the two lines.
@@ -551,6 +551,9 @@ public class CVTAlignment extends ReconstructionEngine {
 
 	@Override
 	public boolean init() {
+		if(this.getEngineConfiguration() == null || "null".equals(this.getEngineConfiguration())) {
+			return true; //prevents init from being run twice.
+		}
 		// Load config
 		String rmReg = this.getEngineConfigString("removeRegion");
 
