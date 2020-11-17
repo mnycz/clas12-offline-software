@@ -59,7 +59,11 @@ public abstract class ReconstructionEngine implements Engine {
         engineConfigMap   = new ConcurrentHashMap<String,String>();
         String env = System.getenv("CLAS12DIR");
         engineDictionary.initFromDirectory( env +  "/etc/bankdefs/hipo4");
-        //System.out.println("[Engine] >>>>> constants manager : " + getConstantsManager().toString());
+        
+        String v = this.getClass().getPackage().getImplementationVersion();
+        System.out.println("[CONFIGURE][" + getName() + "] version: " + v);
+        v = ConstantsManager.class.getPackage().getImplementationVersion();
+        System.out.println("[CONFIGURE][COATJAVA] version: " + v);
     }
 
     abstract public boolean processDataEvent(DataEvent event);
