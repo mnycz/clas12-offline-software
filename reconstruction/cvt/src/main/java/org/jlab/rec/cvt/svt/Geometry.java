@@ -78,10 +78,10 @@ public class Geometry {
         //System.out.println(" GET MODULE O "+labFrameLine.origin().toString());
         //System.out.println(" GET MODULE 1 "+SVTConstants.getDataAlignmentSectorShift()[SVTConstants.convertRegionSector2Index( rm[0],sector-1)].toString());
         //System.out.println(" GET MODULE 2 "+new Point3D(SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1).x, SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1).y, SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1).z).toString());
-        if(SVTConstants.getDataAlignmentSectorShift()[SVTConstants.convertRegionSector2Index( rm[0],sector-1)]==null)
+        if(SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1]==null)
             System.out.println(" SHIFT ARRAY NULL FOR "+rm[0]+" sect "+(sector-1));
- 	AlignmentFactory.applyShift(labFrameLine.origin(),SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
-        AlignmentFactory.applyShift(labFrameLine.end(),   SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
+ 	AlignmentFactory.applyShift(labFrameLine.origin(),SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
+        AlignmentFactory.applyShift(labFrameLine.end(),   SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
  
  	// return only the origin of the line.
  
@@ -90,7 +90,6 @@ public class Geometry {
       /* * * * * * * *
       // returns NPE:
         Vector3d[] corners = this._svtStripFactory.getLayerCorners(layer-1, sector-1);
-
         return new Point3D(corners[0].x, corners[0].y, corners[0].z);
       * * * * * * * */
     }
@@ -106,8 +105,8 @@ public class Geometry {
                                                                               SVTConstants.Z0ACTIVE[    rm[0] ] ));
         // apply the shifts to both ends of labFrameLine
  	double scaleT = 1.0, scaleR = -1.0;// scale factors used for visualization. Not relevant here.
- 	AlignmentFactory.applyShift(labFrameLine.origin(),SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
-        AlignmentFactory.applyShift(labFrameLine.end(),   SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
+ 	AlignmentFactory.applyShift(labFrameLine.origin(),SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
+        AlignmentFactory.applyShift(labFrameLine.end(),   SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
  
  	// return only the origin of this line.
         return new Point3D(labFrameLine.origin().x, labFrameLine.origin().y, labFrameLine.origin().z);
@@ -237,8 +236,8 @@ public class Geometry {
               
             //gpg apply the shifts to both ends of labFrameLine.
  	    double scaleT = 1.0, scaleR = -1.0;// scale factors used for visualization. Not relevant here.
- 	    AlignmentFactory.applyShift(labFrameLine.origin(),SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
- 	    AlignmentFactory.applyShift(labFrameLine.end(),   SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
+ 	    AlignmentFactory.applyShift(labFrameLine.origin(),SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
+ 	    AlignmentFactory.applyShift(labFrameLine.end(),   SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1),scaleT,scaleR );
 
             transf= new Point3D(labFrameLine.origin().x,
                                 labFrameLine.origin().y,
@@ -251,8 +250,8 @@ public class Geometry {
             
             //gpg need to apply the reverse survey shifts here.
  	    double scaleT = 1.0, scaleR = -1.0;// scale factors used for visualization. Not relevant here.
- 	    AlignmentFactory.applyInverseShift( glLine.origin(), SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1 ), scaleT, scaleR );
- 	    AlignmentFactory.applyInverseShift( glLine.end(), SVTConstants.getDataAlignmentSectorShift()[SVTConstants.RSI[rm[0]][sector-1]], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1 ), scaleT, scaleR );
+ 	    AlignmentFactory.applyInverseShift( glLine.origin(), SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1 ), scaleT, scaleR );
+ 	    AlignmentFactory.applyInverseShift( glLine.end(), SVTConstants.getLayerSectorAlignmentData()[sector-1][layer-1], SVTAlignmentFactory.getIdealFiducialCenter( rm[0], sector-1 ), scaleT, scaleR );
   
             Line3d localLine = glLine.transformed(SVTConstants.getLabFrame( (int)((layer+1)/2) -1,
                                                                             sector-1,
@@ -272,7 +271,7 @@ public class Geometry {
         // if first iteration trkDir == null
         double s2corr = s2;
         // now use track info
-        s2corr = this.getCorrectedStrip(sector, upperlayer, s2, trkDir, SVTConstants.ACTIVESENLEN);
+        s2corr = this.getCorrectedStrip(sector, upperlayer, s2, trkDir, SVTConstants.MODULELEN);
         double z = getLocCoord(s1, s2corr)[1];
         //update using the corrected z
         s2corr = this.getCorrectedStrip(sector, upperlayer, s2, trkDir, z);
@@ -286,13 +285,12 @@ public class Geometry {
         double[] LC = getLocCoord(s1, s2corr);
         double LC_x = LC[0];
         double LC_z = LC[1];
-        
-        Point3D crPoint = transformToFrame(sector, upperlayer - 1, LC_x, 0, LC_z, "lab", "");
+
+        Point3D crPoint = transformToFrame(sector, upperlayer - 1, LC_x, 0, LC_z, "lab", "middle");
 
         vals[0] = crPoint.x();
         vals[1] = crPoint.y();
         vals[2] = crPoint.z();
-
         double[] LCErr = getLocCoordErrs(upperlayer - 1, upperlayer, s1, s2corr, zf);
         double LCErr_x = LCErr[0];
         double LCErr_z = LCErr[1];
@@ -716,7 +714,7 @@ public class Geometry {
 
             z1 = 0;
             x1 = m1 * z1 + b1;
-            z2 = SVTConstants.STRIPLENMAX;
+            z2 = SVTConstants.MODULELEN;
             x2 = m1 * z2 + b1;
 
             if (x2 < 0) {
@@ -735,7 +733,7 @@ public class Geometry {
 
             z1 = 0;
             x1 = m2 * z1 + b2;
-            z2 = SVTConstants.STRIPLENMAX;
+            z2 = SVTConstants.MODULELEN;
             x2 = m2 * z2 + b2;
 
             if (x2 > SVTConstants.ACTIVESENWID) {
