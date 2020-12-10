@@ -14,4 +14,5 @@ public final class DetId {
     public static final int CTOFID = 22;
     public static final int PCALID = 33;
     public static final int ECID = 44;
+    public static final int ALERTID = 555;
 }

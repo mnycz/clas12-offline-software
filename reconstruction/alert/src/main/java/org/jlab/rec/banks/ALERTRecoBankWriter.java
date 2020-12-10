@@ -3,7 +3,7 @@ package org.jlab.rec.banks;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.io.base.DataBank;
 import org.jlab.io.base.DataEvent;
-import org.jlab.rec.hit.ALERTHit;
+import org.jlab.rec.hit.Hit;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public class ALERTRecoBankWriter {
 public ALERTRecoBankWriter(){
     // Blank
 }
-public DataBank fillRawHitsBank(DataEvent event, List<ALERTHit> hitlist){
+public DataBank fillRawHitsBank(DataEvent event, List<Hit> hitlist){
     // Need to decide if we want to combine AHit.java and ALERTHit.java into a single JAVA class
     // in TOF - ctof and hit Hit class extends AHit (but we do not need to separate
     DataBank bank = event.createBank("ALERT::rawhits", hitlist.size());

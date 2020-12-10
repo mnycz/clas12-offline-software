@@ -5,8 +5,7 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.rec.banks.ALERTRecoBankWriter;
 import org.jlab.rec.banks.ALERTTrackReader;
 import org.jlab.rec.cluster.ALERTCluster;
-import org.jlab.rec.hit.ALERTHit;
-import org.jlab.rec.tracks.ALERTTrack;
+import org.jlab.rec.hit.Hit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +41,7 @@ public class ALERTEngine extends ReconstructionEngine{
         ALERTTrackReader trkRead = new ALERTTrackReader();
         //ArrayList<ALERTTrack> tracks = trkRead.fetch_Trks(event);
 
-        List<ALERTHit> hits = new ArrayList<ALERTHit>(); // all hits
+        List<Hit> hits = new ArrayList<Hit>(); // all hits
         List<ALERTCluster> clusters = new ArrayList<ALERTCluster>(); // all clusters
 
 

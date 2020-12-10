@@ -1,6 +1,9 @@
 package org.jlab.rec.hit;
 
-public abstract class ALERTHit implements Comparable<ALERTHit> {
+import org.jlab.detector.geant4.v2.ALERTGeant4Factory;
+import org.jlab.geom.prim.Point3D;
+
+public abstract class Hit implements Comparable<Hit> {
     //Comparable is used for sorting
     private int _Id;
     private int _Sector;
@@ -14,8 +17,8 @@ public abstract class ALERTHit implements Comparable<ALERTHit> {
     private int _TDC2; // TDC Back
     private int _TDC3; // TDC top - 10 wedges on top
 
-    public ALERTHit(int id, int sector, int superlayer, int layer, int paddle,
-                    int adc1, int adc2, int adc3, int tdc1, int tdc2, int tdc3)
+    public Hit(int id, int sector, int superlayer, int layer, int paddle,
+               int adc1, int adc2, int adc3, int tdc1, int tdc2, int tdc3)
     {
         _Id = id;
         _Sector = sector;
@@ -119,4 +122,41 @@ public abstract class ALERTHit implements Comparable<ALERTHit> {
     public void set_TDC3(int _TDC3) {
         this._TDC3 = _TDC3;
     }
-}
+
+
+
+    public void setPaddleLine(ALERTGeant4Factory geometry) {
+/*
+org.jlab.detector.volume.Geant4Basic pad = geometry
+                .getPaddle(get_Paddle());
+        Line3d l = pad.getLineZ();
+        Line3D paddleLine = new Line3D();
+
+        paddleLine.set(l.origin().x, l.origin().y, l.origin().z, l.end().x,
+                l.end().y, l.end().z);
+        this.set_paddleLine(paddleLine);
+
+        this.set_barthickness(geometry.getThickness(get_Paddle()));
+ */
+
+    }
+
+
+
+    private Point3D calc_hitPosition() {
+        Point3D hitPosition = new Point3D();
+        //get_paddleLine() ---- must be included to **
+        /*
+        Point3D startpoint = this.get_paddleLine().origin();
+
+        hitPosition.setX(startpoint.x());
+        hitPosition.setY(startpoint.y());
+        hitPosition.setZ(this.get_y());
+       */
+        return hitPosition;
+    }
+
+
+
+
+    }
