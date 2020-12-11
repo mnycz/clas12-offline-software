@@ -373,15 +373,15 @@ public class ALERTHitReader implements ALERTIMatchedHit {
         }
 
         @Override
-        public List<BaseHit> MatchHits(ArrayList<Hit> ADCandTDCLists, double timeJitter, IndexedTable tdcConv, IndexedTable ADCandTDCOffsets) {
-            ArrayList<BaseHit> matchLists = new ArrayList<BaseHit>();
+        public List<ALERTBaseHit> MatchHits(ArrayList<Hit> ADCandTDCLists, double timeJitter, IndexedTable tdcConv, IndexedTable ADCandTDCOffsets) {
+            ArrayList<Hit> matchLists = new ArrayList<Hit>();
             int debug=0;
             if (ADCandTDCLists != null) {
                 Collections.sort(ADCandTDCLists);
 
                 if(debug>1) {
                     System.out.println("List of hits for matching");
-                    for(BaseHit h : ADCandTDCLists)
+                    for(Hit h : ADCandTDCLists)
                         System.out.println(h.get_Sector()+":"+h.get_Layer()+":"+h.get_Superlayer()+"   --   "+h.ADC1+"; "+h.ADC2+"; "+h.ADCTime1+"; "+h.ADCTime2+"; "+h.TDC1+"; "+h.TDC2+"; ");
                 }
 
@@ -392,9 +392,9 @@ public class ALERTHitReader implements ALERTIMatchedHit {
                 int tdc1 = -1;
                 int tdc2 = -1;
 
-                List<ArrayList<BaseHit>> hitlists = new ArrayList<ArrayList<BaseHit>>();
+                List<ArrayList<Hit>> hitlists = new ArrayList<ArrayList<Hit>>();
                 for (int i = 0; i < ADCandTDCLists.size(); i++) {
-                    hitlists.add(new ArrayList<BaseHit>());
+                    hitlists.add(new ArrayList<Hit>());
                 }
                 int index1 = 0;
                 int index2 = 0;
@@ -402,13 +402,13 @@ public class ALERTHitReader implements ALERTIMatchedHit {
                 int index4 = 0;
 
                 for (int i = 0; i < ADCandTDCLists.size(); i++) {
-                    BaseHit h = ADCandTDCLists.get(i);
+                    Hit h = ADCandTDCLists.get(i);
                     double tdconv1 = tdcConv.getDoubleValue("upstream",   h.get_Sector(), h.get_Layer(), h.get_Superlayer());
                     double tdconv2 = tdcConv.getDoubleValue("downstream", h.get_Sector(), h.get_Layer(), h.get_Superlayer());
                     double offset1 = ADCandTDCOffsets.getDoubleValue("upstream",   h.get_Sector(), h.get_Layer(), h.get_Superlayer());
                     double offset2 = ADCandTDCOffsets.getDoubleValue("downstream", h.get_Sector(), h.get_Layer(), h.get_Superlayer());
                     double width  = ADCandTDCOffsets.getDoubleValue("width", h.get_Sector(), h.get_Layer(), h.get_Superlayer());
-                    if(debug>1) System.out.println("Working on hit " + i + "   --   "+h.ADC1+"; "+h.ADC2+"; "+h.ADCTime1+"; "+h.ADCTime2+"; "+h.TDC1+"; "+h.TDC2+"; ");
+                    //if(debug>1) System.out.println("Working on hit " + i + "   --   "+h.ADC1+"; "+h.ADC2+"; "+h.ADCTime1+"; "+h.ADCTime2+"; "+h.TDC1+"; "+h.TDC2+"; ");
                     if (h.get_ADC1() > 0) {
                         adc1 = h.get_ADC1();
                         if (h.get_ADCTime1() > 0) {
@@ -490,8 +490,9 @@ public class ALERTHitReader implements ALERTIMatchedHit {
                 for (int i = 0; i < hitlists.size(); i++) {
                     if (hitlists.get(i).size() > 0) {
                         // Make the new hit
-                        BaseHit hit = new BaseHit(hitlists.get(i).get(0)
-                                .get_Sector(), hitlists.get(i).get(0).get_Layer(),
+                        //Hit hit = new Hit(hitlists.get(i).g)
+                        ALERTBaseHit hit = new ALERTBaseHit(hitlists.get(i).get(0).get_Sector(),
+                                hitlists.get(i).get(0).get_Layer(),
                                 hitlists.get(i).get(0).get_Superlayer());
                         hit.set_Id(hitNb++);
                         double t_1 = -1;
@@ -573,7 +574,7 @@ public class ALERTHitReader implements ALERTIMatchedHit {
             return triggerphase;
         }
 
-        public void setHitPointersToClusters(List<Hit> hits, List<Cluster> clusters) {
+        public void setHitPointersToClusters(List<Hit> hits, List<ALERTCluster> clusters) {
             for(int j=0; j<clusters.size(); j++) {
                 Cluster cluster=clusters.get(j);
                 for(int k=0; k<cluster.size(); k++) {
